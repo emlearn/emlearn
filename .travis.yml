@@ -8,4 +8,4 @@ install:
 - pip install -r requirements.dev.txt
 - pip install ./
 script:
-- pytest -v --cov=emtrees --cov-report html --cov-report term-missing --cov-branch
+- PYTHONPATH=./:build/lib.linux-x86_64-3.6/:$PYTHONPATH pytest -v --cov=emtrees --cov-report html --cov-report term-missing --cov-branch
