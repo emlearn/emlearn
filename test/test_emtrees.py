@@ -43,7 +43,7 @@ def build_classifier(estimator, name='test_trees', temp_dir='tmp/'):
     with open(code_file, 'w') as f:
         f.write(code)
 
-    args = [ 'cc', code_file, '-o', bin_path, '-I./test', '-I.' ]
+    args = [ 'cc', '-std=c99', code_file, '-o', bin_path, '-I./test', '-I.' ]
     subprocess.check_call(args)
 
     return bin_path
