@@ -234,6 +234,8 @@ class RandomForest:
 		predictions = [ self.classifier.predict(row) for row in X ]
 		return predictions
 
+	def output_c(self, name):
+		return generate_c_forest(self.forest, name)
 
 def main():
 	# Example usage on Sonar Dataset
