@@ -1,4 +1,8 @@
 
+import subprocess
+import os
+import os.path
+
 import sklearn
 import numpy
 from sklearn import datasets
@@ -7,13 +11,19 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn import metrics
 
 import emtrees
-import subprocess
 
-def build_classifier(estimator):
-    def_file = 'tmp/test_trees.def.h'
-    tree_name = 'test_trees'
-    with open(def_file, 'w') as f:
-        f.write(estimator.output_c(tree_name))
+
+
+def build_classifier(estimator, name='test_trees', temp_dir='tmp/'):
+    if not os.path.exists(temp_dir):
+        os.makedirs(temp_dir)
+
+    tree_name = name
+    def_file = os.path.join(temp_dir, name+'.def.h')
+    code_file = os.path.join(temp_dir, name+'.c')
+    bin_path = os.path.join(temp_dir, name)
+
+    # Trivial program that reads values on stdin, and returns classifications on stdout
     code = """
     #include "emtrees_test.h"
     #include "{def_file}"
@@ -27,11 +37,11 @@ def build_classifier(estimator):
     }}
     """.format(**locals())
 
-    code_file = 'tmp/test_trees.c'
+    with open(def_file, 'w') as f:
+        f.write(estimator.output_c(tree_name))
+
     with open(code_file, 'w') as f:
         f.write(code)
-
-    bin_path = 'tmp/test_trees'
 
     args = [ 'cc', code_file, '-o', bin_path, '-I./test', '-I.' ]
     subprocess.check_call(args)
