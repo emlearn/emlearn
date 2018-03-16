@@ -328,7 +328,7 @@ def main():
 
 	# evaluate algorithm
 	n_folds = 5
-	for n_trees in [1, 5, 10]:
+	for n_trees in [5, 10]:
 		estimator = RandomForest(n_trees=n_trees, max_depth=10, min_size=10, sample_size=1.0)
 		scores = evaluate_algorithm(dataset, estimator, n_folds)
 
