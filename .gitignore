@@ -3,3 +3,4 @@
 *.dll
 .pytest_cache/
 build/
+tmp/
