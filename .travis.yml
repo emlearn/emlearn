@@ -6,5 +6,6 @@ python:
 install:
 - pip install -r requirements.txt
 - pip install -r requirements.dev.txt
+- pip install ./
 script:
-- PYTHONPATH=./:build/lib.linux-x86_64-3.6/:$PYTHONPATH pytest -v --cov=emtrees --cov-report html --cov-report term-missing --cov-branch
+- pytest -v --cov=emtrees --cov-report html --cov-report term-missing --cov-branch
