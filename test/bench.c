@@ -1,4 +1,5 @@
 
+#include "emtrees.h"
 #include "emtrees_bench.h"
 #include <sys/time.h>
 #include <stdio.h>

@@ -1,8 +1,6 @@
 
 #ifndef EMTREES_BENCH
 
-#include <emtrees.h>
-
 // https://en.wikipedia.org/wiki/Lehmer_random_number_generator#Parameters_in_common_use
 static uint32_t
 lcg_parkmiller(uint32_t *state) {
@@ -24,7 +22,7 @@ emtrees_bench_fill(EmtreesValue *values, int rows, int features) {
 
     for (int row=0; row<rows; row++) {
         for (int feature=0; feature<features; feature++) {
-            const int idx = (rows * features) + feature;
+            const int idx = (row * features) + feature;
             values[idx] = (int32_t)lcg_parkmiller(&rng_state);
         }
     }
