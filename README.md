@@ -3,15 +3,9 @@
 Tree-based machine learning classifiers for embedded systems.
 Train in Python, deploy on microcontroller.
 
+## Key features
 
-## Status
-Proof-of-concept
-
-Binary classification using Random Forests is implemented.
-
-## Design
-
-Classifier
+Embedded-friendly Classifier
 
 * Portable C99 code
 * No stdlib required
@@ -19,11 +13,30 @@ Classifier
 * Integer/fixed-point math only
 * Single header file, less than 100 lines
 
-Training
+Convenient Training
 
-* Implemented in Python
 * API-compatible with [scikit-learn](http://scikit-learn.org)
+* Implemented in Python 3
 * C classifier accessed via pybind11
+
+## Status
+**Proof-of-concept**
+
+Binary classification using Random Forests is implemented.
+Tested running on AVR, ESP8266 and Linux.
+
+## Installing
+
+Install from git
+
+    git clone https://github.com/jonnor/emtrees
+    cd emtrees
+    pip install ./
+
+
+## Usage
+For now, see the [tests](./tests)
+
 
 ## TODO
 
@@ -33,12 +46,14 @@ Training
 
 0.2
 
-* De-duplicate leaf nodes
+* De-duplicate leaf nodes. Can save 50% memory on binary classification with 3 trees 
 * Support multi-target classification
-* Add performance benchmark
+* Add validation to performance benchmarks
+* Run tests on/against microcontroller
 * Optimize training time
 
 1.0
 
 * Support serializing/deserializing trees
+* Support storing trees in PROGMEM
 * Implement Extratrees
