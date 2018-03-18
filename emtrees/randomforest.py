@@ -152,7 +152,7 @@ def remove_orphans(nodes, roots):
 		if n[0] >= 0:
 			referenced.append(n[2])
 			referenced.append(n[3])
-	referenced = set(referenced)
+	referenced = set(referenced).union(roots)
 	all_nodes = set(range(len(nodes))) 
 	orphaned = all_nodes.difference(referenced)
 

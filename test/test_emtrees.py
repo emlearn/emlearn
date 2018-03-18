@@ -89,3 +89,21 @@ def test_binary_classification_compiled():
 
     assert accuracy > 0.9 # testing on training data
 
+def test_deduplicate_single_tree():
+    nodes = [
+        [ -1, 100, -1, -1 ],
+        [ -1, 200, -1, -1 ],
+        [ 1, 666, 0, 1 ],
+        [ -1, 100, -1, -1 ], # dup leaf. idx=3
+        [ 1, 333, 0, 3 ], # dup ref
+        [ 1, 444, 2, 1],
+        [ 1, 444, 4, 5],
+    ]
+    roots = [ 6 ]
+
+    de_nodes, de_roots = emtrees.randomforest.remove_duplicate_leaves((nodes, roots))
+
+    duplicates = 1
+    assert len(de_roots) == len(roots)
+    assert len(de_nodes) == len(nodes) - duplicates
+    assert de_roots[0] == roots[0] - duplicates
