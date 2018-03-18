@@ -119,7 +119,7 @@ def flatten_tree(tree):
 
 	return flat
 
-# TODO: de-duplicate identical leaves
+
 def flatten_forest(trees):
 	tree_roots = []
 	tree_offset = 0
@@ -156,8 +156,6 @@ def remove_orphans(nodes, roots):
 	all_nodes = set(range(len(nodes))) 
 	orphaned = all_nodes.difference(referenced)
 
-	print('orphans', orphaned)
-	#print(referenced)
 
 	offsets = []	
 	offset = 0
@@ -165,8 +163,6 @@ def remove_orphans(nodes, roots):
 		offsets.append(offset)
 		if idx in orphaned:
 			offset -= 1
-
-	print('offs', offsets)
 
 	compacted = []
 	for idx, node in enumerate(nodes):
@@ -202,13 +198,8 @@ def remove_duplicate_leaves(forest):
 
 	leaves = list(filter(lambda n: n[0] < 0, nodes))
 	wasted = (len(leaves) - len(unique_leaves)) / len(nodes)
-	print(wasted, unique_leaves)
-	print(remap_leaves)
-	#print('before', nodes)
 	
 	remap_node_references(nodes, remap_leaves)
-	#print('after', nodes)
-
 	compacted, compacted_roots = remove_orphans(nodes, roots)
 
 	return compacted, compacted_roots
