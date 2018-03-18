@@ -91,13 +91,13 @@ def test_binary_classification_compiled():
 
 def test_deduplicate_single_tree():
     nodes = [
-        [ -1, 100, -1, -1 ],
-        [ -1, 200, -1, -1 ],
-        [ 1, 666, 0, 1 ],
-        [ -1, 100, -1, -1 ], # dup leaf. idx=3
-        [ 1, 333, 0, 3 ], # dup ref
-        [ 1, 444, 2, 1],
-        [ 1, 444, 4, 5],
+        [ -1, 1, -1, -1 ],
+        [ -1, 0, -1, -1 ],
+        [ 2, 666, 0, 1 ],
+        [ -1, 1, -1, -1 ], # dup leaf. idx=3
+        [ 4, 333, 1, 3 ], # dup ref
+        [ 5, 444, 2, 1],
+        [ 6, 555, 4, 5],
     ]
     roots = [ 6 ]
 
@@ -107,3 +107,13 @@ def test_deduplicate_single_tree():
     assert len(de_roots) == len(roots)
     assert len(de_nodes) == len(nodes) - duplicates
     assert de_roots[0] == roots[0] - duplicates
+
+def test_trees_to_dot():
+    X, Y = datasets.make_classification(n_classes=2, n_samples=10)
+    trees = emtrees.RandomForest(n_trees=3, max_depth=5)
+    X = (X * 2**16).astype(int) # convert to integer
+    trees.fit(X, Y)
+
+    dot = trees.to_dot(name='ffoo')
+    with open('tmp/trees.dot', 'w') as f:
+        f.write(dot)

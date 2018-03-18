@@ -204,6 +204,47 @@ def remove_duplicate_leaves(forest):
 
 	return compacted, compacted_roots
 
+def forest_to_dot(forest, name='emtrees', indent="  "):
+    nodes, roots = forest
+
+    graph_options = {
+        #'rankdir': 'LR',
+        #'ranksep': 0.07,
+    }
+
+    def dot_node(name, **opts):
+        return '{name} [label={label}];'.format(name=name, label=opts['label'])
+    def dot_edge(src, tgt, **opts):
+        return '{src} -> {tgt} [taillabel={label}, labelfontsize={f}];'.format(src=src,tgt=tgt,label=opts['label'], f=opts['labelfontsize'])
+
+    dot_items = []
+    for idx, node in enumerate(nodes):
+        if node[0] >= 0:
+            n = dot_node(idx, label='"feature[{}] < {}"'.format(node[0], node[1]))
+            left = dot_edge(idx, node[2], label='"  1"', labelfontsize=8)
+            right = dot_edge(idx, node[3], label='"  0"', labelfontsize=8)
+            dot_items += [ n, left, right]
+        else:
+            dot_items += [ dot_node(idx, label='"{}"'.format(node[1])) ]
+
+	# TODO: indicate tree roots
+	# TODO: use cluster_ subgraph for each tree
+    variables = {
+        'name': name,
+        'options': ('\n'+indent).join('{}={};'.format(k,v) for k,v in graph_options.items()),
+        'items': ('\n'+indent).join(dot_items),
+    }
+    dot = """digraph {name} {{
+        // Graph options
+        {options}
+
+        // Nodes/edges
+        {items}
+    }}""".format(**variables)
+
+    return dot
+
+
 def generate_c_nodes(flat, name):
 	def node(n):
 		return "{{ {}, {}, {}, {} }}".format(*n)
@@ -299,6 +340,9 @@ class RandomForest:
 
 	def output_c(self, name):
 		return generate_c_forest(self.forest, name)
+
+	def to_dot(self, **kwargs):
+		return forest_to_dot(self.forest, **kwargs)
 
 def main():
 	# Example usage on Sonar Dataset

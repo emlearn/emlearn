@@ -46,7 +46,6 @@ For now, see the [tests](./tests)
 
 0.2
 
-* De-duplicate leaf nodes. Can save 50% memory on binary classification with 3 trees 
 * Support multi-target classification
 * Add validation to performance benchmarks
 * Run tests on/against microcontroller
