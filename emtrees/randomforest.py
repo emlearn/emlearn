@@ -141,6 +141,77 @@ def flatten_forest(trees):
 
 	return forest_nodes, tree_roots
 
+def remap_node_references(nodes, remap):
+	for n in nodes:
+		n[2] = remap.get(n[2], n[2])
+		n[3] = remap.get(n[3], n[3])
+
+def remove_orphans(nodes, roots):
+	referenced = []
+	for n in nodes:
+		if n[0] >= 0:
+			referenced.append(n[2])
+			referenced.append(n[3])
+	referenced = set(referenced)
+	all_nodes = set(range(len(nodes))) 
+	orphaned = all_nodes.difference(referenced)
+
+	print('orphans', orphaned)
+	#print(referenced)
+
+	offsets = []	
+	offset = 0
+	for idx, node in enumerate(nodes):
+		offsets.append(offset)
+		if idx in orphaned:
+			offset -= 1
+
+	print('offs', offsets)
+
+	compacted = []
+	for idx, node in enumerate(nodes):
+		if idx in orphaned:
+			continue
+
+		if node[0] >= 0:
+			node[2] += offsets[node[2]]
+			node[3] += offsets[node[3]] 
+		compacted.append(node)
+
+	compacted_roots = [ r + offsets[r] for r in roots ]
+
+	return compacted, compacted_roots
+
+
+def remove_duplicate_leaves(forest):
+	nodes, roots = forest
+
+	unique_leaves = []
+	unique_idx = []
+	remap_leaves = {}
+	for i, node in enumerate(nodes):
+		if node[0] >= 0:
+			# not a leaf
+			continue
+		found = unique_leaves.index(node) if node in unique_leaves else None
+		if found is None:
+			unique_leaves.append(node)
+			unique_idx.append(i)
+		else:
+			remap_leaves[i] = unique_idx[found]	
+
+	leaves = list(filter(lambda n: n[0] < 0, nodes))
+	wasted = (len(leaves) - len(unique_leaves)) / len(nodes)
+	print(wasted, unique_leaves)
+	print(remap_leaves)
+	#print('before', nodes)
+	
+	remap_node_references(nodes, remap_leaves)
+	#print('after', nodes)
+
+	compacted, compacted_roots = remove_orphans(nodes, roots)
+
+	return compacted, compacted_roots
 
 def generate_c_nodes(flat, name):
 	def node(n):
@@ -223,6 +294,7 @@ class RandomForest:
 			trees.append(tree)
 
 		self.forest = flatten_forest(trees)
+		self.forest = remove_duplicate_leaves(self.forest)		
 		nodes, roots = self.forest
 		node_data = []
 		for node in nodes:
