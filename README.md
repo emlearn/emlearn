@@ -42,6 +42,7 @@ For now, see the [tests](./tests)
 
 0.1
 
+* Investigate/fix both yes+no leading to same class
 * Release as Python library on PyPI
 
 0.2
