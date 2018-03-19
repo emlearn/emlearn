@@ -204,45 +204,75 @@ def remove_duplicate_leaves(forest):
 
 	return compacted, compacted_roots
 
+def traverse_dfs(nodes, idx, visitor):
+	visitor(idx)
+	if nodes[idx][0] < 0:
+		return None
+	traverse_dfs(nodes, nodes[idx][2], visitor)
+	traverse_dfs(nodes, nodes[idx][3], visitor)
+
+def dot_node(name, **opts):
+	return '{name} [label={label}];'.format(name=name, label=opts['label'])
+def dot_edge(src, tgt, **opts):
+	return '{src} -> {tgt} [taillabel={label}, labelfontsize={f}];'.format(src=src,tgt=tgt,label=opts['label'], f=opts['labelfontsize'])
+def dot_cluster(name, nodes, indent='  '):
+	name = 'cluster_' + name
+	n = ('\n'+indent).join(nodes)
+	return 'subgraph {name} {{\n  {nodes}\n}}'.format(name=name, nodes=n)
+
 def forest_to_dot(forest, name='emtrees', indent="  "):
-    nodes, roots = forest
+	nodes, roots = forest
 
-    graph_options = {
-        #'rankdir': 'LR',
-        #'ranksep': 0.07,
-    }
+	leaf_nodes = list(filter(lambda i: nodes[i][0] < 0, range(len(nodes))))
+	trees = [ [] for r in roots ]
+	for tree_idx, root in enumerate(roots):
+		collect = []
+		traverse_dfs(nodes, root, lambda i: collect.append(i))
+		trees[tree_idx] = set(collect).difference(leaf_nodes)
 
-    def dot_node(name, **opts):
-        return '{name} [label={label}];'.format(name=name, label=opts['label'])
-    def dot_edge(src, tgt, **opts):
-        return '{src} -> {tgt} [taillabel={label}, labelfontsize={f}];'.format(src=src,tgt=tgt,label=opts['label'], f=opts['labelfontsize'])
+	edges = []
+	leaves = []
+	clusters = []
 
-    dot_items = []
-    for idx, node in enumerate(nodes):
-        if node[0] >= 0:
-            n = dot_node(idx, label='"feature[{}] < {}"'.format(node[0], node[1]))
-            left = dot_edge(idx, node[2], label='"  1"', labelfontsize=8)
-            right = dot_edge(idx, node[3], label='"  0"', labelfontsize=8)
-            dot_items += [ n, left, right]
-        else:
-            dot_items += [ dot_node(idx, label='"{}"'.format(node[1])) ]
+	# group trees using cluster
+	for tree_idx, trees in enumerate(trees):
+		decisions = []
+		for idx in trees:
+			node = nodes[idx]
+			n = dot_node(idx, label='"{}: feature[{}] < {}"'.format(idx, node[0], node[1]))
+			left = dot_edge(idx, node[2], label='"  1"', labelfontsize=8)
+			right = dot_edge(idx, node[3], label='"  0"', labelfontsize=8)
+			decisions += [ n ]
+			edges += [ left, right]
 
-	# TODO: indicate tree roots
-	# TODO: use cluster_ subgraph for each tree
-    variables = {
-        'name': name,
-        'options': ('\n'+indent).join('{}={};'.format(k,v) for k,v in graph_options.items()),
-        'items': ('\n'+indent).join(dot_items),
-    }
-    dot = """digraph {name} {{
-        // Graph options
-        {options}
+		clusters.append(dot_cluster('_tree_{}'.format(tree_idx), decisions, indent=2*indent))
 
-        // Nodes/edges
-        {items}
-    }}""".format(**variables)
+	# leaves shared between trees
+	for idx in leaf_nodes:
+		node = nodes[idx]
+		leaves += [ dot_node(idx, label='"{}"'.format(node[1])) ]
 
-    return dot
+	dot_items = clusters + edges + leaves
+
+	graph_options = {
+		#'rankdir': 'LR',
+		#'ranksep': 0.07,
+	}
+
+	variables = {
+		'name': name,
+		'options': ('\n'+indent).join('{}={};'.format(k,v) for k,v in graph_options.items()),
+		'items': ('\n'+indent).join(dot_items),
+	}
+	dot = """digraph {name} {{
+	  // Graph options
+	  {options}
+
+	  // Nodes/edges
+	  {items}
+	}}""".format(**variables)
+
+	return dot
 
 
 def generate_c_nodes(flat, name):
