@@ -19,6 +19,8 @@ Convenient Training
 * Implemented in Python 3
 * C classifier accessed via pybind11
 
+[MIT licensed](./LICENSE.md)
+
 ## Status
 **Proof-of-concept**
 
@@ -54,6 +56,7 @@ For now, see the [tests](./tests)
 
 1.0
 
+* Support generating specialized C/machine code for trees
 * Support serializing/deserializing trees
 * Support storing trees in PROGMEM
-* Implement Extratrees
+* Implement Extratrees learning
