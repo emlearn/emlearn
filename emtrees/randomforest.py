@@ -381,6 +381,7 @@ class RandomForest:
         if samples < 1:
             raise ValueError('{} feature(s) (shape={}) while a minimum of {} is required.'.format(samples, X.shape, 1))
 
+        self.input_features_ = features 
         self.classes_, Y = numpy.unique(Y, return_inverse=True)
         if len(self.classes_) < 2:
             raise ValueError('Targets must contain 2 or more classes')
@@ -413,6 +414,10 @@ class RandomForest:
         if numpy.isinf(X.astype(float)).any():
             raise ValueError('X contains inf')
 
+        print(X.shape, self.input_features_)
+        if X.shape[1] != self.input_features_:
+            raise ValueError('Expected {} features, got {}'.format(self.input_features_, X.shape[1]))
+
         if not numpy.issubdtype(X.dtype, numpy.integer):
             conversion = (2 ** 16)
             if self.convert == 'warn':
@@ -426,13 +431,10 @@ class RandomForest:
         for node in nodes:
             assert len(node) == 4
             node_data += node # [int(v) for v in node]
-            print('n', node)
         assert len(node_data) % 4 == 0
         classifier_ = emtreesc.Classifier(node_data, roots)
 
         predictions = [ classifier_.predict(row) for row in X ]
-        print('c', self.classes_)        
-        print('p', predictions)
         classes = numpy.array([self.classes_[p] for p in predictions])
         return classes
 
