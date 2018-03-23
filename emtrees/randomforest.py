@@ -220,8 +220,7 @@ def generate_c_forest(forest, name='myclassifier'):
     
     return '\n\n'.join([nodes_c, tree_roots, forest]) 
 
- 
-# TODO: implement max_nodes limit
+
 class RandomForest:
     def __init__(self, *args, **kwargs):
         self._estimator_type = 'classifier'
@@ -230,13 +229,15 @@ class RandomForest:
 
         self._estimator = RandomForestClassifier(*args, **kwargs)
         self._param_names = ['convert']
+        self._unsupported_params = set(['class_weight'])
 
     def get_params(self, deep=False):
-
         params = {}
         for name in self._param_names:
             params[name] = getattr(self, name)
-        params.update(self._estimator.get_params(deep))
+        child_params = self._estimator.get_params(deep)
+        child_params = { k: v for k, v in child_params.items() if k not in self._unsupported_params }
+        params.update(child_params)
         return params
 
     def set_params(self, **params):
@@ -249,7 +250,16 @@ class RandomForest:
         return self
 
     def fit(self, X, Y):
+        if hasattr(X, 'todense'):
+            raise TypeError('sparse matrices not supported')
+
         X = numpy.array(X)
+
+        if numpy.issubdtype(X.dtype, numpy.floating):
+            if numpy.isnan(X).any():
+                raise ValueError('X contains NaN')
+            if numpy.isinf(X).any():
+                raise ValueError('X contains inf')
 
         if not numpy.issubdtype(X.dtype, numpy.integer):
             conversion = (2 ** 16)
@@ -257,16 +267,32 @@ class RandomForest:
                 sys.stderr.write('Warning: fit() implicitly converting from {} to int32\n'.format(X.dtype))
             else:
                 conversion = self.convert
-            X = (X * conversion).astype('int32')
+            try:
+                X = (X * conversion).astype('int32')
+            except TypeError as e:
+                if 'unsupported operand' in str(e):
+                    e = TypeError('argument must be a string or a number')
+                raise e
 
         self._estimator.fit(X, Y)
 
+        self.n_features_ = X.shape[1]
+        self.classes_ = self._estimator.classes_
         self.forest_ = flatten_forest([ e.tree_ for e in self._estimator.estimators_])
 
         return self
 
     def predict(self, X):
+        if not hasattr(self, 'n_features_'):
+            raise ValueError('Estimator is not fit() yet')
+
         X = numpy.array(X)
+
+        if numpy.issubdtype(X.dtype, numpy.floating):
+            if numpy.isnan(X).any():
+                raise ValueError('X contains NaN')
+            if numpy.isinf(X).any():
+                raise ValueError('X contains inf')
 
         if not numpy.issubdtype(X.dtype, numpy.integer):
             conversion = (2 ** 16)
@@ -275,6 +301,12 @@ class RandomForest:
             else:
                 conversion = self.convert
             X = (X * conversion).astype('int32')
+
+        if len(X.shape) == 1:
+            raise ValueError('Features should be 2d, not 1d. Reshape your data')
+
+        if X.shape[1] != self.n_features_:
+            raise ValueError('Expected {} features, got {}'.format(self.n_features_, X.shape[1]))
 
         nodes, roots = self.forest_
         node_data = []
@@ -285,7 +317,7 @@ class RandomForest:
         classifier_ = emtreesc.Classifier(node_data, roots)
 
         predictions = [ classifier_.predict(row) for row in X ]
-        classes = numpy.array([self._estimator.classes_[p] for p in predictions])
+        classes = numpy.array([self.classes_[p] for p in predictions])
         return classes
 
     def output_c(self, name):
