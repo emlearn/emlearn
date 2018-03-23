@@ -75,7 +75,7 @@ def test_estimator_api():
 def test_basic_binary_classification():
     X, Y = datasets.make_classification(n_classes=2)
     #trees = RandomForestClassifier(n_estimators=3, max_depth=5)
-    trees = emtrees.RandomForest(n_trees=3, max_depth=5)
+    trees = emtrees.RandomForest(n_estimators=3, max_depth=5)
     X = (X * 2**16).astype(int) # convert to integer
     scores = model_selection.cross_val_score(trees, X, Y, scoring='accuracy')
 
@@ -83,7 +83,7 @@ def test_basic_binary_classification():
 
 def test_binary_classification_compiled():
     X, Y = datasets.make_classification(n_classes=2)
-    trees = emtrees.RandomForest(n_trees=3, max_depth=5)
+    trees = emtrees.RandomForest(n_estimators=3, max_depth=5)
     X = (X * 2**16).astype(int) # convert to integer
     trees.fit(X, Y)
 
@@ -114,7 +114,7 @@ def test_deduplicate_single_tree():
 
 def test_trees_to_dot():
     X, Y = datasets.make_classification(n_classes=2, n_samples=10)
-    trees = emtrees.RandomForest(n_trees=3, max_depth=5)
+    trees = emtrees.RandomForest(n_estimators=3, max_depth=5)
     X = (X * 2**16).astype(int) # convert to integer
     trees.fit(X, Y)
 

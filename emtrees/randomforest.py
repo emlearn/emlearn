@@ -4,91 +4,11 @@ import math
 import sys
 
 import numpy
+import sklearn
+from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier
 
 import emtreesc
   
-# Split a dataset based on an attribute and an attribute value
-def test_split(index, value, dataset):
-    left, right = list(), list()
-    for row in dataset:
-        if row[index] < value:
-            left.append(row)
-        else:
-            right.append(row)
-    return left, right
- 
-# Calculate the Gini index for a split dataset
-def gini_index(groups, classes):
-    # count all samples at split point
-    n_instances = float(sum([len(group) for group in groups]))
-    # sum weighted Gini index for each group
-    gini = 0.0
-    for group in groups:
-        size = float(len(group))
-        # avoid divide by zero
-        if size == 0:
-            continue
-        score = 0.0
-        # score the group based on the score for each class
-        for class_val in classes:
-            p = [row[-1] for row in group].count(class_val) / size
-            score += p * p
-        # weight the group score by its relative size
-        gini += (1.0 - score) * (size / n_instances)
-    return gini
- 
-# Select the best split point for a dataset
-def get_split(dataset, n_features):
-    class_values = list(set(row[-1] for row in dataset))
-    b_index, b_value, b_score, b_groups = 999, 999, 999, None
-    features = list()
-    while len(features) < n_features:
-        index = random.randrange(len(dataset[0])-1)
-        if index not in features:
-            features.append(index)
-    for index in features:
-        for row in dataset:
-            groups = test_split(index, row[index], dataset)
-            gini = gini_index(groups, class_values)
-            if gini < b_score:
-                b_index, b_value, b_score, b_groups = index, row[index], gini, groups
-    return {'index':b_index, 'value':b_value, 'groups':b_groups}
- 
-# Create a terminal node value
-def to_terminal(group):
-    outcomes = [row[-1] for row in group]
-    return max(set(outcomes), key=outcomes.count)
- 
-# Create child splits for a node or make terminal
-def split(node, max_depth, min_size, n_features, depth):
-    left, right = node['groups']
-    del(node['groups'])
-    # check for a no split
-    if not left or not right:
-        node['left'] = node['right'] = to_terminal(left + right)
-        return
-    # check for max depth
-    if depth >= max_depth:
-        node['left'], node['right'] = to_terminal(left), to_terminal(right)
-        return
-    # process left child
-    if len(left) <= min_size:
-        node['left'] = to_terminal(left)
-    else:
-        node['left'] = get_split(left, n_features)
-        split(node['left'], max_depth, min_size, n_features, depth+1)
-    # process right child
-    if len(right) <= min_size:
-        node['right'] = to_terminal(right)
-    else:
-        node['right'] = get_split(right, n_features)
-        split(node['right'], max_depth, min_size, n_features, depth+1)
- 
-# Build a decision tree
-def build_tree(train, max_depth, min_size, n_features):
-    root = get_split(train, n_features)
-    split(root, max_depth, min_size, n_features, 1)
-    return root
 
 # Tree representation as 2d array
 # feature, value, left_child, right_child
@@ -96,29 +16,18 @@ def build_tree(train, max_depth, min_size, n_features):
 # 	fields = { 'feature': 0, 'value': 1, 'left': 2, 'right': 3 }
 def flatten_tree(tree):
     flat = []
-    next_node_idx = 0
 
-    def is_leaf(node):
-        return not isinstance(node, dict)
-    def get_node_idx(node):
-        nonlocal next_node_idx
-        idx = next_node_idx
-        next_node_idx += 1
-        return idx
+    assert tree.node_count == len(tree.value)
+    assert tree.value.shape[1] == 1 # number of outputs
 
-    def flatten_node(node):
-        if is_leaf(node):
-            flat.append([-1, node, -1, -1])
-            return get_node_idx(node)
+    for left, right, feature, th, value in zip(tree.children_left, tree.children_right, tree.feature, tree.threshold, tree.value):
+        if left == -1 and right == -1:
+            cls = numpy.argmax(value[0])
+            n = [ -1, cls, -1, -1 ] # leaf
+        else:
+            n = [ feature, int(th), left, right ]
 
-        l = flatten_node(node['left'])
-        r = flatten_node(node['right'])
-        flat.append([node['index'], node['value'], l, r])
-        return get_node_idx(node)
-
-    r_idx = flatten_node(tree)
-    assert r_idx == next_node_idx -1
-    assert r_idx == len(flat) - 1
+        flat.append(n) 
 
     return flat
 
@@ -132,7 +41,7 @@ def flatten_forest(trees):
         flat = flatten_tree(tree)
 
         # Offset the nodes in tree, so they can be stored in one array 
-        root = len(flat) - 1 + tree_offset
+        root = 0 + tree_offset
         for node in flat:
             if node[2] > 0:
                 node[2] += tree_offset
@@ -311,61 +220,36 @@ def generate_c_forest(forest, name='myclassifier'):
     
     return '\n\n'.join([nodes_c, tree_roots, forest]) 
 
-
-# Create a random subsample from the dataset with replacement
-def subsample(dataset, ratio):
-    sample = list()
-    n_sample = round(len(dataset) * ratio)
-    while len(sample) < n_sample:
-        index = random.randrange(len(dataset))
-        sample.append(dataset[index])
-    return sample
- 
-import copy
  
 # TODO: implement max_nodes limit
 class RandomForest:
-    def __init__(self, n_features=None, max_depth=10, min_size=1, sample_size=1.0, n_trees=10, convert='warn'):
-        self.n_trees = n_trees
-        self.sample_size = sample_size
-        self.min_size = min_size
-        self.max_depth = max_depth
-        self.n_features = n_features
-        self.convert = convert
-
+    def __init__(self, *args, **kwargs):
         self._estimator_type = 'classifier'
 
+        self.convert = kwargs.pop('convert', 'warn')
+
+        self._estimator = RandomForestClassifier(*args, **kwargs)
+        self._param_names = ['convert']
+
     def get_params(self, deep=False):
-        param_names = ['n_trees', 'sample_size', 'min_size', 'max_depth', 'n_features', 'convert']
+
         params = {}
-        for name in param_names:
+        for name in self._param_names:
             params[name] = getattr(self, name)
+        params.update(self._estimator.get_params(deep))
         return params
 
-    def set_params(self, params={}):
-        for k, v in params.items():
-            setattr(self, k, v)
-
+    def set_params(self, **params):
+        our_keys = set(params.keys()).intersection(self._param_names)
+        external_keys = set(params.keys()).difference(our_keys)
+        theirs = { k: params[k] for k in external_keys }
+        self._estimator.set_params(**theirs)
+        for k in our_keys:
+            setattr(self, k, params[v])
         return self
 
     def fit(self, X, Y):
-        if hasattr(X, 'todense'):
-            raise TypeError('sparse matrices not supported')
-
         X = numpy.array(X)
-        Y = numpy.array(Y)
-
-        if numpy.isnan(X.astype(float)).any():
-            raise ValueError('X contains NaN')
-        if numpy.isinf(X.astype(float)).any():
-            raise ValueError('X contains inf')
-
-        try:
-            X.astype(int)
-        except TypeError as e:
-            if 'must be a string' in str(e):
-                e = TypeError('argument must be a string or a number')            
-            raise e
 
         if not numpy.issubdtype(X.dtype, numpy.integer):
             conversion = (2 ** 16)
@@ -375,48 +259,14 @@ class RandomForest:
                 conversion = self.convert
             X = (X * conversion).astype('int32')
 
-        samples, features = X.shape
-        if features < 1:
-            raise ValueError('{} feature(s) (shape={}) while a minimum of {} is required.'.format(features, X.shape, 1))
-        if samples < 1:
-            raise ValueError('{} feature(s) (shape={}) while a minimum of {} is required.'.format(samples, X.shape, 1))
+        self._estimator.fit(X, Y)
 
-        self.input_features_ = features 
-        self.classes_, Y = numpy.unique(Y, return_inverse=True)
-        if len(self.classes_) < 2:
-            raise ValueError('Targets must contain 2 or more classes')
-        if len(Y.shape) == 1:
-            Y = numpy.reshape(Y, (Y.shape[0], 1))
-
-        n_features = self.n_features 
-        if n_features is None:
-            n_features = math.sqrt(len(X[0]))
-
-        # Internally targets are expected to be part of same list/array as features
-        data = numpy.concatenate((X, Y), axis=1)
-
-        trees = list()
-        for i in range(self.n_trees):
-            sample = subsample(data, self.sample_size)
-            tree = build_tree(sample, self.max_depth, self.min_size, n_features)
-            trees.append(tree)
-
-        self.forest_ = flatten_forest(trees)
-        self.forest_ = remove_duplicate_leaves(self.forest_)		
+        self.forest_ = flatten_forest([ e.tree_ for e in self._estimator.estimators_])
 
         return self
 
     def predict(self, X):
         X = numpy.array(X)
-
-        if numpy.isnan(X.astype(float)).any():
-            raise ValueError('X contains NaN')
-        if numpy.isinf(X.astype(float)).any():
-            raise ValueError('X contains inf')
-
-        print(X.shape, self.input_features_)
-        if X.shape[1] != self.input_features_:
-            raise ValueError('Expected {} features, got {}'.format(self.input_features_, X.shape[1]))
 
         if not numpy.issubdtype(X.dtype, numpy.integer):
             conversion = (2 ** 16)
@@ -435,7 +285,7 @@ class RandomForest:
         classifier_ = emtreesc.Classifier(node_data, roots)
 
         predictions = [ classifier_.predict(row) for row in X ]
-        classes = numpy.array([self.classes_[p] for p in predictions])
+        classes = numpy.array([self._estimator.classes_[p] for p in predictions])
         return classes
 
     def output_c(self, name):
