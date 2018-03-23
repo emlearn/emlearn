@@ -44,19 +44,17 @@ For now, see the [tests](./tests)
 
 0.1
 
-* Investigate/fix both yes+no leading to same class
 * Release as Python library on PyPI
 
 0.2
 
-* Support multi-target classification
 * Add validation to performance benchmarks
 * Run tests on/against microcontroller
-* Optimize training time
 
 1.0
 
 * Support generating specialized C/machine code for trees
 * Support serializing/deserializing trees
 * Support storing trees in PROGMEM
+* Support multi-target classification
 * Implement Extratrees learning
