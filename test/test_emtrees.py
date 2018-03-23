@@ -69,12 +69,15 @@ def run_classifier(bin_path, data):
 
     return classes
 
-def test_estimator_api():
+def test_randomforest_api():
    check_estimator(emtrees.RandomForest)
+
+def test_extratrees_api():
+   check_estimator(emtrees.ExtraTrees)
+
 
 def test_basic_binary_classification():
     X, Y = datasets.make_classification(n_classes=2, n_samples=1000)
-    #trees = RandomForestClassifier(n_estimators=3, max_depth=5)
     trees = emtrees.RandomForest(n_estimators=10, max_depth=10)
     X = (X * 2**16).astype(int) # convert to integer
     scores = model_selection.cross_val_score(trees, X, Y, scoring='accuracy')
@@ -92,6 +95,19 @@ def test_binary_classification_compiled():
     accuracy = metrics.accuracy_score(Y, predicted)
 
     assert accuracy > 0.9 # testing on training data
+
+def test_extratrees_classification_compiled():
+    X, Y = datasets.make_classification(n_classes=2)
+    trees = emtrees.ExtraTrees(n_estimators=3, max_depth=5)
+    X = (X * 2**16).astype(int) # convert to integer
+    trees.fit(X, Y)
+
+    p = build_classifier(trees)
+    predicted = run_classifier(p, X)
+    accuracy = metrics.accuracy_score(Y, predicted)
+
+    assert accuracy > 0.85 # testing on training data
+
 
 def test_deduplicate_single_tree():
     nodes = [

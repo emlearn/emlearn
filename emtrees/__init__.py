@@ -1,3 +1,3 @@
 
-from .randomforest import RandomForest
+from .randomforest import RandomForest, ExtraTrees
 

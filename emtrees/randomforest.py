@@ -221,15 +221,14 @@ def generate_c_forest(forest, name='myclassifier'):
     return '\n\n'.join([nodes_c, tree_roots, forest]) 
 
 
-class RandomForest:
+class Wrapper:
     def __init__(self, *args, **kwargs):
         self._estimator_type = 'classifier'
 
-        self.convert = kwargs.pop('convert', 'warn')
-
-        self._estimator = RandomForestClassifier(*args, **kwargs)
         self._param_names = ['convert']
         self._unsupported_params = set(['class_weight'])
+
+        self._estimator = None # should be set by subclass
 
     def get_params(self, deep=False):
         params = {}
@@ -325,5 +324,20 @@ class RandomForest:
 
     def to_dot(self, **kwargs):
         return forest_to_dot(self.forest_, **kwargs)
+
+
+class RandomForest(Wrapper):
+    def __init__(self, *args, **kwargs):
+        Wrapper.__init__(self, *args, **kwargs)
+
+        self.convert = kwargs.pop('convert', 'warn')
+        self._estimator = RandomForestClassifier(*args, **kwargs)
+
+class ExtraTrees(Wrapper):
+    def __init__(self, *args, **kwargs):
+        Wrapper.__init__(self, *args, **kwargs)
+
+        self.convert = kwargs.pop('convert', 'warn')
+        self._estimator = ExtraTreesClassifier(*args, **kwargs)
 
 

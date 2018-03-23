@@ -57,4 +57,3 @@ For now, see the [tests](./tests)
 * Support serializing/deserializing trees
 * Support storing trees in PROGMEM
 * Support multi-target classification
-* Implement Extratrees learning
