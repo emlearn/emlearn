@@ -1,6 +1,8 @@
 
 import random
 import math
+import sys
+
 import numpy
 
 import emtreesc
@@ -323,17 +325,18 @@ import copy
  
 # TODO: implement max_nodes limit
 class RandomForest:
-    def __init__(self, n_features=None, max_depth=10, min_size=1, sample_size=1.0, n_trees=10):
+    def __init__(self, n_features=None, max_depth=10, min_size=1, sample_size=1.0, n_trees=10, convert='warn'):
         self.n_trees = n_trees
         self.sample_size = sample_size
         self.min_size = min_size
         self.max_depth = max_depth
         self.n_features = n_features
+        self.convert = convert
 
         self._estimator_type = 'classifier'
 
     def get_params(self, deep=False):
-        param_names = ['n_trees', 'sample_size', 'min_size', 'max_depth', 'n_features', ]
+        param_names = ['n_trees', 'sample_size', 'min_size', 'max_depth', 'n_features', 'convert']
         params = {}
         for name in param_names:
             params[name] = getattr(self, name)
@@ -346,24 +349,31 @@ class RandomForest:
         return self
 
     def fit(self, X, Y):
+        if hasattr(X, 'todense'):
+            raise TypeError('sparse matrices not supported')
+
         X = numpy.array(X)
         Y = numpy.array(Y)
-        if len(Y.shape) == 1:
-            Y = numpy.reshape(Y, (Y.shape[0], 1))
 
         if numpy.isnan(X.astype(float)).any():
-            print('NaN')
             raise ValueError('X contains NaN')
         if numpy.isinf(X.astype(float)).any():
-            print('inf')
             raise ValueError('X contains inf')
 
         try:
-            X = X.astype(int)
+            X.astype(int)
         except TypeError as e:
             if 'must be a string' in str(e):
                 e = TypeError('argument must be a string or a number')            
             raise e
+
+        if not numpy.issubdtype(X.dtype, numpy.integer):
+            conversion = (2 ** 16)
+            if self.convert == 'warn':
+                sys.stderr.write('Warning: fit() implicitly converting from {} to int32\n'.format(X.dtype))
+            else:
+                conversion = self.convert
+            X = (X * conversion).astype('int32')
 
         samples, features = X.shape
         if features < 1:
@@ -371,8 +381,15 @@ class RandomForest:
         if samples < 1:
             raise ValueError('{} feature(s) (shape={}) while a minimum of {} is required.'.format(samples, X.shape, 1))
 
-        if self.n_features is None:
-            self.n_features = math.sqrt(len(X[0]))
+        self.classes_, Y = numpy.unique(Y, return_inverse=True)
+        if len(self.classes_) < 2:
+            raise ValueError('Targets must contain 2 or more classes')
+        if len(Y.shape) == 1:
+            Y = numpy.reshape(Y, (Y.shape[0], 1))
+
+        n_features = self.n_features 
+        if n_features is None:
+            n_features = math.sqrt(len(X[0]))
 
         # Internally targets are expected to be part of same list/array as features
         data = numpy.concatenate((X, Y), axis=1)
@@ -380,7 +397,7 @@ class RandomForest:
         trees = list()
         for i in range(self.n_trees):
             sample = subsample(data, self.sample_size)
-            tree = build_tree(sample, self.max_depth, self.min_size, self.n_features)
+            tree = build_tree(sample, self.max_depth, self.min_size, n_features)
             trees.append(tree)
 
         self.forest_ = flatten_forest(trees)
@@ -389,16 +406,35 @@ class RandomForest:
         return self
 
     def predict(self, X):
-        X = numpy.array(X).astype('int')
+        X = numpy.array(X)
+
+        if numpy.isnan(X.astype(float)).any():
+            raise ValueError('X contains NaN')
+        if numpy.isinf(X.astype(float)).any():
+            raise ValueError('X contains inf')
+
+        if not numpy.issubdtype(X.dtype, numpy.integer):
+            conversion = (2 ** 16)
+            if self.convert == 'warn':
+                sys.stderr.write('Warning: predict() implicitly converting from {} to int32\n'.format(X.dtype))
+            else:
+                conversion = self.convert
+            X = (X * conversion).astype('int32')
 
         nodes, roots = self.forest_
         node_data = []
         for node in nodes:
-            node_data += node # copy.copy(node)
+            assert len(node) == 4
+            node_data += node # [int(v) for v in node]
+            print('n', node)
+        assert len(node_data) % 4 == 0
         classifier_ = emtreesc.Classifier(node_data, roots)
 
         predictions = [ classifier_.predict(row) for row in X ]
-        return predictions
+        print('c', self.classes_)        
+        print('p', predictions)
+        classes = numpy.array([self.classes_[p] for p in predictions])
+        return classes
 
     def output_c(self, name):
         return generate_c_forest(self.forest_, name)
