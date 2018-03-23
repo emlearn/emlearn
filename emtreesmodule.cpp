@@ -24,7 +24,7 @@ public:
 
         for (int i=0; i<n_nodes; i++) {
             EmtreesNode n = {
-                (int8_t) node_data[i*4+0],
+                (int8_t)node_data[i*4+0],
                 node_data[i*4+1],
                 (int16_t)node_data[i*4+2],
                 (int16_t)node_data[i*4+3]
@@ -42,7 +42,12 @@ public:
     }
 
     int32_t predict(std::vector<EmtreesValue> values) {
-        return emtrees_predict(&forest, &values[0], values.size());
+        const int32_t p = emtrees_predict(&forest, &values[0], values.size());
+        if (p < 0) {
+            const std::string msg = emtrees_errors[-p];
+            throw std::runtime_error(msg);
+        }
+        return p;
     }
 };
 

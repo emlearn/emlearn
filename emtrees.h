@@ -25,9 +25,18 @@ typedef struct _Emtrees {
 } Emtrees;
 
 typedef enum _EmtreesError {
-    EmtreesUnknownError,
     EmtreesOK = 0,
+    EmtreesUnknownError,
+    EmtreesInvalidClassPredicted,
+    EmtreesErrorLength,
 } EmtreesError;
+
+const char *emtrees_errors[EmtreesErrorLength+1] = {
+   "OK",
+   "Unknown error",
+   "Invalid class predicted",
+   "Error length",
+};
 
 #ifndef EMTREES_MAX_CLASSES
 #define EMTREES_MAX_CLASSES 10
@@ -37,7 +46,7 @@ static int32_t
 emtrees_tree_predict(const Emtrees *forest, int32_t tree_root, const EmtreesValue *features, int8_t features_length) {
     int32_t node_idx = tree_root;
 
-    while (forest->nodes[node_idx].feature > 0) {
+    while (forest->nodes[node_idx].feature >= 0) {
         const int8_t feature = forest->nodes[node_idx].feature;
         const EmtreesValue value = features[feature];
         const EmtreesValue point = forest->nodes[node_idx].value;
@@ -64,7 +73,7 @@ emtrees_predict(const Emtrees *forest, const EmtreesValue *features, int8_t feat
         if (_class >= 0 && _class < EMTREES_MAX_CLASSES) {
             votes[_class] += 1;
         } else {
-            // FIXME: error when this happens
+            return -EmtreesInvalidClassPredicted;
         }
     }
     
