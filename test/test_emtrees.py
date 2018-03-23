@@ -9,6 +9,7 @@ from sklearn import datasets
 from sklearn import model_selection
 from sklearn.ensemble import RandomForestClassifier
 from sklearn import metrics
+from sklearn.utils.estimator_checks import check_estimator 
 
 import emtrees
 
@@ -67,6 +68,9 @@ def run_classifier(bin_path, data):
     assert len(classes) == len(data)
 
     return classes
+
+def test_estimator_api():
+   check_estimator(emtrees.RandomForest)
 
 def test_basic_binary_classification():
     X, Y = datasets.make_classification(n_classes=2)

@@ -1,6 +1,7 @@
 
 import random
 import math
+import numpy
 
 import emtreesc
   
@@ -329,25 +330,52 @@ class RandomForest:
         self.max_depth = max_depth
         self.n_features = n_features
 
-        self.forest = None
-        self.classifier = None
+        self._estimator_type = 'classifier'
 
     def get_params(self, deep=False):
-        param_names = ['n_trees', 'sample_size', 'min_size', 'max_depth', 'n_features']
+        param_names = ['n_trees', 'sample_size', 'min_size', 'max_depth', 'n_features', ]
         params = {}
         for name in param_names:
             params[name] = getattr(self, name)
         return params
 
+    def set_params(self, params={}):
+        for k, v in params.items():
+            setattr(self, k, v)
+
+        return self
+
     def fit(self, X, Y):
+        X = numpy.array(X)
+        Y = numpy.array(Y)
+        if len(Y.shape) == 1:
+            Y = numpy.reshape(Y, (Y.shape[0], 1))
+
+        if numpy.isnan(X.astype(float)).any():
+            print('NaN')
+            raise ValueError('X contains NaN')
+        if numpy.isinf(X.astype(float)).any():
+            print('inf')
+            raise ValueError('X contains inf')
+
+        try:
+            X = X.astype(int)
+        except TypeError as e:
+            if 'must be a string' in str(e):
+                e = TypeError('argument must be a string or a number')            
+            raise e
+
+        samples, features = X.shape
+        if features < 1:
+            raise ValueError('{} feature(s) (shape={}) while a minimum of {} is required.'.format(features, X.shape, 1))
+        if samples < 1:
+            raise ValueError('{} feature(s) (shape={}) while a minimum of {} is required.'.format(samples, X.shape, 1))
+
         if self.n_features is None:
             self.n_features = math.sqrt(len(X[0]))
 
         # Internally targets are expected to be part of same list/array as features
-        data = []
-        for x, y in zip(X, Y):
-            row = list(x) + [ y ]
-            data.append(row)
+        data = numpy.concatenate((X, Y), axis=1)
 
         trees = list()
         for i in range(self.n_trees):
@@ -355,23 +383,27 @@ class RandomForest:
             tree = build_tree(sample, self.max_depth, self.min_size, self.n_features)
             trees.append(tree)
 
-        self.forest = flatten_forest(trees)
-        self.forest = remove_duplicate_leaves(self.forest)		
-        nodes, roots = self.forest
+        self.forest_ = flatten_forest(trees)
+        self.forest_ = remove_duplicate_leaves(self.forest_)		
+
+        return self
+
+    def predict(self, X):
+        X = numpy.array(X).astype('int')
+
+        nodes, roots = self.forest_
         node_data = []
         for node in nodes:
             node_data += node # copy.copy(node)
-        self.classifier = emtreesc.Classifier(node_data, roots)
+        classifier_ = emtreesc.Classifier(node_data, roots)
 
-    def predict(self, X):
-        # TODO: only pass features
-        predictions = [ self.classifier.predict(row) for row in X ]
+        predictions = [ classifier_.predict(row) for row in X ]
         return predictions
 
     def output_c(self, name):
-        return generate_c_forest(self.forest, name)
+        return generate_c_forest(self.forest_, name)
 
     def to_dot(self, **kwargs):
-        return forest_to_dot(self.forest, **kwargs)
+        return forest_to_dot(self.forest_, **kwargs)
 
 
