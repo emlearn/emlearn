@@ -278,6 +278,7 @@ class Wrapper:
         self.n_features_ = X.shape[1]
         self.classes_ = self._estimator.classes_
         self.forest_ = flatten_forest([ e.tree_ for e in self._estimator.estimators_])
+        self.forest_ = remove_duplicate_leaves(self.forest_)
 
         return self
 
