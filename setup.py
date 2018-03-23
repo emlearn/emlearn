@@ -1,10 +1,12 @@
 from setuptools import setup, Extension
 from setuptools.command.build_ext import build_ext
 import sys
+import os.path
 import setuptools
 
 __version__ = '0.1.1'
 
+project_dir = os.path.abspath(os.path.dirname(__file__))
 
 class get_pybind_include(object):
     """Helper class to determine the pybind11 include path
@@ -86,6 +88,22 @@ ext_modules = [
     ),
 ]
 
+def read_requirements():
+    requirements_txt = os.path.join(project_dir, 'requirements.txt')
+    with open(requirements_txt, encoding='utf-8') as f:
+        contents = f.read()
+
+    specifiers = [s for s in contents.split('\n') if s]
+    return specifiers
+
+def read_readme():
+    readme = os.path.join(project_dir, 'README.md')
+    with open(readme, encoding='utf-8') as f:
+        long_description = f.read()
+
+    return long_description
+
+
 setup(
     name='emtrees',
     version=__version__,
@@ -93,9 +111,9 @@ setup(
     author_email='jononor@gmail.com',
     url='https://github.com/jonnor/emtrees',
     description='Tree-based machine learning for embedded system',
-    long_description='',
+    long_description=read_readme(),
     ext_modules=ext_modules,
-    install_requires=['pybind11>=2.2'],
+    install_requires=read_requirements(),
     cmdclass={'build_ext': BuildExt},
     zip_safe=False,
 )
