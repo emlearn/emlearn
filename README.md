@@ -24,8 +24,8 @@ Convenient Training
 ## Status
 **Proof-of-concept**
 
-Single-target classification with Random Forests and ExtraTrees is implemented.
-Tested running on AVR, ESP8266 and Linux.
+* Random Forests and ExtraTrees classifiers implemented
+* Tested running on AVR, ESP8266 and Linux.
 
 ## Installing
 
@@ -35,7 +35,7 @@ Install from PyPI
 
 ## Usage
 
-1. Train your model
+1. Train your model in Python
 
 ```python
 import emtrees
@@ -46,7 +46,9 @@ estimator.fit(X_train, Y_train)
 
 2. Generate C code
 ```python
-estimator.output_c('sonar')
+code = estimator.output_c('sonar')
+with open('sonar.h', 'w') as f:
+   f.write(code)
 ```
 
 3. Use the C code
