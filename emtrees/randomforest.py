@@ -201,7 +201,15 @@ def generate_c_nodes(flat, name):
 def generate_c_inlined(forest, name):
     nodes, roots = forest
 
-    n_classes = 2 # FIXME: detect from nodes
+    def is_leaf(n):
+      return n[0] < 0
+    def class_value(n):
+      assert is_leaf(n)
+      return n[1]
+
+    class_values = set(map(class_value, filter(is_leaf, nodes)))
+    assert min(class_values) == 0
+    n_classes = max(class_values)
     tree_names = [ name + '_tree_{}'.format(i) for i,_ in enumerate(roots) ]
 
     indent = 2
