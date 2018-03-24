@@ -15,11 +15,13 @@ import emtrees
 
 
 
-def build_classifier(estimator, name='test_trees', temp_dir='tmp/'):
+def build_classifier(estimator, name='test_trees', temp_dir='tmp/', func=None):
     if not os.path.exists(temp_dir):
         os.makedirs(temp_dir)
 
     tree_name = name
+    if func is None:
+      func = 'emtrees_predict(&{}, values, length)'.format(tree_name)
     def_file = os.path.join(temp_dir, name+'.def.h')
     code_file = os.path.join(temp_dir, name+'.c')
     bin_path = os.path.join(temp_dir, name)
@@ -30,7 +32,7 @@ def build_classifier(estimator, name='test_trees', temp_dir='tmp/'):
     #include "{def_file}"
 
     static void classify(const EmtreesValue *values, int length, int row) {{
-        const int32_t class = emtrees_predict(&{tree_name}, values, length);
+        const int32_t class = {func};
         printf("%d,%d\\n", row, class);
     }}
     int main() {{
@@ -107,6 +109,18 @@ def test_extratrees_classification_compiled():
     accuracy = metrics.accuracy_score(Y, predicted)
 
     assert accuracy > 0.85 # testing on training data
+
+def test_inline_compiled():
+    X, Y = datasets.make_classification(n_classes=2)
+    trees = emtrees.RandomForest(n_estimators=3, max_depth=5)
+    X = (X * 2**16).astype(int) # convert to integer
+    trees.fit(X, Y)
+
+    p = build_classifier(trees, 'myinline', func='myinline_predict(values, length)')
+    predicted = run_classifier(p, X)
+    accuracy = metrics.accuracy_score(Y, predicted)
+
+    assert accuracy > 0.9 # testing on training data
 
 
 def test_deduplicate_single_tree():

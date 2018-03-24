@@ -197,7 +197,77 @@ def generate_c_nodes(flat, name):
     nodes = "EmtreesNode {nodes_name}[{nodes_length}] = {{\n  {nodes_structs} \n}};".format(**locals());
 
     return nodes
+
+def generate_c_inlined(forest, name):
+    nodes, roots = forest
+
+    n_classes = 2 # FIXME: detect from nodes
+    tree_names = [ name + '_tree_{}'.format(i) for i,_ in enumerate(roots) ]
+
+    indent = 2
+    def c_leaf(n, depth):
+        return (depth*indent * ' ') + "return {};".format(n[1])
+    def c_internal(n, depth):
+        f = """{indent}if (features[{feature}] < {value}) {{
+        {left}
+        {indent}}} else {{
+        {right}
+        {indent}}}""".format(**{
+            'feature': n[0],
+            'value': n[1],
+            'left': c_node(n[2], depth+1),
+            'right': c_node(n[3], depth+1),
+            'indent': depth*indent*' ',
+        })
+        return f
+    def c_node(nid, depth):
+        n = nodes[nid]
+        if n[0] < 0:
+            return c_leaf(n, depth+1)
+        return c_internal(n, depth+1)
+
+    def tree_func(name, root):
+        return """static inline int32_t {function_name}(EmtreesValue *features, int32_t features_length) {{
+        {code}
+        }}
+        """.format(**{
+            'function_name': name,
+            'code': c_node(root, 0),
+        })
+
+    def tree_vote(name):
+        return '_class = {}(features, features_length); votes[_class] += 1;'.format(name)
+
+    tree_votes = [ tree_vote(n) for n in tree_names ]
+    print('v', tree_votes)
+
+    forest_func = """int32_t {function_name}(EmtreesValue *features, int32_t features_length) {{
+
+        int32_t votes[{n_classes}] = {{0,}};
+        int32_t _class = -1;
+
+        {tree_predictions}
     
+        int32_t most_voted_class = -1;
+        int32_t most_voted_votes = 0;
+        for (int32_t i=0; i<{n_classes}; i++) {{
+
+            if (votes[i] > most_voted_votes) {{
+                most_voted_class = i;
+                most_voted_votes = votes[i];
+            }}
+        }}
+        return most_voted_class;
+    }}
+    """.format(**{
+      'function_name': name,
+      'n_classes': n_classes,
+      'tree_predictions': '\n    '.join(tree_votes)
+    })
+    
+    tree_funcs = [tree_func(n, r) for n,r in zip(tree_names, roots)]
+
+    return '\n\n'.join(tree_funcs + [forest_func])
 
 def generate_c_forest(forest, name='myclassifier'):
     nodes, roots = forest
@@ -211,14 +281,16 @@ def generate_c_forest(forest, name='myclassifier'):
     tree_roots_values = ', '.join(str(t) for t in roots)
     tree_roots = 'int32_t {tree_roots_name}[{tree_roots_length}] = {{ {tree_roots_values} }};'.format(**locals())
 
-    forest = """Emtrees {name} = {{
+    forest_struct = """Emtrees {name} = {{
         {nodes_length},
         {nodes_name},	  
         {tree_roots_length},
         {tree_roots_name},
     }};""".format(**locals())
     
-    return '\n\n'.join([nodes_c, tree_roots, forest]) 
+    inline = generate_c_inlined(forest, name+'_predict')
+
+    return '\n\n'.join([nodes_c, tree_roots, forest_struct, inline]) 
 
 
 class Wrapper:
