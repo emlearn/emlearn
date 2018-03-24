@@ -12,12 +12,11 @@ char receive_buffer[buffer_length] = {0,};
 int32_t receive_idx = 0;
 
 void setup() {
-  Serial.begin(115200); 
+  Serial.begin(115200);
 }
 
 void loop() {
   EmtreesValue values[n_features];
-  int32_t request;
 
   while (Serial.available() > 0) {
 
@@ -31,7 +30,7 @@ void loop() {
     }
     
     if (ch == '\n') {
-      
+        int32_t request = -3;
         // Parse the values to use for prediction
         int field_no = 0;
         char seps[] = ",;";
@@ -58,7 +57,7 @@ void loop() {
 
         // Do predictions
         int32_t sum = 0;
-        const long pre = millis();
+        const long pre = micros();
         int32_t prediction = -999;
         for (int32_t i=0; i<n_repetitions; i++) {
           const int32_t p = digits_predict(values, n_features);
@@ -71,7 +70,7 @@ void loop() {
           sum += p;
           prediction = p;
         }
-        const long post = millis();
+        const long post = micros();
         const long time_taken = post - pre;     
 
         // Send back on parseable format
