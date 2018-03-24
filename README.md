@@ -11,7 +11,8 @@ Embedded-friendly Classifier
 * No stdlib required
 * No dynamic allocations
 * Integer/fixed-point math only
-* Single header file, less than 100 lines
+* Single header file include
+* Fast, sub-millisecond classification
 
 Convenient Training
 
@@ -26,6 +27,7 @@ Convenient Training
 
 * Random Forests and ExtraTrees classifiers implemented
 * Tested running on AVR, ESP8266 and Linux.
+* Classifies 8x8 digits in under 0.3ms on ESP8266, with 95%+ accuracy
 
 ## Installing
 
@@ -62,14 +64,10 @@ int32_t values[length] = { ... };
 const int32_t predicted_class = sonar_predict(values, length):
 ```
 
-For full example code, see [examples/sonar.py](./examples/sonar.py)
+For full example code, see [examples/digits.py](./examples/digits.py)
+and [arduinobench.ino](./test/arduinobench/arduinobench.ino)
 
 ## TODO
-
-0.2
-
-* Add validation to performance benchmarks
-* Run tests on/against microcontroller
 
 1.0
 

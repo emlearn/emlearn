@@ -11,27 +11,32 @@ Xtrain, Xtest, ytrain, ytest = train_test_split(digits.data, digits.target, rand
 Xtrain = (Xtrain * 2**16).astype(numpy.int32)
 Xtest = (Xtest * 2**16).astype(numpy.int32)
 
+print('Loading digits dataset. 8x8=64 features')
+
 # 0.95+ with n_estimators=40, max_depth=20
 # 0.90+ with n_estimators=10, max_depth=10
-#model = RandomForestClassifier(n_estimators=10, max_depth=10, random_state=rnd)
-model = emtrees.RandomForest(n_estimators=40, max_depth=20, random_state=rnd)
+trees = 40
+max_depth = 20
+print('Training {} trees with max_depth {}'.format(trees, max_depth))
+model = emtrees.RandomForest(n_estimators=trees, max_depth=max_depth, random_state=rnd)
 model.fit(Xtrain, ytrain)
 
 # Predict
 ypred = model.predict(Xtest)
-print(metrics.classification_report(ypred, ytest))
+print('Accuracy on validation set {:.2f}%'.format(metrics.accuracy_score(ypred, ytest)*100))
 
-print('features', Xtrain.shape[1])
 m = numpy.max(Xtrain), numpy.min(Xtrain)
-print('max val', m, 2147483647)
 
 code = model.output_c('digits')
-with open('digits.h', 'w') as f:
+filename = 'digits.h'
+with open(filename, 'w') as f:
    f.write(code)
+print('Wrote C code to', filename)
 
-print('Attempting to classify on microcontroller')
+port = '/dev/ttyUSB0'
+print('Classify on microcontroller via', port)
 import serial
-device = serial.Serial(port='/dev/ttyUSB0', baudrate=115200, timeout=0.1) 
+device = serial.Serial(port=port, baudrate=115200, timeout=0.1) 
 
 repetitions = 10
 Y_pred = []
@@ -55,9 +60,9 @@ for idx,row in enumerate(Xtest):
 
    Y_pred.append(prediction)
    times.append(micros / 1000)
-   print(idx, prediction, reps, micros)
+   #print(idx, prediction, reps, micros)
 
-
+print('Confusion matrix')
 print(metrics.confusion_matrix(Y_pred, ytest))
 
 avg = numpy.mean(times) / repetitions
