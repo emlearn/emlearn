@@ -1,5 +1,6 @@
 
 #ifndef EMTREES_H
+#define EMTREES_H
 
 #include <stdint.h>
 
