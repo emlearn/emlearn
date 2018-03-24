@@ -54,10 +54,11 @@ with open('sonar.h', 'w') as f:
 3. Use the C code
 
 ```c
+#include <emtrees.h>
 #include "sonar.h"
 
 const int32_t length = 60;
-EmtreesValue values[length] = { ... };
+int32_t values[length] = { ... };
 const int32_t predicted_class = sonar_predict(values, length):
 ```
 
