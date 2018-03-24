@@ -42,10 +42,6 @@ For now, see the [tests](./tests)
 
 ## TODO
 
-0.1
-
-* Release as Python library on PyPI
-
 0.2
 
 * Add validation to performance benchmarks
