@@ -209,7 +209,7 @@ def generate_c_inlined(forest, name):
 
     class_values = set(map(class_value, filter(is_leaf, nodes)))
     assert min(class_values) == 0
-    n_classes = max(class_values)
+    n_classes = max(class_values)+1
     tree_names = [ name + '_tree_{}'.format(i) for i,_ in enumerate(roots) ]
 
     indent = 2
