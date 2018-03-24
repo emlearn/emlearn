@@ -4,7 +4,6 @@
 #include "digits.h"
 
 const int32_t n_features = 64;
-const int32_t n_repetitions = 100000;
 
 const int32_t bytes_per_number = 50; // 32bit integer, plus separator. But better to have too much
 const int32_t buffer_length = n_features*bytes_per_number;
@@ -31,6 +30,9 @@ void loop() {
     
     if (ch == '\n') {
         int32_t request = -3;
+        int32_t n_repetitions = -1;
+        const int non_value_fields = 2;
+        
         // Parse the values to use for prediction
         int field_no = 0;
         char seps[] = ",;";
@@ -41,22 +43,24 @@ void loop() {
             sscanf(token, "%ld", &value);
             if (field_no == 0) {
               request = value;
+            } else if (field_no == 1) {
+              n_repetitions = value;
             } else {
-              values[field_no-1] = value; 
+              values[field_no-non_value_fields] = value; 
             }
             field_no++;
             token = strtok(NULL, seps);
         }
 
-        if (field_no-1 != n_features) {
-            Serial.print("Error, wrong number of features: "); Serial.println(field_no-1);
+        if (field_no-non_value_fields != n_features) {
+            Serial.print("Error, wrong number of features: "); Serial.println(field_no-non_value_fields);
         }
         
         receive_idx = 0;
         memset(receive_buffer, buffer_length, 0);
 
         // Do predictions
-        int32_t sum = 0;
+        volatile int32_t sum = 0; // avoid profiler folding the loop
         const long pre = micros();
         int32_t prediction = -999;
         for (int32_t i=0; i<n_repetitions; i++) {
@@ -80,7 +84,7 @@ void loop() {
         Serial.print(";");
         Serial.print(prediction);
         Serial.print(";");
-        Serial.print(sum);
+        Serial.print(n_repetitions);
         for (int i=0; i<n_features; i++) {
           Serial.print(";");
           Serial.print(values[i]);
