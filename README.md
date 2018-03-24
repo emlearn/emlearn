@@ -17,28 +17,49 @@ Convenient Training
 
 * API-compatible with [scikit-learn](http://scikit-learn.org)
 * Implemented in Python 3
-* C classifier accessed via pybind11
+* C classifier accessible in Python using pybind11
 
 [MIT licensed](./LICENSE.md)
 
 ## Status
 **Proof-of-concept**
 
-Binary classification using Random Forests is implemented.
+Single-target classification with Random Forests and ExtraTrees is implemented.
 Tested running on AVR, ESP8266 and Linux.
 
 ## Installing
 
-Install from git
+Install from PyPI
 
-    git clone https://github.com/jonnor/emtrees
-    cd emtrees
-    pip install ./
-
+    pip install emtrees --user
 
 ## Usage
-For now, see the [tests](./tests)
 
+1. Train your model
+
+```python
+import emtrees
+estimator = emtrees.RandomForest(n_estimators=10, max_depth=10)
+estimator.fit(X_train, Y_train)
+...
+```
+
+2. Generate C code
+```python
+estimator.output_c('sonar')
+```
+
+3. Use the C code
+
+```c
+#include "sonar.h"
+
+const int32_t length = 60;
+EmtreesValue values[length] = { ... };
+const int32_t predicted_class = sonar_predict(values, length):
+```
+
+For full example code, see [examples/sonar.py](./examples/sonar.py)
 
 ## TODO
 

@@ -239,7 +239,6 @@ def generate_c_inlined(forest, name):
         return '_class = {}(features, features_length); votes[_class] += 1;'.format(name)
 
     tree_votes = [ tree_vote(n) for n in tree_names ]
-    print('v', tree_votes)
 
     forest_func = """int32_t {function_name}(EmtreesValue *features, int32_t features_length) {{
 
