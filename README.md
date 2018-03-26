@@ -23,11 +23,11 @@ Convenient Training
 [MIT licensed](./LICENSE.md)
 
 ## Status
-**Proof-of-concept**
+**Minimally useful**
 
 * Random Forests and ExtraTrees classifiers implemented
 * Tested running on AVR, ESP8266 and Linux.
-* Classifies 8x8 digits in under 0.3ms on ESP8266, with 95%+ accuracy
+* On ESP8266, 8x8 digits classify in under 0.3ms with 95%+ accuracy
 
 ## Installing
 
@@ -69,7 +69,12 @@ and [arduinobench.ino](./test/arduinobench/arduinobench.ino)
 
 ## TODO
 
+0.2
+
+* Standalone example application on microcontroller
+
 1.0
 
 * Support serializing/deserializing trees
 * Support multi-target classification
+* Maybe implement a Very Fast Decision Tree (VFDT) learning algorithm
