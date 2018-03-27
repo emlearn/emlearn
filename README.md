@@ -3,6 +3,8 @@
 Tree-based machine learning classifiers for embedded systems.
 Train in Python, deploy on microcontroller.
 
+Want Naive Bayes instead? Go to [embayes](https://github.com/jonnor/embayes)
+
 ## Key features
 
 Embedded-friendly Classifier

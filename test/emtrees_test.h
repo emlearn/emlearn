@@ -1,4 +1,5 @@
-#ifndef EMTREES_TEST
+#ifndef EMTREES_TEST_H
+#define EMTREES_TEST_H
 
 #include <errno.h>
 #include <stdio.h>
@@ -32,6 +33,6 @@ emtrees_test_read_csv(FILE *fp, EmtreesCsvCallback row_callback) {
     }
 }
 
-#endif // EMTREES_TEST
+#endif // EMTREES_TEST_H
 
 
