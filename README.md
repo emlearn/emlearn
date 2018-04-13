@@ -67,7 +67,7 @@ const int32_t predicted_class = sonar_predict(values, length):
 ```
 
 For full example code, see [examples/digits.py](./examples/digits.py)
-and [arduinobench.ino](./test/arduinobench/arduinobench.ino)
+and [emtrees.ino](./emtrees.ino)
 
 ## TODO
 
