@@ -78,5 +78,8 @@ and [emtrees.ino](./emtrees.ino)
 1.0
 
 * Support serializing/deserializing trees
-* Support multi-target classification
-* Maybe implement a Very Fast Decision Tree (VFDT) learning algorithm
+
+Maybe
+
+* Implement a Very Fast Decision Tree (VFDT) learning algorithm
+* Support [XGBoost](https://github.com/dmlc/xgboost) learning of trees
