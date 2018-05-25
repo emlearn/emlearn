@@ -47,6 +47,7 @@ static int32_t
 emtrees_tree_predict(const Emtrees *forest, int32_t tree_root, const EmtreesValue *features, int8_t features_length) {
     int32_t node_idx = tree_root;
 
+    // TODO: see if using a pointer node instead of indirect adressing using node_idx improves perf
     while (forest->nodes[node_idx].feature >= 0) {
         const int8_t feature = forest->nodes[node_idx].feature;
         const EmtreesValue value = features[feature];

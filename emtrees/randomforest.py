@@ -235,7 +235,7 @@ def generate_c_inlined(forest, name):
         return c_internal(n, depth+1)
 
     def tree_func(name, root):
-        return """static inline int32_t {function_name}(EmtreesValue *features, int32_t features_length) {{
+        return """static inline int32_t {function_name}(const EmtreesValue *features, int32_t features_length) {{
         {code}
         }}
         """.format(**{
@@ -248,7 +248,7 @@ def generate_c_inlined(forest, name):
 
     tree_votes = [ tree_vote(n) for n in tree_names ]
 
-    forest_func = """int32_t {function_name}(EmtreesValue *features, int32_t features_length) {{
+    forest_func = """int32_t {function_name}(const EmtreesValue *features, int32_t features_length) {{
 
         int32_t votes[{n_classes}] = {{0,}};
         int32_t _class = -1;
