@@ -395,8 +395,10 @@ class Wrapper:
         assert len(node_data) % 4 == 0
         classifier_ = emtreesc.Classifier(node_data, roots)
 
-        predictions = [ classifier_.predict(row) for row in X ]
-        classes = numpy.array([self.classes_[p] for p in predictions])
+        #predictions = [ classifier_.predict(row) for row in X ]
+        #classes = numpy.array([self.classes_[p] for p in predictions])
+        predictions = classifier_.predict(X)
+        classes = self.classes_[predictions]
         return classes
 
     def output_c(self, name):

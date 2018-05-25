@@ -5,6 +5,7 @@
 
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
+#include <pybind11/numpy.h>
 
 namespace py = pybind11;
 
@@ -41,7 +42,7 @@ public:
         free(nodes);
     }
 
-    int32_t predict(std::vector<EmtreesValue> values) {
+    int32_t predict_one(std::vector<EmtreesValue> values) {
         const int32_t p = emtrees_predict(&forest, &values[0], values.size());
         if (p < 0) {
             const std::string msg = emtrees_errors[-p];
@@ -49,6 +50,33 @@ public:
         }
         return p;
     }
+
+    py::array_t<int32_t>
+    predict(py::array_t<int32_t, py::array::c_style | py::array::forcecast> in) {
+        if (in.ndim() != 2) {
+            throw std::runtime_error("predict input must have dimensions 2");
+        }
+
+        const int64_t n_samples = in.shape()[0];
+        const int32_t n_features = in.shape()[1];
+
+        auto classes = py::array_t<int32_t>(n_samples);
+        //auto s = in.unchecked();
+        auto r = classes.mutable_unchecked<1>(); 
+        for (int i=0; i<n_samples; i++) {
+            //const int32_t *v = s.data(i);
+            const int32_t *v = in.data(i);
+            const int32_t p = emtrees_predict(&forest, v, n_features);
+            if (p < 0) {
+                const std::string msg = emtrees_errors[-p];
+                throw std::runtime_error(msg);
+            }
+            r(i) = p;
+        }
+
+        return classes;
+    }
+
 };
 
 PYBIND11_MODULE(emtreesc, m) {
@@ -57,6 +85,7 @@ PYBIND11_MODULE(emtreesc, m) {
     py::class_<EmtreesClassifier>(m, "Classifier")
         .def(py::init<std::vector<EmtreesValue>, std::vector<int32_t>>())
         //.def_readwrite("dt", &PID::dt)
+        .def("predict_one", &EmtreesClassifier::predict_one)
         .def("predict", &EmtreesClassifier::predict);
 }
 

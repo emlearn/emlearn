@@ -3,7 +3,6 @@ import emtrees
 import numpy
 from sklearn.model_selection import train_test_split
 from sklearn import metrics, datasets
-from sklearn.ensemble import RandomForestClassifier
 
 rnd = 11
 digits = datasets.load_digits()
