@@ -359,6 +359,15 @@ class Wrapper:
         self.forest_ = flatten_forest([ e.tree_ for e in self._estimator.estimators_])
         self.forest_ = remove_duplicate_leaves(self.forest_)
 
+        # setup C++ classifier
+        nodes, roots = self.forest_
+        node_data = []
+        for node in nodes:
+            assert len(node) == 4
+            node_data += node # [int(v) for v in node]
+        assert len(node_data) % 4 == 0
+        self.classifier_ = emtreesc.Classifier(node_data, roots)
+
         return self
 
     def predict(self, X):
@@ -387,17 +396,9 @@ class Wrapper:
         if X.shape[1] != self.n_features_:
             raise ValueError('Expected {} features, got {}'.format(self.n_features_, X.shape[1]))
 
-        nodes, roots = self.forest_
-        node_data = []
-        for node in nodes:
-            assert len(node) == 4
-            node_data += node # [int(v) for v in node]
-        assert len(node_data) % 4 == 0
-        classifier_ = emtreesc.Classifier(node_data, roots)
-
         #predictions = [ classifier_.predict(row) for row in X ]
         #classes = numpy.array([self.classes_[p] for p in predictions])
-        predictions = classifier_.predict(X)
+        predictions = self.classifier_.predict(X)
         classes = self.classes_[predictions]
         return classes
 
