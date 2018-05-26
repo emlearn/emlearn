@@ -112,6 +112,7 @@ setup(
     url='https://github.com/jonnor/emtrees',
     description='Tree-based machine learning for embedded system',
     long_description=read_readme(),
+    long_description_content_type="text/markdown",
     ext_modules=ext_modules,
     install_requires=read_requirements(),
     cmdclass={'build_ext': BuildExt},
