@@ -30,6 +30,7 @@ Convenient Training
 * Random Forests and ExtraTrees classifiers implemented
 * Tested running on AVR, ESP8266 and Linux.
 * On ESP8266, 8x8 digits classify in under 0.3ms with 95%+ accuracy
+* On Linux, is approx 2x faster than sklearn
 
 ## Installing
 
@@ -77,9 +78,15 @@ and [emtrees.ino](./emtrees.ino)
 
 1.0
 
+* Support returning probabilities
 * Support serializing/deserializing trees
 
 Maybe
 
+* Support weighted voting
+* Support GradientBoostingClassifier
 * Implement a Very Fast Decision Tree (VFDT) learning algorithm
 * Support [XGBoost](https://github.com/dmlc/xgboost) learning of trees
+* Support [LightGBM](https://github.com/Microsoft/LightGBM) learning of trees
+* Implement multithreading when used in Python bindings, using OpenMP
+* Support regression trees
