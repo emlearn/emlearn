@@ -79,16 +79,16 @@ def test_extratrees_api():
 
 
 def test_basic_binary_classification():
-    X, Y = datasets.make_classification(n_classes=2, n_samples=1000)
-    trees = emtrees.RandomForest(n_estimators=10, max_depth=10)
+    X, Y = datasets.make_classification(n_classes=2, n_samples=1000, random_state=1)
+    trees = emtrees.RandomForest(n_estimators=10, max_depth=10, random_state=1)
     X = (X * 2**16).astype(int) # convert to integer
     scores = model_selection.cross_val_score(trees, X, Y, scoring='accuracy')
 
     assert numpy.mean(scores) > 0.7, scores
 
 def test_binary_classification_compiled():
-    X, Y = datasets.make_classification(n_classes=2)
-    trees = emtrees.RandomForest(n_estimators=3, max_depth=5)
+    X, Y = datasets.make_classification(n_classes=2, random_state=1)
+    trees = emtrees.RandomForest(n_estimators=3, max_depth=5, random_state=1)
     X = (X * 2**16).astype(int) # convert to integer
     trees.fit(X, Y)
 
@@ -99,8 +99,8 @@ def test_binary_classification_compiled():
     assert accuracy > 0.9 # testing on training data
 
 def test_extratrees_classification_compiled():
-    X, Y = datasets.make_classification(n_classes=2)
-    trees = emtrees.ExtraTrees(n_estimators=3, max_depth=5)
+    X, Y = datasets.make_classification(n_classes=2, random_state=1)
+    trees = emtrees.ExtraTrees(n_estimators=3, max_depth=5, random_state=1)
     X = (X * 2**16).astype(int) # convert to integer
     trees.fit(X, Y)
 
@@ -111,8 +111,8 @@ def test_extratrees_classification_compiled():
     assert accuracy > 0.85 # testing on training data
 
 def test_inline_compiled():
-    X, Y = datasets.make_classification(n_classes=2)
-    trees = emtrees.RandomForest(n_estimators=3, max_depth=5)
+    X, Y = datasets.make_classification(n_classes=2, random_state=1)
+    trees = emtrees.RandomForest(n_estimators=3, max_depth=5, random_state=1)
     X = (X * 2**16).astype(int) # convert to integer
     trees.fit(X, Y)
 
@@ -143,8 +143,8 @@ def test_deduplicate_single_tree():
     assert de_roots[0] == roots[0] - duplicates
 
 def test_trees_to_dot():
-    X, Y = datasets.make_classification(n_classes=2, n_samples=10)
-    trees = emtrees.RandomForest(n_estimators=3, max_depth=5)
+    X, Y = datasets.make_classification(n_classes=2, n_samples=10, random_state=1)
+    trees = emtrees.RandomForest(n_estimators=3, max_depth=5, random_state=1)
     X = (X * 2**16).astype(int) # convert to integer
     trees.fit(X, Y)
 
