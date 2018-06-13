@@ -19,6 +19,7 @@ public:
     EmtreesClassifier(std::vector<EmtreesValue> node_data, std::vector<int32_t> _roots)
         : roots(_roots)
     {
+        // TODO: take model coefficients as a Numpy array (perf) 
         // FIXME: check node_data is multiple of 4
         const int n_nodes = node_data.size() / 4;
         nodes = (EmtreesNode *)malloc(sizeof(EmtreesNode)*n_nodes);

@@ -81,12 +81,16 @@ and [emtrees.ino](./emtrees.ino)
 * Support returning probabilities
 * Support serializing/deserializing trees
 
+Probably
+
+* Support sklearn GradientBoostingClassifier
+* Support regression trees
+* Support weighted voting
+
 Maybe
 
-* Support weighted voting
-* Support GradientBoostingClassifier
-* Implement a Very Fast Decision Tree (VFDT) learning algorithm
 * Support [XGBoost](https://github.com/dmlc/xgboost) learning of trees
 * Support [LightGBM](https://github.com/Microsoft/LightGBM) learning of trees
+* Support/Implement a Very Fast Decision Tree (VFDT) learning algorithm
 * Implement multithreading when used in Python bindings, using OpenMP
-* Support regression trees
+
