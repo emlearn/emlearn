@@ -43,14 +43,6 @@ public:
         free(nodes);
     }
 
-    int32_t predict_one(std::vector<EmtreesValue> values) {
-        const int32_t p = emtrees_predict(&forest, &values[0], values.size());
-        if (p < 0) {
-            const std::string msg = emtrees_errors[-p];
-            throw std::runtime_error(msg);
-        }
-        return p;
-    }
 
     py::array_t<int32_t>
     predict(py::array_t<int32_t, py::array::c_style | py::array::forcecast> in) {
