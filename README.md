@@ -1,20 +1,21 @@
 
 # emtrees
-Tree-based machine learning classifiers for embedded systems.
-Train in Python, deploy on microcontroller.
+Tree-based machine learning classifiers for microcontroller and embedded systems.
+Train in Python, then do inference on any device with support for C.
 
 Want Naive Bayes instead? Go to [embayes](https://github.com/jonnor/embayes)
 
 ## Key features
 
-Embedded-friendly Classifier
+Embedded-friendly Inference
 
 * Portable C99 code
-* No stdlib required
+* No libc required
 * No dynamic allocations
 * Integer/fixed-point math only
 * Single header file include
 * Fast, sub-millisecond classification
+* Memory efficient. Can run with `<100 bytes RAM`
 
 Convenient Training
 
@@ -24,11 +25,15 @@ Convenient Training
 
 [MIT licensed](./LICENSE.md)
 
+Can be used as an open source alternative to MATLAB Classification Trees,
+Decision Trees using MATLAB Coder for C/C++ code generation.
+`fitctree`, `fitcensemble`, `TreeBagger`, `ClassificationEnsemble`, `CompactTreeBagger`
+
 ## Status
 **Minimally useful**
 
 * Random Forests and ExtraTrees classifiers implemented
-* Tested running on AVR, ESP8266 and Linux.
+* Tested running on AVR Atmega, ESP8266 and Linux.
 * On ESP8266, 8x8 digits classify in under 0.3ms with 95%+ accuracy
 * On Linux, is approx 2x faster than sklearn
 
@@ -75,6 +80,7 @@ and [emtrees.ino](./emtrees.ino)
 0.2
 
 * Standalone example application on microcontroller
+* Include emtrees.h inline in generated code
 
 1.0
 
