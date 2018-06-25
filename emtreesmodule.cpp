@@ -77,8 +77,6 @@ PYBIND11_MODULE(emtreesc, m) {
 
     py::class_<EmtreesClassifier>(m, "Classifier")
         .def(py::init<std::vector<EmtreesValue>, std::vector<int32_t>>())
-        //.def_readwrite("dt", &PID::dt)
-        .def("predict_one", &EmtreesClassifier::predict_one)
         .def("predict", &EmtreesClassifier::predict);
 }
 
