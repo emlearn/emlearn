@@ -92,6 +92,7 @@ Probably
 * Support sklearn GradientBoostingClassifier
 * Support regression trees
 * Support weighted voting
+* Implement Isolation Forests (requires path/depths)
 
 Maybe
 
