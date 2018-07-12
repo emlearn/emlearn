@@ -1,3 +1,3 @@
 
-from .randomforest import RandomForest, ExtraTrees
+from .randomforest import RandomForest, ExtraTrees, GradientBoostingClassifier
 

@@ -25,6 +25,13 @@ typedef struct _Emtrees {
     // int8_t n_classes;
 } Emtrees;
 
+// Used for GBM,GradientBoosting
+typedef struct _EmtreesStaged {
+    int32_t n_stages;
+    float *scores;
+    Emtrees *trees;
+};
+
 typedef enum _EmtreesError {
     EmtreesOK = 0,
     EmtreesUnknownError,
@@ -90,6 +97,42 @@ emtrees_predict(const Emtrees *forest, const EmtreesValue *features, int8_t feat
     }
 
     return most_voted_class;
+}
+
+
+float
+emtrees_expit(float x) {
+    return 1/(1+exp(-x));
+}
+
+float
+emtrees_logit(float p) {
+    return log(p/(1-p));
+}
+
+
+float
+emtrees_gbm_score(const EmtreesGbm *, const EmtreesValues *features, int8_t features_length) {
+
+    float scores[EMTREES_MAX_CLASSES];  
+    float scale = ;
+
+    for (int stage; stage < model->n_stages; stage++) {
+        const Emtrees *forest = model->trees[stage];
+
+        const float s = emtrees_tree_predict(
+        scores[] += scale * s
+    }
+
+}
+
+int32_t
+emtrees_gmb_predict( ) {
+
+    float score = emtrees_gbm_score();
+    // loss: binomial deviation
+    float p = emtrees_expit(score);
+    // argmax
 }
 
 #endif // EMTREES_H

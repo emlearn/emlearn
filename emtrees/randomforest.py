@@ -6,6 +6,7 @@ import sys
 import numpy
 import sklearn
 from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier
+import sklearn.ensemble
 
 import emtreesc
   
@@ -356,8 +357,25 @@ class Wrapper:
 
         self.n_features_ = X.shape[1]
         self.classes_ = self._estimator.classes_
-        self.forest_ = flatten_forest([ e.tree_ for e in self._estimator.estimators_])
-        self.forest_ = remove_duplicate_leaves(self.forest_)
+
+        estimators = self._estimator.estimators_
+        if hasattr(estimators, 'shape'):
+            if len(self.classes_) == 2:
+                assert estimators.shape[1] == 1
+                estimators = estimators[:,0]
+                self.forest_ = flatten_forest([ e.tree_ for e in estimators])
+                self.forest_ = remove_duplicate_leaves(self.forest_)
+            else:
+                assert estimators.shape[1] == len(self.classes_)
+                raise NotImplementedError('GBM only binary classification supported')
+
+            # one tree per class. For binary, only
+            print('n est', self._estimator.estimators_.shape)
+            for e in self._estimator.estimators_:
+                print(e)
+        else:
+            self.forest_ = flatten_forest([ e.tree_ for e in self._estimator.estimators_])
+            self.forest_ = remove_duplicate_leaves(self.forest_)
 
         return self
 
@@ -422,4 +440,18 @@ class ExtraTrees(Wrapper):
         self.convert = kwargs.pop('convert', 'warn')
         self._estimator = ExtraTreesClassifier(*args, **kwargs)
 
+class GradientBoostingClassifier(Wrapper):
+    def __init__(self, *args, **kwargs):
+        Wrapper.__init__(self, *args, **kwargs)
+
+        self.convert = kwargs.pop('convert', 'warn')
+        self._estimator = sklearn.ensemble.GradientBoostingClassifier(*args, **kwargs)
+
+        # uses DecisionTreeRegressors internally
+        # has a number of stages
+        # decision_function computes a numeric score
+        # using _predict_regression_tree_inplace_fast_dense
+        # https://github.com/scikit-learn/scikit-learn/blob/a24c8b464d094d2c468a16ea9f8bf8d42d949f84/sklearn/ensemble/_gradient_boosting.pyx#L92
+        # uses (configurable) loss function to classify based on the score
+        # classifier loss functions: deviance (default), exponential (Adaboost style)
 
