@@ -277,7 +277,7 @@ def generate_c_inlined(forest, name):
 
     return '\n\n'.join(tree_funcs + [forest_func])
 
-def generate_c_forest(forest, name='myclassifier'):
+def generate_c_forest(forest, name='myclassifier', scale=1.0):
     nodes, roots = forest
 
     nodes_name = name+'_nodes'
@@ -294,6 +294,7 @@ def generate_c_forest(forest, name='myclassifier'):
         {nodes_name},	  
         {tree_roots_length},
         {tree_roots_name},
+        {scale},
     }};""".format(**locals())
     
     inline = generate_c_inlined(forest, name+'_predict')
@@ -368,6 +369,8 @@ class Wrapper:
             else:
                 assert estimators.shape[1] == len(self.classes_)
                 raise NotImplementedError('GBM only binary classification supported')
+
+            # FIXME: check only zero init_ predictor supported
 
             # one tree per class. For binary, only
             print('n est', self._estimator.estimators_.shape)

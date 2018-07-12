@@ -4,7 +4,7 @@
 
 #include <stdint.h>
 
-typedef int32_t EmtreesValue;
+typedef float EmtreesValue;
 
 typedef struct _EmtreesNode {
     int8_t feature;
@@ -25,12 +25,6 @@ typedef struct _Emtrees {
     // int8_t n_classes;
 } Emtrees;
 
-// Used for GBM,GradientBoosting
-typedef struct _EmtreesStaged {
-    int32_t n_stages;
-    float *scores;
-    Emtrees *trees;
-};
 
 typedef enum _EmtreesError {
     EmtreesOK = 0,
@@ -50,7 +44,7 @@ const char *emtrees_errors[EmtreesErrorLength+1] = {
 #define EMTREES_MAX_CLASSES 10
 #endif
 
-static int32_t
+static EmtreesValue
 emtrees_tree_predict(const Emtrees *forest, int32_t tree_root, const EmtreesValue *features, int8_t features_length) {
     int32_t node_idx = tree_root;
 
@@ -100,39 +94,41 @@ emtrees_predict(const Emtrees *forest, const EmtreesValue *features, int8_t feat
 }
 
 
-float
+inline float
 emtrees_expit(float x) {
     return 1/(1+exp(-x));
 }
 
-float
+inline float
 emtrees_logit(float p) {
     return log(p/(1-p));
 }
 
-
-float
-emtrees_gbm_score(const EmtreesGbm *, const EmtreesValues *features, int8_t features_length) {
-
-    float scores[EMTREES_MAX_CLASSES];  
-    float scale = ;
-
-    for (int stage; stage < model->n_stages; stage++) {
-        const Emtrees *forest = model->trees[stage];
-
-        const float s = emtrees_tree_predict(
-        scores[] += scale * s
-    }
-
-}
+// TODO: support emtrees_regress for RandomForestRegressor and ExtraTreesRegressor
 
 int32_t
-emtrees_gmb_predict( ) {
+emtrees_gbm_predict(const Emtrees *model,
+        const EmtreesValues *features, int8_t features_length) {
 
-    float score = emtrees_gbm_score();
-    // loss: binomial deviation
-    float p = emtrees_expit(score);
-    // argmax
+    // FIXME: support multi-class, not just binary  
+
+    // FIXME: pre-compute in the scale factor
+    float scale = 0.1;
+
+    // Additive trees
+    float score = 0.0;
+    for (int32_t i=0; i<forest->n_trees; i++) {
+        const float val = emtrees_tree_predict(forest, forest->tree_roots[i],
+                                               features, features_length);
+        score += scale * val;
+    }
+
+    // Apply loss
+    // binomial deviation
+    // TODO: support other loss types
+    const float p = emtrees_expit(score);
+    // Decide winner
+    return ( p > (1.0f-p)  ) ? 1 : 0;
 }
 
 #endif // EMTREES_H
