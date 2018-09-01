@@ -98,6 +98,7 @@ Maybe
 
 * Support [XGBoost](https://github.com/dmlc/xgboost) learning of trees
 * Support [LightGBM](https://github.com/Microsoft/LightGBM) learning of trees
+* Support [CatBoost](https://github.com/catboost/catboost) learning of trees
 * Support/Implement a Very Fast Decision Tree (VFDT) learning algorithm
 * Implement multithreading when used in Python bindings, using OpenMP
 
