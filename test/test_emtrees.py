@@ -7,7 +7,7 @@ import sklearn
 import numpy
 from sklearn import datasets
 from sklearn import model_selection
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier
 from sklearn import metrics
 from sklearn.utils.estimator_checks import check_estimator 
 
@@ -74,7 +74,7 @@ def run_classifier(bin_path, data):
 
 def test_basic_binary_classification():
     X, Y = datasets.make_classification(n_classes=2, n_samples=1000, random_state=1)
-    trees = emtrees.RandomForest(n_estimators=10, max_depth=10, random_state=1)
+    trees = RandomForestClassifier(n_estimators=10, max_depth=10, random_state=1)
     X = (X * 2**16).astype(int) # convert to integer
     scores = model_selection.cross_val_score(trees, X, Y, scoring='accuracy')
 
@@ -82,10 +82,11 @@ def test_basic_binary_classification():
 
 def test_binary_classification_compiled():
     X, Y = datasets.make_classification(n_classes=2, random_state=1)
-    trees = emtrees.RandomForest(n_estimators=3, max_depth=5, random_state=1)
+    model = RandomForestClassifier(n_estimators=3, max_depth=5, random_state=1)
     X = (X * 2**16).astype(int) # convert to integer
-    trees.fit(X, Y)
+    model.fit(X, Y)
 
+    trees = emtrees.convert(model)
     p = build_classifier(trees)
     predicted = run_classifier(p, X)
     accuracy = metrics.accuracy_score(Y, predicted)
@@ -94,10 +95,11 @@ def test_binary_classification_compiled():
 
 def test_extratrees_classification_compiled():
     X, Y = datasets.make_classification(n_classes=2, random_state=1)
-    trees = emtrees.ExtraTrees(n_estimators=3, max_depth=5, random_state=1)
+    model = ExtraTreesClassifier(n_estimators=3, max_depth=5, random_state=1)
     X = (X * 2**16).astype(int) # convert to integer
-    trees.fit(X, Y)
+    model.fit(X, Y)
 
+    trees = emtrees.convert(model)
     p = build_classifier(trees)
     predicted = run_classifier(p, X)
     accuracy = metrics.accuracy_score(Y, predicted)
@@ -106,10 +108,11 @@ def test_extratrees_classification_compiled():
 
 def test_inline_compiled():
     X, Y = datasets.make_classification(n_classes=2, random_state=1)
-    trees = emtrees.RandomForest(n_estimators=3, max_depth=5, random_state=1)
+    model = RandomForestClassifier(n_estimators=3, max_depth=5, random_state=1)
     X = (X * 2**16).astype(int) # convert to integer
-    trees.fit(X, Y)
+    model.fit(X, Y)
 
+    trees = emtrees.convert(model)
     p = build_classifier(trees, 'myinline', func='myinline_predict(values, length)')
     predicted = run_classifier(p, X)
     accuracy = metrics.accuracy_score(Y, predicted)
@@ -138,10 +141,11 @@ def test_deduplicate_single_tree():
 
 def test_trees_to_dot():
     X, Y = datasets.make_classification(n_classes=2, n_samples=10, random_state=1)
-    trees = emtrees.RandomForest(n_estimators=3, max_depth=5, random_state=1)
+    model = RandomForestClassifier(n_estimators=3, max_depth=5, random_state=1)
     X = (X * 2**16).astype(int) # convert to integer
-    trees.fit(X, Y)
+    model.fit(X, Y)
 
+    trees = emtrees.convert(model)
     dot = trees.to_dot(name='ffoo')
     with open('tmp/trees.dot', 'w') as f:
         f.write(dot)

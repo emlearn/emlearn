@@ -4,8 +4,6 @@ import math
 import sys
 
 import numpy
-import sklearn
-from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier
 
 import emtreesc
   
@@ -301,91 +299,16 @@ def generate_c_forest(forest, name='myclassifier'):
 
 
 class Wrapper:
-    def __init__(self, *args, **kwargs):
-        self._estimator_type = 'classifier'
+    def __init__(self, estimator, *args, **kwargs):
 
-        self._param_names = ['convert']
-        self._unsupported_params = set(['class_weight'])
+        #self._estimator = estimator
 
-        self._estimator = None # should be set by subclass
+        self.classes_ = estimator.classes_
 
-    def get_params(self, deep=False):
-        params = {}
-        for name in self._param_names:
-            params[name] = getattr(self, name)
-        child_params = self._estimator.get_params(deep)
-        child_params = { k: v for k, v in child_params.items() if k not in self._unsupported_params }
-        params.update(child_params)
-        return params
-
-    def set_params(self, **params):
-        our_keys = set(params.keys()).intersection(self._param_names)
-        external_keys = set(params.keys()).difference(our_keys)
-        theirs = { k: params[k] for k in external_keys }
-        self._estimator.set_params(**theirs)
-        for k in our_keys:
-            setattr(self, k, params[v])
-        return self
-
-    def fit(self, X, Y):
-        if hasattr(X, 'todense'):
-            raise TypeError('sparse matrices not supported')
-
-        X = numpy.array(X)
-
-        if numpy.issubdtype(X.dtype, numpy.floating):
-            if numpy.isnan(X).any():
-                raise ValueError('X contains NaN')
-            if numpy.isinf(X).any():
-                raise ValueError('X contains inf')
-
-        if not numpy.issubdtype(X.dtype, numpy.integer):
-            conversion = (2 ** 16)
-            if self.convert == 'warn':
-                sys.stderr.write('Warning: fit() implicitly converting from {} to int32\n'.format(X.dtype))
-            else:
-                conversion = self.convert
-            try:
-                X = (X * conversion).astype('int32')
-            except TypeError as e:
-                if 'unsupported operand' in str(e):
-                    e = TypeError('argument must be a string or a number')
-                raise e
-
-        self._estimator.fit(X, Y)
-
-        self.n_features_ = X.shape[1]
-        self.classes_ = self._estimator.classes_
-        self.forest_ = flatten_forest([ e.tree_ for e in self._estimator.estimators_])
+        self.forest_ = flatten_forest([ e.tree_ for e in estimator.estimators_])
         self.forest_ = remove_duplicate_leaves(self.forest_)
 
-        return self
-
-    def predict(self, X):
-        if not hasattr(self, 'n_features_'):
-            raise ValueError('Estimator is not fit() yet')
-
-        X = numpy.array(X)
-
-        if numpy.issubdtype(X.dtype, numpy.floating):
-            if numpy.isnan(X).any():
-                raise ValueError('X contains NaN')
-            if numpy.isinf(X).any():
-                raise ValueError('X contains inf')
-
-        if not numpy.issubdtype(X.dtype, numpy.integer):
-            conversion = (2 ** 16)
-            if self.convert == 'warn':
-                sys.stderr.write('Warning: predict() implicitly converting from {} to int32\n'.format(X.dtype))
-            else:
-                conversion = self.convert
-            X = (X * conversion).astype('int32')
-
-        if len(X.shape) == 1:
-            raise ValueError('Features should be 2d, not 1d. Reshape your data')
-
-        if X.shape[1] != self.n_features_:
-            raise ValueError('Expected {} features, got {}'.format(self.n_features_, X.shape[1]))
+        # FIXME: use Nodes,Roots directly, as Numpy Array
 
         nodes, roots = self.forest_
         node_data = []
@@ -393,13 +316,12 @@ class Wrapper:
             assert len(node) == 4
             node_data += node # [int(v) for v in node]
         assert len(node_data) % 4 == 0
-        classifier_ = emtreesc.Classifier(node_data, roots)
+        self.classifier_ = emtreesc.Classifier(node_data, roots)
 
-        #predictions = [ classifier_.predict(row) for row in X ]
-        #classes = numpy.array([self.classes_[p] for p in predictions])
-        predictions = classifier_.predict(X)
+    def predict(self, X):
+        predictions = self.classifier_.predict(X)
         classes = self.classes_[predictions]
-        return classes
+        return predictions
 
     def output_c(self, name):
         return generate_c_forest(self.forest_, name)
@@ -408,18 +330,13 @@ class Wrapper:
         return forest_to_dot(self.forest_, **kwargs)
 
 
-class RandomForest(Wrapper):
-    def __init__(self, *args, **kwargs):
-        Wrapper.__init__(self, *args, **kwargs)
+def convert(estimator, kind=None):
+    if kind is None:
+        kind = type(estimator).__name__
 
-        self.convert = kwargs.pop('convert', 'warn')
-        self._estimator = RandomForestClassifier(*args, **kwargs)
-
-class ExtraTrees(Wrapper):
-    def __init__(self, *args, **kwargs):
-        Wrapper.__init__(self, *args, **kwargs)
-
-        self.convert = kwargs.pop('convert', 'warn')
-        self._estimator = ExtraTreesClassifier(*args, **kwargs)
+    if kind in ['RandomForestClassifier', 'ExtraTreesClassifier']:
+        return Wrapper(estimator) 
+    else:
+        raise ValueError("Unknown model type: '{}'".format(kind))
 
 
