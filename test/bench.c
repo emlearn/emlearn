@@ -20,7 +20,7 @@ int main() {
     const int n_rows = 1000;
     const int n_features = 61;
     const int n_repetitions = 1000;
-    Emtrees *trees = &myclassifier;
+    EmlTrees *trees = &myclassifier;
     int32_t *values = (int32_t *)malloc(n_rows*n_features*sizeof(int32_t));
 
     eml_benchmark_fill(values, n_rows, n_features);

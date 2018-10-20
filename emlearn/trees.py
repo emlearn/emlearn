@@ -196,7 +196,7 @@ def generate_c_nodes(flat, name):
     nodes_structs = ',\n  '.join(node(n) for n in flat)
     nodes_name = name
     nodes_length = len(flat)
-    nodes = "EmtreesNode {nodes_name}[{nodes_length}] = {{\n  {nodes_structs} \n}};".format(**locals());
+    nodes = "EmlTreesNode {nodes_name}[{nodes_length}] = {{\n  {nodes_structs} \n}};".format(**locals());
 
     return nodes
 
@@ -237,7 +237,7 @@ def generate_c_inlined(forest, name):
         return c_internal(n, depth+1)
 
     def tree_func(name, root):
-        return """static inline int32_t {function_name}(const EmtreesValue *features, int32_t features_length) {{
+        return """static inline int32_t {function_name}(const EmlTreesValue *features, int32_t features_length) {{
         {code}
         }}
         """.format(**{
@@ -250,7 +250,7 @@ def generate_c_inlined(forest, name):
 
     tree_votes = [ tree_vote(n) for n in tree_names ]
 
-    forest_func = """int32_t {function_name}(const EmtreesValue *features, int32_t features_length) {{
+    forest_func = """int32_t {function_name}(const EmlTreesValue *features, int32_t features_length) {{
 
         int32_t votes[{n_classes}] = {{0,}};
         int32_t _class = -1;
@@ -290,7 +290,7 @@ def generate_c_forest(forest, name='myclassifier'):
     tree_roots_values = ', '.join(str(t) for t in roots)
     tree_roots = 'int32_t {tree_roots_name}[{tree_roots_length}] = {{ {tree_roots_values} }};'.format(**locals())
 
-    forest_struct = """Emtrees {name} = {{
+    forest_struct = """EmlTrees {name} = {{
         {nodes_length},
         {nodes_name},	  
         {tree_roots_length},
@@ -314,7 +314,7 @@ def build_classifier(cmodel, name, temp_dir, include_dir, func=None, compiler='c
 
     tree_name = name
     if func is None:
-      func = 'emtrees_predict(&{}, values, length)'.format(tree_name)
+      func = 'eml_trees_predict(&{}, values, length)'.format(tree_name)
     def_file_name = name+'.h'
     def_file = os.path.join(temp_dir, def_file_name)
     code_file = os.path.join(temp_dir, name+'.c')
@@ -325,7 +325,7 @@ def build_classifier(cmodel, name, temp_dir, include_dir, func=None, compiler='c
     #include "{def_file_name}"
     #include <eml_test.h>
 
-    static void classify(const EmtreesValue *values, int length, int row) {{
+    static void classify(const int32_t *values, int length, int row) {{
         const int32_t class = {func};
         printf("%d,%d\\n", row, class);
     }}

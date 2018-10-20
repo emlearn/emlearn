@@ -3,10 +3,15 @@
 
 0.3
 
-* Include embayes
+* Include emaudio
 * Include emnet
+* Include embayes
 * Standalone example application on microcontroller
 * Use absolute path by default for library imports in generated code
+
+0.4
+
+* Consolidate error handling. Use EmlError, EML_PRE/POSTCONDITION, EML_CHECK_ERROR from `emnet`
 
 ## trees
 

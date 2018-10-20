@@ -7,12 +7,12 @@
 #include <string.h>
 
 
-typedef void (*EmtreesCsvCallback)(const int32_t *values, int length, int row);
+typedef void (*EmlCsvCallback)(const int32_t *values, int length, int row);
 
 void
-eml_test_read_csv(FILE *fp, EmtreesCsvCallback row_callback) {
+eml_test_read_csv(FILE *fp, EmlCsvCallback row_callback) {
     char buffer[1024];
-    EmtreesValue values[256];
+    int32_t values[256];
     int row_no = 0;
     int value_no = 0;
 

@@ -4,35 +4,35 @@
 
 #include <stdint.h>
 
-typedef int32_t EmtreesValue;
+typedef int32_t EmlTreesValue;
 
-typedef struct _EmtreesNode {
+typedef struct _EmlTreesNode {
     int8_t feature;
-    EmtreesValue value;
+    EmlTreesValue value;
     int16_t left;
     int16_t right;
-} EmtreesNode;
+} EmlTreesNode;
 
 
-typedef struct _Emtrees {
+typedef struct _EmlTrees {
     int32_t n_nodes;
-    EmtreesNode *nodes;
+    EmlTreesNode *nodes;
 
     int32_t n_trees;
     int32_t *tree_roots;
 
     // int8_t n_features;
     // int8_t n_classes;
-} Emtrees;
+} EmlTrees;
 
-typedef enum _EmtreesError {
-    EmtreesOK = 0,
-    EmtreesUnknownError,
-    EmtreesInvalidClassPredicted,
-    EmtreesErrorLength,
-} EmtreesError;
+typedef enum _EmlTreesError {
+    EmlTreesOK = 0,
+    EmlTreesUnknownError,
+    EmlTreesInvalidClassPredicted,
+    EmlTreesErrorLength,
+} EmlTreesError;
 
-const char *emtrees_errors[EmtreesErrorLength+1] = {
+const char *eml_trees_errors[EmlTreesErrorLength+1] = {
    "OK",
    "Unknown error",
    "Invalid class predicted",
@@ -44,14 +44,14 @@ const char *emtrees_errors[EmtreesErrorLength+1] = {
 #endif
 
 static int32_t
-emtrees_tree_predict(const Emtrees *forest, int32_t tree_root, const EmtreesValue *features, int8_t features_length) {
+eml_trees_predict_tree(const EmlTrees *forest, int32_t tree_root, const EmlTreesValue *features, int8_t features_length) {
     int32_t node_idx = tree_root;
 
     // TODO: see if using a pointer node instead of indirect adressing using node_idx improves perf
     while (forest->nodes[node_idx].feature >= 0) {
         const int8_t feature = forest->nodes[node_idx].feature;
-        const EmtreesValue value = features[feature];
-        const EmtreesValue point = forest->nodes[node_idx].value;
+        const EmlTreesValue value = features[feature];
+        const EmlTreesValue point = forest->nodes[node_idx].value;
         //printf("node %d feature %d. %d < %d\n", node_idx, feature, value, point);
         node_idx = (value < point) ? forest->nodes[node_idx].left : forest->nodes[node_idx].right;
     }
@@ -59,7 +59,7 @@ emtrees_tree_predict(const Emtrees *forest, int32_t tree_root, const EmtreesValu
 }
 
 int32_t
-emtrees_predict(const Emtrees *forest, const EmtreesValue *features, int8_t features_length) {
+eml_trees_predict(const EmlTrees *forest, const EmlTreesValue *features, int8_t features_length) {
 
     //printf("features %d\n", features_length);
     //printf("trees %d\n", forest->n_trees);
@@ -70,12 +70,12 @@ emtrees_predict(const Emtrees *forest, const EmtreesValue *features, int8_t feat
  
     int32_t votes[EMTREES_MAX_CLASSES] = {0};
     for (int32_t i=0; i<forest->n_trees; i++) {
-        const int32_t _class = emtrees_tree_predict(forest, forest->tree_roots[i], features, features_length);
+        const int32_t _class = eml_trees_predict_tree(forest, forest->tree_roots[i], features, features_length);
         //printf("pred[%d]: %d\n", i, _class);
         if (_class >= 0 && _class < EMTREES_MAX_CLASSES) {
             votes[_class] += 1;
         } else {
-            return -EmtreesInvalidClassPredicted;
+            return -EmlTreesInvalidClassPredicted;
         }
     }
     

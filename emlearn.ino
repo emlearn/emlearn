@@ -16,7 +16,7 @@ void setup() {
 }
 
 void loop() {
-  EmtreesValue values[n_features];
+  int32_t values[n_features];
 
   while (Serial.available() > 0) {
 

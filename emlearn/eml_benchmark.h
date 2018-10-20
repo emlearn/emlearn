@@ -31,7 +31,7 @@ eml_benchmark_fill(int32_t *values, int rows, int features) {
 
 
 int
-eml_benchmark_run(Emtrees *trees, int32_t *values, int rows, int features, int repetitions) {
+eml_benchmark_run(EmlTrees *trees, int32_t *values, int rows, int features, int repetitions) {
 
     int32_t class_sum = 0; // do something with data, prevents dead-code opt
 
