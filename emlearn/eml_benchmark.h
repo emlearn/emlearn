@@ -1,5 +1,6 @@
 
-#ifndef EMTREES_BENCH
+#ifndef EML_BENCHMARK_H
+#define EML_BENCHMARK_H
 
 // https://en.wikipedia.org/wiki/Lehmer_random_number_generator#Parameters_in_common_use
 static uint32_t
@@ -17,7 +18,7 @@ lcg_parkmiller(uint32_t *state) {
 }
 
 void
-emtrees_bench_fill(EmtreesValue *values, int rows, int features) {
+eml_benchmark_fill(int32_t *values, int rows, int features) {
     uint32_t rng_state = 1;    
 
     for (int row=0; row<rows; row++) {
@@ -30,14 +31,14 @@ emtrees_bench_fill(EmtreesValue *values, int rows, int features) {
 
 
 int
-emtrees_bench_run(Emtrees *trees, EmtreesValue *values, int rows, int features, int repetitions) {
+eml_benchmark_run(Emtrees *trees, int32_t *values, int rows, int features, int repetitions) {
 
     int32_t class_sum = 0; // do something with data, prevents dead-code opt
 
     for (int r=0; r<repetitions; r++) {
         for (int row=0; row<rows; row++) {
-            EmtreesValue *vals = values + (row * features); 
-            const int32_t class_ = emtrees_predict(trees, vals, features);
+            int32_t *vals = values + (row * features); 
+            const int32_t class_ = eml_predict(trees, vals, features);
             class_sum += class_;
         }
     }
@@ -46,4 +47,4 @@ emtrees_bench_run(Emtrees *trees, EmtreesValue *values, int rows, int features, 
 }
 
 
-#endif
+#endif // EML_BENCHMARK_H

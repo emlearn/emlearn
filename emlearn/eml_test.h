@@ -1,16 +1,16 @@
-#ifndef EMTREES_TEST_H
-#define EMTREES_TEST_H
+#ifndef EML_TEST_H
+#define EML_TEST_H
 
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <emtrees.h>
 
-typedef void (*EmtreesCsvCallback)(const EmtreesValue *values, int length, int row);
+
+typedef void (*EmtreesCsvCallback)(const int32_t *values, int length, int row);
 
 void
-emtrees_test_read_csv(FILE *fp, EmtreesCsvCallback row_callback) {
+eml_test_read_csv(FILE *fp, EmtreesCsvCallback row_callback) {
     char buffer[1024];
     EmtreesValue values[256];
     int row_no = 0;
@@ -33,6 +33,6 @@ emtrees_test_read_csv(FILE *fp, EmtreesCsvCallback row_callback) {
     }
 }
 
-#endif // EMTREES_TEST_H
+#endif // EML_TEST_H
 
 

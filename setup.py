@@ -4,7 +4,7 @@ import sys
 import os.path
 import setuptools
 
-__version__ = '0.2.5'
+__version__ = '0.3.0'
 
 project_dir = os.path.abspath(os.path.dirname(__file__))
 
@@ -80,7 +80,7 @@ ext_modules = [
         'emtreesc',
         ['emtreesmodule.cpp'],
         include_dirs=[
-            'emtrees/',
+            'emlearn/',
             # Path to pybind11 headers
             get_pybind_include(),
             get_pybind_include(user=True)
@@ -106,15 +106,15 @@ def read_readme():
 
 
 setup(
-    name='emtrees',
+    name='emlearn',
     version=__version__,
     author='Jon Nordby',
     author_email='jononor@gmail.com',
-    url='https://github.com/jonnor/emtrees',
+    url='https://github.com/emlearn/emlearn',
     description='Tree-based machine learning for embedded system',
     long_description=read_readme(),
     long_description_content_type="text/markdown",
-    packages=['emtrees'],
+    packages=['emlearn'],
     ext_modules=ext_modules,
     include_package_data=True,
     package_data = {

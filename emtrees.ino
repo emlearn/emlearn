@@ -1,6 +1,7 @@
 
-#include "emtrees.h"
-#include "emtrees_bench.h"
+#include <eml_trees.h>
+#include <eml_benchmark.h>
+
 #include "digits.h"
 
 const int32_t n_features = 64;

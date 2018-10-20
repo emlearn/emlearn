@@ -137,7 +137,7 @@ def dot_cluster(name, nodes, indent='  '):
     n = ('\n'+indent).join(nodes)
     return 'subgraph {name} {{\n  {nodes}\n}}'.format(name=name, nodes=n)
 
-def forest_to_dot(forest, name='emtrees', indent="  "):
+def forest_to_dot(forest, name='trees', indent="  "):
     nodes, roots = forest
 
     leaf_nodes = list(filter(lambda i: nodes[i][0] < 0, range(len(nodes))))
@@ -299,10 +299,16 @@ def generate_c_forest(forest, name='myclassifier'):
         {tree_roots_length},
         {tree_roots_name},
     }};""".format(**locals())
-    
+
+    head = """
+    // !!! This file is generated using emlearn !!!
+
+    #include <eml_trees.h>
+    """
+
     inline = generate_c_inlined(forest, name+'_predict')
 
-    return '\n\n'.join([nodes_c, tree_roots, forest_struct, inline]) 
+    return '\n\n'.join([head, nodes_c, tree_roots, forest_struct, inline]) 
 
 
 def build_classifier(cmodel, name, temp_dir, include_dir, func=None, compiler='cc'):
@@ -319,15 +325,15 @@ def build_classifier(cmodel, name, temp_dir, include_dir, func=None, compiler='c
 
     # Trivial program that reads values on stdin, and returns classifications on stdout
     code = """
-    #include "emtrees_test.h"
     #include "{def_file_name}"
+    #include <eml_test.h>
 
     static void classify(const EmtreesValue *values, int length, int row) {{
         const int32_t class = {func};
         printf("%d,%d\\n", row, class);
     }}
     int main() {{
-        emtrees_test_read_csv(stdin, classify);
+        eml_test_read_csv(stdin, classify);
     }}
     """.format(**locals())
 

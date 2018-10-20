@@ -9,7 +9,7 @@ from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier
 from sklearn import metrics
 from sklearn.utils.estimator_checks import check_estimator 
 
-import emtrees
+import emlearn
 import pytest
 
 random = numpy.random.randint(0, 1000)
@@ -35,7 +35,7 @@ def test_prediction_equals_sklearn(data, model, method):
     X = (X * 2**16).astype(int) # currently only integers supported
 
     estimator.fit(X, y)
-    cmodel = emtrees.convert(estimator, method=method)
+    cmodel = emlearn.convert(estimator, method=method)
 
     pred_original = estimator.predict(X[:5])
     pred_c = cmodel.predict(X[:5])
@@ -55,7 +55,7 @@ def test_deduplicate_single_tree():
     ]
     roots = [ 6 ]
 
-    de_nodes, de_roots = emtrees.randomforest.remove_duplicate_leaves((nodes, roots))
+    de_nodes, de_roots = emlearn.randomforest.remove_duplicate_leaves((nodes, roots))
 
     duplicates = 1
     assert len(de_roots) == len(roots)
@@ -68,7 +68,7 @@ def test_trees_to_dot():
     X = (X * 2**16).astype(int) # convert to integer
     model.fit(X, Y)
 
-    trees = emtrees.convert(model)
+    trees = emlearn.convert(model)
     dot = trees.to_dot(name='ffoo')
     with open('tmp/trees.dot', 'w') as f:
         f.write(dot)

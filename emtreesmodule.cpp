@@ -1,7 +1,7 @@
 
 #include <stdio.h>
 
-#include "emtrees.h"
+#include <eml_trees.h>
 
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
