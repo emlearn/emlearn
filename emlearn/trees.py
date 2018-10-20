@@ -9,7 +9,7 @@ import subprocess
 import numpy
 
 from . import common
-import emtreesc
+import eml_trees
 
 
 # Tree representation as 2d array
@@ -398,7 +398,7 @@ class Wrapper:
                 node_data += node # [int(v) for v in node]
             assert len(node_data) % 4 == 0
 
-            self.classifier_ = emtreesc.Classifier(node_data, roots)
+            self.classifier_ = eml_trees.Classifier(node_data, roots)
 
         elif classifier == 'loadable':
             self.classifier_ = CompiledClassifier(self.save(name='mymodel'), name='mymodel')

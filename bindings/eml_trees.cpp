@@ -72,7 +72,7 @@ public:
 
 };
 
-PYBIND11_MODULE(emtreesc, m) {
+PYBIND11_MODULE(eml_trees, m) {
     m.doc() = "Tree-based machine learning classifiers for embedded devices";
 
     py::class_<EmtreesClassifier>(m, "Classifier")

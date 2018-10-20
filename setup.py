@@ -77,8 +77,8 @@ class BuildExt(build_ext):
 
 ext_modules = [
     Extension(
-        'emtreesc',
-        ['emtreesmodule.cpp'],
+        'eml_trees',
+        ['bindings/eml_trees.cpp'],
         include_dirs=[
             'emlearn/',
             # Path to pybind11 headers
@@ -111,7 +111,7 @@ setup(
     author='Jon Nordby',
     author_email='jononor@gmail.com',
     url='https://github.com/emlearn/emlearn',
-    description='Tree-based machine learning for embedded system',
+    description='Machine learning for microcontrollers and embedded systems',
     long_description=read_readme(),
     long_description_content_type="text/markdown",
     packages=['emlearn'],

@@ -8,7 +8,7 @@ install:
 - pip install -r requirements.dev.txt
 - pip install ./
 script:
-- PYTHONPATH=./:build/lib.linux-x86_64-3.6/:$PYTHONPATH pytest -v --cov=emtrees --cov-report
+- PYTHONPATH=./:build/lib.linux-x86_64-3.6/:$PYTHONPATH pytest -v --cov=emlearn --cov-report
   html --cov-report term-missing --cov-branch
 deploy:
   provider: pypi
@@ -17,4 +17,4 @@ deploy:
     secure: cRX6DYJv7dv58fw+oJGmJPsuXOpRlhjJPpRkBDpfRy3VUZSz8BYGlWd4HMJeWm5PhQCIUU/u5V4GN0uMJH8XFz7LdYI8wOY1+5vfzdmddbeZOIom7aMDrDu8m7HrOc0AA9cYCg2mIThi+JGv7CTU6HowpqPwfTy+MCjfbJ+iEpsq5eqdxSF75jPIoUl+/lrhuRkoq+yyfeY2xRafGHXWZvxsU7nA0VjOsDlNK0TZ2V5wphn5Bgye9DVX7WF92ndhSErZdBAg8uH/hYPI/I1ta9NqNRblAGv+Huq38ftm4oC/1d0SEDys0vF+vCIAolMZmEgYGs0JNBZ0ff6Iwq28KEvpkz4QQs3qKtDhiQSDIb4lXukJu2ix84dggn4oMDZY+ve8wZ3/nQttuAh5WLBIGVDdqZt1Q+gDE2zCOoWy6JFgxU1sjpzy9XwWxDQnvCk9+gZcuGljXut/f1M3hQXSpAxyKjiGyIEDYMOaPnmeUOfPYw0a7YAFGr+vJH2fyS3GFauLpXXpv+ykjWDAPbkU4WBkyKa1rkMq9LBVTWomYWkHug66hWrk1o50wgorCInL4QOpGZsMrG2e6oe/0MOkiCjMMta1J/UMMiPqXLgend9nHEEaDFXlxI/BA72mouqvq8gyEE51a97U0FEDTl1QrwyXWgAMLOfhWQueEeoXEtc=
   on:
     tags: true
-    repo: jonnor/emtrees
+    repo: emlearn/emlearn
