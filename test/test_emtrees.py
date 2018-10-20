@@ -15,7 +15,7 @@ def test_basic_binary_classification():
     X, Y = datasets.make_classification(n_classes=2, n_samples=1000, random_state=1)
     trees = RandomForestClassifier(n_estimators=10, max_depth=10, random_state=1)
     X = (X * 2**16).astype(int) # convert to integer
-    scores = model_selection.cross_val_score(trees, X, Y, scoring='accuracy')
+    scores = model_selection.cross_val_score(trees, X, Y, cv=5, scoring='accuracy')
 
     assert numpy.mean(scores) > 0.7, scores
 

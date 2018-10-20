@@ -9,7 +9,11 @@ import subprocess
 import numpy
 
 import emtreesc
-  
+
+
+def get_include_dir():
+    return os.path.join(os.path.dirname(__file__))
+
 
 # Tree representation as 2d array
 # feature, value, left_child, right_child
@@ -301,21 +305,22 @@ def generate_c_forest(forest, name='myclassifier'):
     return '\n\n'.join([nodes_c, tree_roots, forest_struct, inline]) 
 
 
-def build_classifier(cmodel, name, temp_dir, lib_dir, func=None):
+def build_classifier(cmodel, name, temp_dir, include_dir, func=None, compiler='cc'):
     if not os.path.exists(temp_dir):
         os.makedirs(temp_dir)
 
     tree_name = name
     if func is None:
       func = 'emtrees_predict(&{}, values, length)'.format(tree_name)
-    def_file = os.path.join(temp_dir, name+'.def.h')
+    def_file_name = name+'.h'
+    def_file = os.path.join(temp_dir, def_file_name)
     code_file = os.path.join(temp_dir, name+'.c')
     bin_path = os.path.join(temp_dir, name)
 
     # Trivial program that reads values on stdin, and returns classifications on stdout
     code = """
     #include "emtrees_test.h"
-    #include "{def_file}"
+    #include "{def_file_name}"
 
     static void classify(const EmtreesValue *values, int length, int row) {{
         const int32_t class = {func};
@@ -332,7 +337,13 @@ def build_classifier(cmodel, name, temp_dir, lib_dir, func=None):
     with open(code_file, 'w') as f:
         f.write(code)
 
-    args = [ 'cc', '-std=c99', code_file, '-o', bin_path, '-I{}'.format(lib_dir) ]
+    args = [
+        compiler,
+        '-std=c99',
+        code_file, '-o', bin_path,
+        '-I{}'.format(include_dir),
+        '-I{}'.format(temp_dir),
+    ]
     subprocess.check_call(args)
 
     return bin_path
@@ -359,9 +370,10 @@ def run_classifier(bin_path, data):
 
 
 class CompiledClassifier():
-    def __init__(self, cmodel, name, call=None, lib_dir=None, temp_dir='tmp/'):
-        lib_dir = './' # FIXME: unharcode, use a data directory
-        self.bin_path = build_classifier(cmodel, name, lib_dir=lib_dir, temp_dir=temp_dir, func=call) 
+    def __init__(self, cmodel, name, call=None, include_dir=None, temp_dir='tmp/'):
+        if include_dir == None:
+            include_dir = get_include_dir()
+        self.bin_path = build_classifier(cmodel, name, include_dir=include_dir, temp_dir=temp_dir, func=call) 
 
     def predict(self, X):
         return run_classifier(self.bin_path, X)

@@ -48,15 +48,17 @@ Install from PyPI
 1. Train your model in Python
 
 ```python
-import emtrees
-estimator = emtrees.RandomForest(n_estimators=10, max_depth=10)
+from sklearn.ensemble import RandomForestClassifier
+estimator = RandomForestClassifier(n_estimators=10, max_depth=10)
 estimator.fit(X_train, Y_train)
 ...
 ```
 
-2. Generate C code
+2. Convert it to C code
 ```python
-code = estimator.output_c('sonar')
+import emtrees
+cmodel = emtrees.convert(estimator, method='inline')
+code = cmodel.output_c('sonar')
 with open('sonar.h', 'w') as f:
    f.write(code)
 ```
@@ -64,13 +66,13 @@ with open('sonar.h', 'w') as f:
 3. Use the C code
 
 ```c
-#include <emtrees.h>
 #include "sonar.h"
 
 const int32_t length = 60;
 int32_t values[length] = { ... };
 const int32_t predicted_class = sonar_predict(values, length):
 ```
+
 
 For full example code, see [examples/digits.py](./examples/digits.py)
 and [emtrees.ino](./emtrees.ino)

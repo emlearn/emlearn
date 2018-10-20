@@ -80,6 +80,7 @@ ext_modules = [
         'emtreesc',
         ['emtreesmodule.cpp'],
         include_dirs=[
+            'emtrees/',
             # Path to pybind11 headers
             get_pybind_include(),
             get_pybind_include(user=True)
@@ -115,6 +116,10 @@ setup(
     long_description_content_type="text/markdown",
     packages=['emtrees'],
     ext_modules=ext_modules,
+    include_package_data=True,
+    package_data = {
+        '': ['*.h', '*.ino'],
+    },
     install_requires=read_requirements(),
     cmdclass={'build_ext': BuildExt},
     zip_safe=False,
