@@ -1,7 +1,8 @@
 
-
 import sklearn
 import numpy
+import numpy.testing
+
 from sklearn import datasets
 from sklearn import model_selection
 from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier
@@ -9,51 +10,37 @@ from sklearn import metrics
 from sklearn.utils.estimator_checks import check_estimator 
 
 import emtrees
+import pytest
 
+random = numpy.random.randint(0, 1000)
+print('random_state={}'.format(random))
 
-def test_basic_binary_classification():
-    X, Y = datasets.make_classification(n_classes=2, n_samples=1000, random_state=1)
-    trees = RandomForestClassifier(n_estimators=10, max_depth=10, random_state=1)
-    X = (X * 2**16).astype(int) # convert to integer
-    scores = model_selection.cross_val_score(trees, X, Y, cv=5, scoring='accuracy')
+MODELS = {
+    'RFC': RandomForestClassifier(n_estimators=10, random_state=random),
+    'ETC': ExtraTreesClassifier(n_estimators=10, random_state=random),
+}
+DATASETS = {
+    'binary': datasets.make_classification(n_classes=2, n_samples=100, random_state=random),
+    '5way': datasets.make_classification(n_classes=5, n_informative=5, n_samples=100, random_state=random),
+}
+METHODS = ['pymodule', 'loadable', 'inline']
 
-    assert numpy.mean(scores) > 0.7, scores
+@pytest.mark.parametrize("data", DATASETS.keys())
+@pytest.mark.parametrize("model", MODELS.keys())
+@pytest.mark.parametrize("method", METHODS)
+def test_prediction_equals_sklearn(data, model, method):
+    X, y = DATASETS[data]
+    estimator = MODELS[model]
 
-def test_binary_classification_compiled():
-    X, Y = datasets.make_classification(n_classes=2, random_state=1)
-    model = RandomForestClassifier(n_estimators=3, max_depth=5, random_state=1)
-    X = (X * 2**16).astype(int) # convert to integer
-    model.fit(X, Y)
+    X = (X * 2**16).astype(int) # currently only integers supported
 
-    trees = emtrees.convert(model, method='loadable')
-    predicted = trees.predict(X)
-    accuracy = metrics.accuracy_score(Y, predicted)
+    estimator.fit(X, y)
+    cmodel = emtrees.convert(estimator, method=method)
 
-    assert accuracy > 0.9 # testing on training data
+    pred_original = estimator.predict(X[:5])
+    pred_c = cmodel.predict(X[:5])
 
-def test_extratrees_classification_compiled():
-    X, Y = datasets.make_classification(n_classes=2, random_state=1)
-    model = ExtraTreesClassifier(n_estimators=3, max_depth=5, random_state=1)
-    X = (X * 2**16).astype(int) # convert to integer
-    model.fit(X, Y)
-
-    trees = emtrees.convert(model, method='loadable')
-    predicted = trees.predict(X)
-    accuracy = metrics.accuracy_score(Y, predicted)
-
-    assert accuracy > 0.85 # testing on training data
-
-def test_inline_compiled():
-    X, Y = datasets.make_classification(n_classes=2, random_state=1)
-    model = RandomForestClassifier(n_estimators=3, max_depth=5, random_state=1)
-    X = (X * 2**16).astype(int) # convert to integer
-    model.fit(X, Y)
-
-    trees = emtrees.convert(model, method='inline')
-    predicted = trees.predict(X)
-    accuracy = metrics.accuracy_score(Y, predicted)
-
-    assert accuracy > 0.9 # testing on training data
+    numpy.testing.assert_equal(pred_c, pred_original)
 
 
 def test_deduplicate_single_tree():
