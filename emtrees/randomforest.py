@@ -2,6 +2,9 @@
 import random
 import math
 import sys
+import os
+import os.path
+import subprocess
 
 import numpy
 
@@ -298,29 +301,99 @@ def generate_c_forest(forest, name='myclassifier'):
     return '\n\n'.join([nodes_c, tree_roots, forest_struct, inline]) 
 
 
+def build_classifier(cmodel, name, temp_dir, lib_dir, func=None):
+    if not os.path.exists(temp_dir):
+        os.makedirs(temp_dir)
+
+    tree_name = name
+    if func is None:
+      func = 'emtrees_predict(&{}, values, length)'.format(tree_name)
+    def_file = os.path.join(temp_dir, name+'.def.h')
+    code_file = os.path.join(temp_dir, name+'.c')
+    bin_path = os.path.join(temp_dir, name)
+
+    # Trivial program that reads values on stdin, and returns classifications on stdout
+    code = """
+    #include "emtrees_test.h"
+    #include "{def_file}"
+
+    static void classify(const EmtreesValue *values, int length, int row) {{
+        const int32_t class = {func};
+        printf("%d,%d\\n", row, class);
+    }}
+    int main() {{
+        emtrees_test_read_csv(stdin, classify);
+    }}
+    """.format(**locals())
+
+    with open(def_file, 'w') as f:
+        f.write(cmodel)
+
+    with open(code_file, 'w') as f:
+        f.write(code)
+
+    args = [ 'cc', '-std=c99', code_file, '-o', bin_path, '-I{}'.format(lib_dir) ]
+    subprocess.check_call(args)
+
+    return bin_path
+
+def run_classifier(bin_path, data):
+    lines = []
+    for row in data:
+        lines.append(",".join(str(v) for v in row))
+    stdin = '\n'.join(lines)
+
+    args = [ bin_path ]
+    out = subprocess.check_output(args, input=stdin, encoding='utf8', universal_newlines=True)
+
+    classes = []
+    for line in out.split('\n'):
+        if line:
+            row,class_ = line.split(',')
+            class_ = int(class_)
+            classes.append(class_)
+
+    assert len(classes) == len(data)
+
+    return classes
+
+
+class CompiledClassifier():
+    def __init__(self, cmodel, name, call=None, lib_dir=None, temp_dir='tmp/'):
+        lib_dir = './' # FIXME: unharcode, use a data directory
+        self.bin_path = build_classifier(cmodel, name, lib_dir=lib_dir, temp_dir=temp_dir, func=call) 
+
+    def predict(self, X):
+        return run_classifier(self.bin_path, X)
+
+
 class Wrapper:
-    def __init__(self, estimator, *args, **kwargs):
-
-        #self._estimator = estimator
-
-        self.classes_ = estimator.classes_
+    def __init__(self, estimator, classifier):
 
         self.forest_ = flatten_forest([ e.tree_ for e in estimator.estimators_])
         self.forest_ = remove_duplicate_leaves(self.forest_)
 
-        # FIXME: use Nodes,Roots directly, as Numpy Array
+        if classifier == 'pymodule':
+            # FIXME: use Nodes,Roots directly, as Numpy Array
 
-        nodes, roots = self.forest_
-        node_data = []
-        for node in nodes:
-            assert len(node) == 4
-            node_data += node # [int(v) for v in node]
-        assert len(node_data) % 4 == 0
-        self.classifier_ = emtreesc.Classifier(node_data, roots)
+            nodes, roots = self.forest_
+            node_data = []
+            for node in nodes:
+                assert len(node) == 4
+                node_data += node # [int(v) for v in node]
+            assert len(node_data) % 4 == 0
+
+            self.classifier_ = emtreesc.Classifier(node_data, roots)
+
+        elif classifier == 'loadable':
+            self.classifier_ = CompiledClassifier(self.output_c('mymodel'), name='mymodel')
+        elif classifier == 'inline':
+            self.classifier_ = CompiledClassifier(self.output_c('myinline'), name='myinline', call='myinline_predict(values, length)')
+        else:
+            raise ValueError("Unsupported classifier method '{}'".format(classifier))
 
     def predict(self, X):
         predictions = self.classifier_.predict(X)
-        classes = self.classes_[predictions]
         return predictions
 
     def output_c(self, name):
@@ -330,12 +403,12 @@ class Wrapper:
         return forest_to_dot(self.forest_, **kwargs)
 
 
-def convert(estimator, kind=None):
+def convert(estimator, kind=None, method='pymodule'):
     if kind is None:
         kind = type(estimator).__name__
 
     if kind in ['RandomForestClassifier', 'ExtraTreesClassifier']:
-        return Wrapper(estimator) 
+        return Wrapper(estimator, method) 
     else:
         raise ValueError("Unknown model type: '{}'".format(kind))
 
