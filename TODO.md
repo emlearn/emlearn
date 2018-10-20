@@ -3,13 +3,12 @@
 
 0.3
 
-* Include emnet
-* Include embayes
 * Standalone example on microcontroller. XOR?
 * Use absolute path by default for library imports in generated code
 
 0.4
 
+* Setup documentation build (Sphinx?) 
 * Consolidate error handling. Use EmlError, EML_PRE/POSTCONDITION, EML_CHECK_ERROR from `emnet`
 * Implement some iterators like EML_APPLY(vector, 0, vector->length, func) and EML_MAP_INTO(in, out, 0, out->length, func);
 
@@ -22,6 +21,23 @@
 * Add some pipeline/processor.
 Short audio buffers in, feature extraction, normalization, classifier, predictions out.
 
+0.4
+
+* Add an example. Wakeword detection? Keyword classification?
+
+## bayes
+
+0.3
+
+* Use floats by default. At least external API
+* Move fixed-point somewhere reusable, add missing namespace
+
+## nets
+
+- Implement `convert()` for Sequential Keras models with Dense layers
+- Add support for 2d convolutional layers (Keras).
+- Supports strides and dilation in convolution layers
+
 ## trees
 
 0.3
@@ -31,7 +47,6 @@ Short audio buffers in, feature extraction, normalization, classifier, predictio
 1.0
 
 * Support returning probabilities
-* Support serializing/deserializing trees
 
 Probably
 

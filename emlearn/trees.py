@@ -1,10 +1,7 @@
 
-import random
-import math
-import sys
-import os
+
 import os.path
-import subprocess
+import os
 
 import numpy
 
@@ -308,78 +305,6 @@ def generate_c_forest(forest, name='myclassifier'):
     return '\n\n'.join([head, nodes_c, tree_roots, forest_struct, inline]) 
 
 
-def build_classifier(cmodel, name, temp_dir, include_dir, func=None, compiler='cc'):
-    if not os.path.exists(temp_dir):
-        os.makedirs(temp_dir)
-
-    tree_name = name
-    if func is None:
-      func = 'eml_trees_predict(&{}, values, length)'.format(tree_name)
-    def_file_name = name+'.h'
-    def_file = os.path.join(temp_dir, def_file_name)
-    code_file = os.path.join(temp_dir, name+'.c')
-    bin_path = os.path.join(temp_dir, name)
-
-    # Trivial program that reads values on stdin, and returns classifications on stdout
-    code = """
-    #include "{def_file_name}"
-    #include <eml_test.h>
-
-    static void classify(const int32_t *values, int length, int row) {{
-        const int32_t class = {func};
-        printf("%d,%d\\n", row, class);
-    }}
-    int main() {{
-        eml_test_read_csv(stdin, classify);
-    }}
-    """.format(**locals())
-
-    with open(def_file, 'w') as f:
-        f.write(cmodel)
-
-    with open(code_file, 'w') as f:
-        f.write(code)
-
-    args = [
-        compiler,
-        '-std=c99',
-        code_file, '-o', bin_path,
-        '-I{}'.format(include_dir),
-        '-I{}'.format(temp_dir),
-    ]
-    subprocess.check_call(args)
-
-    return bin_path
-
-def run_classifier(bin_path, data):
-    lines = []
-    for row in data:
-        lines.append(",".join(str(v) for v in row))
-    stdin = '\n'.join(lines)
-
-    args = [ bin_path ]
-    out = subprocess.check_output(args, input=stdin, encoding='utf8', universal_newlines=True)
-
-    classes = []
-    for line in out.split('\n'):
-        if line:
-            row,class_ = line.split(',')
-            class_ = int(class_)
-            classes.append(class_)
-
-    assert len(classes) == len(data)
-
-    return classes
-
-
-class CompiledClassifier():
-    def __init__(self, cmodel, name, call=None, include_dir=None, temp_dir='tmp/'):
-        if include_dir == None:
-            include_dir = common.get_include_dir()
-        self.bin_path = build_classifier(cmodel, name, include_dir=include_dir, temp_dir=temp_dir, func=call) 
-
-    def predict(self, X):
-        return run_classifier(self.bin_path, X)
 
 
 class Wrapper:
@@ -401,9 +326,15 @@ class Wrapper:
             self.classifier_ = eml_trees.Classifier(node_data, roots)
 
         elif classifier == 'loadable':
-            self.classifier_ = CompiledClassifier(self.save(name='mymodel'), name='mymodel')
+            name = 'mytree'
+            func = 'eml_trees_predict(&{}, values, length)'.format(name)
+            code = self.save(name=name)
+            self.classifier_ = common.CompiledClassifier(code, name=name, call=func)
         elif classifier == 'inline':
-            self.classifier_ = CompiledClassifier(self.save(name='myinline'), name='myinline', call='myinline_predict(values, length)')
+            name = 'myinlinetree'
+            func = '{}_predict(values, length)'.format(name)
+            code = self.save(name=name)
+            self.classifier_ = common.CompiledClassifier(code, name=name, call=func)
         else:
             raise ValueError("Unsupported classifier method '{}'".format(classifier))
 
@@ -421,7 +352,7 @@ class Wrapper:
         code = generate_c_forest(self.forest_, name)
         if file:
             with open(file) as f:
-                f.write(file)
+                f.write(code)
 
         return code
 

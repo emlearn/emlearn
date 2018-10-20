@@ -1,7 +1,7 @@
 
 from . import trees
 from . import net
-
+from . import bayes
 
 def convert(estimator, kind=None, method='pymodule'):
     if kind is None:
@@ -11,6 +11,7 @@ def convert(estimator, kind=None, method='pymodule'):
         return trees.Wrapper(estimator, method) 
     elif kind == 'MLPClassifier':
         return net.convert_sklearn_mlp(estimator, method)
-
+    elif kind == 'GaussianNB':
+        return bayes.Wrapper(estimator, method)
     else:
         raise ValueError("Unknown model type: '{}'".format(kind))
