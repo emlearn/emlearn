@@ -398,9 +398,9 @@ class Wrapper:
             self.classifier_ = emtreesc.Classifier(node_data, roots)
 
         elif classifier == 'loadable':
-            self.classifier_ = CompiledClassifier(self.output_c('mymodel'), name='mymodel')
+            self.classifier_ = CompiledClassifier(self.save(name='mymodel'), name='mymodel')
         elif classifier == 'inline':
-            self.classifier_ = CompiledClassifier(self.output_c('myinline'), name='myinline', call='myinline_predict(values, length)')
+            self.classifier_ = CompiledClassifier(self.save(name='myinline'), name='myinline', call='myinline_predict(values, length)')
         else:
             raise ValueError("Unsupported classifier method '{}'".format(classifier))
 
@@ -408,8 +408,19 @@ class Wrapper:
         predictions = self.classifier_.predict(X)
         return predictions
 
-    def output_c(self, name):
-        return generate_c_forest(self.forest_, name)
+    def save(self, name=None, file=None):
+        if name is None:
+            if file is None:
+                raise ValueError('Either name or file must be provided')
+            else:
+                name = os.path.splitext(os.path.basename(file))[0]
+
+        code = generate_c_forest(self.forest_, name)
+        if file:
+            with open(file) as f:
+                f.write(file)
+
+        return code
 
     def to_dot(self, **kwargs):
         return forest_to_dot(self.forest_, **kwargs)

@@ -2,6 +2,7 @@
 import emtrees
 import numpy
 from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
 from sklearn import metrics, datasets
 
 rnd = 11
@@ -17,7 +18,7 @@ print('Loading digits dataset. 8x8=64 features')
 trees = 40
 max_depth = 20
 print('Training {} trees with max_depth {}'.format(trees, max_depth))
-model = emtrees.RandomForest(n_estimators=trees, max_depth=max_depth, random_state=rnd)
+model = RandomForestClassifier(n_estimators=trees, max_depth=max_depth, random_state=rnd)
 model.fit(Xtrain, ytrain)
 
 # Predict
@@ -26,10 +27,10 @@ print('Accuracy on validation set {:.2f}%'.format(metrics.accuracy_score(ypred, 
 
 m = numpy.max(Xtrain), numpy.min(Xtrain)
 
-code = model.output_c('digits')
 filename = 'digits.h'
-with open(filename, 'w') as f:
-   f.write(code)
+cmodel = emtrees.convert(model)
+code = cmodel.save(file=filename)
+
 print('Wrote C code to', filename)
 
 port = '/dev/ttyUSB0'

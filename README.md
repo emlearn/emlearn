@@ -58,9 +58,7 @@ estimator.fit(X_train, Y_train)
 ```python
 import emtrees
 cmodel = emtrees.convert(estimator, method='inline')
-code = cmodel.output_c('sonar')
-with open('sonar.h', 'w') as f:
-   f.write(code)
+cmodel.save(file='sonar.h')
 ```
 
 3. Use the C code
