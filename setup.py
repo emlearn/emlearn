@@ -87,6 +87,17 @@ ext_modules = [
         ],
         language='c++'
     ),
+    Extension(
+        'eml_audio',
+        ['bindings/eml_audio.cpp'],
+        include_dirs=[
+            'emlearn/',
+            # Path to pybind11 headers
+            get_pybind_include(),
+            get_pybind_include(user=True)
+        ],
+        language='c++'
+    ),
 ]
 
 def read_requirements():

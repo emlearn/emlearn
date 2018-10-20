@@ -3,15 +3,24 @@
 
 0.3
 
-* Include emaudio
 * Include emnet
 * Include embayes
-* Standalone example application on microcontroller
+* Standalone example on microcontroller. XOR?
 * Use absolute path by default for library imports in generated code
 
 0.4
 
 * Consolidate error handling. Use EmlError, EML_PRE/POSTCONDITION, EML_CHECK_ERROR from `emnet`
+* Implement some iterators like EML_APPLY(vector, 0, vector->length, func) and EML_MAP_INTO(in, out, 0, out->length, func);
+
+## audio
+
+0.3
+
+* Add tests for melspectrogram
+* Unhardcode FFT length
+* Add some pipeline/processor.
+Short audio buffers in, feature extraction, normalization, classifier, predictions out.
 
 ## trees
 
