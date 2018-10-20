@@ -1,7 +1,6 @@
 
 import numpy
 import numpy.fft
-import librosa
 
 import pytest
 import numpy.testing
@@ -22,6 +21,9 @@ def test_rfft_not_power2_length():
 
 @pytest.mark.skip('wrong scaling?')
 def test_melspectrogram():
+
+    import librosa
+
     y, sr = librosa.load('data/ff1010bird/{}.wav'.format(19037), offset=0)
 
     ref = librosa.feature.melspectrogram(y, sr, fmin=0, fmax=None, n_fft=1024, n_mels=64, norm=None, htk=True)
