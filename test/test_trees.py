@@ -55,7 +55,7 @@ def test_deduplicate_single_tree():
     ]
     roots = [ 6 ]
 
-    de_nodes, de_roots = emlearn.randomforest.remove_duplicate_leaves((nodes, roots))
+    de_nodes, de_roots = emlearn.trees.remove_duplicate_leaves((nodes, roots))
 
     duplicates = 1
     assert len(de_roots) == len(roots)

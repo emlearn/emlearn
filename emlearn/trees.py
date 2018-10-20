@@ -8,11 +8,8 @@ import subprocess
 
 import numpy
 
+from . import common
 import emtreesc
-
-
-def get_include_dir():
-    return os.path.join(os.path.dirname(__file__))
 
 
 # Tree representation as 2d array
@@ -378,7 +375,7 @@ def run_classifier(bin_path, data):
 class CompiledClassifier():
     def __init__(self, cmodel, name, call=None, include_dir=None, temp_dir='tmp/'):
         if include_dir == None:
-            include_dir = get_include_dir()
+            include_dir = common.get_include_dir()
         self.bin_path = build_classifier(cmodel, name, include_dir=include_dir, temp_dir=temp_dir, func=call) 
 
     def predict(self, X):
@@ -430,15 +427,5 @@ class Wrapper:
 
     def to_dot(self, **kwargs):
         return forest_to_dot(self.forest_, **kwargs)
-
-
-def convert(estimator, kind=None, method='pymodule'):
-    if kind is None:
-        kind = type(estimator).__name__
-
-    if kind in ['RandomForestClassifier', 'ExtraTreesClassifier']:
-        return Wrapper(estimator, method) 
-    else:
-        raise ValueError("Unknown model type: '{}'".format(kind))
 
 

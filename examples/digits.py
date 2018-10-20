@@ -1,5 +1,6 @@
 
-import emtrees
+import emlearn
+
 import numpy
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
@@ -28,7 +29,7 @@ print('Accuracy on validation set {:.2f}%'.format(metrics.accuracy_score(ypred, 
 m = numpy.max(Xtrain), numpy.min(Xtrain)
 
 filename = 'digits.h'
-cmodel = emtrees.convert(model)
+cmodel = emlearn.convert(model)
 code = cmodel.save(file=filename)
 
 print('Wrote C code to', filename)

@@ -1,5 +1,8 @@
 
-from .randomforest import convert
+from . import trees
+from . import common
 
-includedir = randomforest.get_include_dir()
+from .convert import convert
+
+includedir = common.get_include_dir()
 
