@@ -71,12 +71,6 @@ def run_classifier(bin_path, data):
 
     return classes
 
-def test_randomforest_api():
-   check_estimator(emtrees.RandomForest)
-
-def test_extratrees_api():
-   check_estimator(emtrees.ExtraTrees)
-
 
 def test_basic_binary_classification():
     X, Y = datasets.make_classification(n_classes=2, n_samples=1000, random_state=1)
