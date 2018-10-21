@@ -29,10 +29,17 @@ Decision Trees using MATLAB Coder for C/C++ code generation.
 ## Status
 **Minimally useful**
 
-* Random Forests and ExtraTrees classifiers implemented
-* Tested running on AVR Atmega, ESP8266 and Linux.
-* On ESP8266, 8x8 digits classify in under 0.3ms with 95%+ accuracy
-* On Linux, is approx 2x faster than sklearn
+Classifiers:
+
+* `eml_trees`: Random Forests, ExtraTrees
+* `eml_net`: MultiLayerPerceptron
+* `eml_bayes`: GaussianNaiveBayes
+
+Feature extraction:
+
+* `eml_audio`: Melspectrogram
+
+Tested running on AVR Atmega, ESP8266 and Linux.
 
 ## Installing
 
