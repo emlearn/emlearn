@@ -2,3 +2,4 @@ pytest-cov>=2.5.1
 scipy>=1.0.0
 scikit-learn>=0.19.1
 librosa>=0.6.1
+keras>=2.2.4

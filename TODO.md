@@ -9,7 +9,7 @@
 0.4
 
 * Setup documentation build (Sphinx?) 
-* Consolidate error handling. Use EmlError, EML_PRE/POSTCONDITION, EML_CHECK_ERROR from `emnet`
+* Consolidate error handling. Use EmlError, EML_PRE/POSTCONDITION, EML_CHECK_ERROR everywhere
 * Implement some iterators like EML_APPLY(vector, 0, vector->length, func) and EML_MAP_INTO(in, out, 0, out->length, func);
 
 ## audio
@@ -34,7 +34,8 @@ Short audio buffers in, feature extraction, normalization, classifier, predictio
 
 ## nets
 
-- Implement `convert()` for Sequential Keras models with Dense layers
+- Support generating C definitions for the model
+- Support `convert()` for Sequential Keras models with Dense layers
 - Add support for 2d convolutional layers (Keras).
 - Supports strides and dilation in convolution layers
 

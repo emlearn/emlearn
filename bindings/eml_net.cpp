@@ -49,7 +49,7 @@ public:
 
         // Layers
         if (weights.size() < 2) {
-            throw std::runtime_error("Must have weights between 3 layers");
+            throw std::runtime_error("Must have at least 3 layers total (1 hidden)");
         }
 
         model.n_layers = weights.size();
