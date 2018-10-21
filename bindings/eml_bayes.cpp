@@ -32,9 +32,9 @@ public:
             for (int feature_idx = 0; feature_idx<n_features; feature_idx++) {
                 const int32_t summary_idx = class_idx*n_features + feature_idx;
                 EmlBayesSummary summary;
-                summary.mean = VAL_FROMFLOAT(data[n_attributes*summary_idx + 0]);
-                summary.std = VAL_FROMFLOAT(data[n_attributes*summary_idx + 1]);
-                summary.stdlog2 = VAL_FROMFLOAT(data[n_attributes*summary_idx + 2]);
+                summary.mean = EML_Q16_FROMFLOAT(data[n_attributes*summary_idx + 0]);
+                summary.std = EML_Q16_FROMFLOAT(data[n_attributes*summary_idx + 1]);
+                summary.stdlog2 = EML_Q16_FROMFLOAT(data[n_attributes*summary_idx + 2]);
                 model.summaries[summary_idx] = summary;
             }
         }
@@ -53,7 +53,7 @@ public:
         const int32_t n_features = in.shape()[1];
 
         // FIXME: use floats primarily
-        std::vector<val_t> values(n_features);
+        std::vector<eml_q16_t> values(n_features);
 
         auto classes = py::array_t<int32_t>(n_samples);
         auto r = classes.mutable_unchecked<1>(); 
@@ -61,7 +61,7 @@ public:
             const float *floats = in.data(i);
 
             for (int i=0; i<n_features; i++) {
-                values[i] = VAL_FROMFLOAT(floats[i]);
+                values[i] = EML_Q16_FROMFLOAT(floats[i]);
             }
             const int32_t p = eml_bayes_predict(&model, values.data(), n_features);
             if (p < 0) {
@@ -75,7 +75,7 @@ public:
 };
 
 float logpdf_float(float x, float mean, float std, float stdlog2) {
-   return VAL_TOFLOAT(eml_bayes_logpdf(VAL_FROMFLOAT(x), VAL_FROMFLOAT(mean), VAL_FROMFLOAT(std), VAL_FROMFLOAT(stdlog2)));
+   return EML_Q16_TOFLOAT(eml_bayes_logpdf(EML_Q16_FROMFLOAT(x), EML_Q16_FROMFLOAT(mean), EML_Q16_FROMFLOAT(std), EML_Q16_FROMFLOAT(stdlog2)));
 }
 
 PYBIND11_MODULE(eml_bayes, m) {

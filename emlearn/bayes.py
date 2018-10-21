@@ -18,7 +18,7 @@ def c_struct_init(vals, convert):
     return '{ ' + s + ' }'
 
 def c_tofixed(v):
-    return "VAL_FROMFLOAT({})".format(v)
+    return "EML_Q16_FROMFLOAT({})".format(v)
 
 
 def generate_c(model, name='myclassifier'):

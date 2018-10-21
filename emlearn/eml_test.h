@@ -34,11 +34,12 @@ eml_test_read_csv(FILE *fp, EmlCsvCallback row_callback) {
 }
 
 // FIXME: Remove in favor of float/int32 support
-typedef void (*EmBayesCsvCallback)(const val_t values[], int length, int row);
+#include "eml_fixedpoint.h"
+typedef void (*EmBayesCsvCallback)(const eml_q16_t values[], int length, int row);
 void
 eml_bayes_test_read_csv(FILE *fp, EmBayesCsvCallback row_callback) {
     char buffer[1024];
-    val_t values[256];
+    eml_q16_t values[256];
     int row_no = 0;
     int value_no = 0;
 
@@ -50,7 +51,7 @@ eml_bayes_test_read_csv(FILE *fp, EmBayesCsvCallback row_callback) {
         {
             float value;
             sscanf(token, "%f", &value);
-            values[value_no++] = VAL_FROMFLOAT(value);
+            values[value_no++] = EML_Q16_FROMFLOAT(value);
             token = strtok (NULL, seps);
         }
         row_callback(values, value_no, row_no);
