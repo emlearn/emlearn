@@ -92,17 +92,28 @@ def keras_mlp_binary_activation_params(features, activation='relu'):
                   metrics=['accuracy'])
     return model, dict(features=features, classes=2)
 
-# TODO: support separate Softmax and ReLU layers
-# TODO: support Input layer
-# TODO: support Dropout layer
-# TODO: support CNNs. Conv1D/2D, (ZeroPadding1D/2D), Average/MaxPooling1D/2D
+def keras_dropout_relu_softmax(features, classes):
+    # Using the specific layer names instead of general Dense,Activation
+    model = Sequential([
+        Dense(8, input_shape=(features,)),
+        keras.layers.ReLU(),
+        keras.layers.Dropout(rate=0.5),
+        Dense(classes),
+        keras.layers.Softmax(),
+    ])
+    model.compile(optimizer='rmsprop',
+                  loss='categorical_crossentropy',
+                  metrics=['accuracy'])
+    return model, dict(features=features, classes=classes)
 
+# TODO: support CNNs. Conv1D/2D, (ZeroPadding1D/2D), Average/MaxPooling1D/2D, Flatten
+# TODO: support simple functional Models, like Logistic Regression. Input+Dense+Softmax
 
 KERAS_MODELS = {
-    'MPL.binary': keras_mlp_binary_activation_params(3),
+    'MLP.binary': keras_mlp_binary_activation_params(3),
     'MLP.4ary.actlayer': keras_mlp_multiclass_activation_layers(3, 4),
+    'Dropout.Relu.Softmax': keras_dropout_relu_softmax(3, 4),
 }
-
 
 @pytest.mark.parametrize('modelname', KERAS_MODELS.keys())
 def test_net_keras_predict(modelname):

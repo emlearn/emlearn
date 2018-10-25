@@ -33,22 +33,47 @@ def convert_keras(model, method):
     activations = []
     layer_weights = []
     biases = []
+
+    def add_dense(activation, weights, bias):
+        activations.append(from_keras_activation(l.activation))
+        weights, bias  = l.get_weights()
+        assert bias.ndim == 1, bias.ndim
+        assert weights.ndim == 2, weights.ndim
+        biases.append(bias)
+        layer_weights.append(weights)
+
+    def set_activation(activation):
+        # merge dedicated Activation layers into the previous layer
+        # TODO: maybe make activation a separate layer in our representation
+        activations[-1] = activation
+
     for i, l in enumerate(model.layers):
         layer_type = type(l).__name__
 
-        if layer_type == 'Activation':
-            # merge dedicated Activation layers into the previous layer
-            # TODO: maybe make activation a separate layer in our representation
-            activations[-1] = from_keras_activation(l.activation)
-            continue
-        elif layer_type == 'Dense':
+        # Dense layers
+        if layer_type == 'Dense':
             assert l.use_bias == True, 'Layers without bias not supported'
-            activations.append(from_keras_activation(l.activation))
-            weights, bias  = l.get_weights()
-            assert bias.ndim == 1, bias.ndim
-            assert weights.ndim == 2, weights.ndim
-            biases.append(bias)
-            layer_weights.append(weights)
+            add_dense(l.activation, *l.get_weights())
+    
+        # Activations
+        elif layer_type == 'Activation':
+            set_activation(from_keras_activation(l.activation))
+            continue
+        elif layer_type == 'ReLU':
+            assert l.negative_slope == 0.0, 'ReLU.negative_slope must be 0.0'
+            assert l.threshold == 0.0, 'ReLU.threshold must be 0.0'
+            set_activation('relu')
+            continue
+        elif layer_type == 'Softmax':
+            assert l.axis == -1, 'Softmax.axis must be -1'
+            set_activation('softmax')
+            continue
+
+        # Training layers
+        elif layer_type == 'Dropout':
+            # only used at training time
+            continue
+
         else:
             raise NotImplementedError("Layer type '{}' is not implemented".format(layer_type)) 
 
