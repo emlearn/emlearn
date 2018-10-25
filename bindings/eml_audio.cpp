@@ -6,8 +6,10 @@
 #include <pybind11/stl.h>
 #include <pybind11/numpy.h>
 
+
 #define EML_DEBUG 1
 
+#include <eml_dsp.h>
 #include <eml_fft.h>
 #include <eml_audio.h>
 
@@ -130,14 +132,79 @@ melspectrogram_py(py::array_t<float, py::array::c_style | py::array::forcecast> 
 }
 
 
+// Returns an EmlNetActivationFunction or -EmlError
+int32_t
+eml_convolve_mode(const char *str)
+{
+    int32_t ret = -EmlUnsupported;
+
+    for (int i=0; i<EmlConvolveModes; i++) {
+        const char *func_str = eml_convolve_mode_strs[i];
+        if (strcmp(str, func_str) == 0) {
+            ret = (int32_t)i;
+        }
+    }
+
+    return ret;
+}
+
+void
+assert_no_error(int32_t code, std::string err_str) {
+    const EmlError err = (EmlError)code;
+    if (err > EmlOk) {
+        throw std::runtime_error(err_str);
+    }
+}
+void
+assert_no_error(int32_t code) {
+    const EmlError err = (EmlError)code;
+    if (err > EmlOk) {
+        std::string err_str = eml_error_str(err);
+        throw std::runtime_error("emlearn error: " + err_str);
+    }
+}
+
+py::array_t<float>
+convolve1d(py::array_t<float, py::array::c_style | py::array::forcecast> in,
+           py::array_t<float, py::array::c_style | py::array::forcecast> kernel,
+           std::string mode_name, int32_t stride)
+{
+    if (in.ndim() != 1) {
+        throw std::runtime_error("input must have dimensions 1");
+    }
+    if (kernel.ndim() != 1) {
+        throw std::runtime_error("kernel must have dimensions 1");
+    }
+    const int32_t mode_int = eml_convolve_mode(mode_name.c_str());
+    assert_no_error(-mode_int, "unsupported convolve mode: " + mode_name);
+    const EmlConvolveMode mode = (EmlConvolveMode)mode_int;
+
+    const int32_t in_length = in.shape(0);
+    const int32_t kernel_size = kernel.shape(0);
+    const int32_t ret_length = eml_convolve_1d_length(in_length, kernel_size, mode);
+    auto ret = py::array_t<float>(ret_length);
+
+    fprintf(stderr, "mode=%d, ret_length=%d\n", mode_int, ret_length);
+
+    const EmlError status = eml_convolve_1d((float *)in.data(), in_length,
+                                (float *)ret.data(), ret_length,
+                                (float *)kernel.data(), kernel_size,
+                                stride, mode);
+    assert_no_error(status);
+
+    return ret;
+}
+
 
 PYBIND11_MODULE(eml_audio, m) {
     m.doc() = "Audio machine learning for microcontrollers and embedded devices";
 
     m.def("rfft", rfft_py);
-    m.def("melfilter", melfilter_py);
 
+    m.def("melfilter", melfilter_py);
     m.def("melspectrogram", melspectrogram_py);
 
+
+    m.def("convolve1d", convolve1d);
 }
 

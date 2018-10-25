@@ -10,8 +10,10 @@
 typedef enum _EmlError {
     EmlOk = 0,
     EmlSizeMismatch,
-    EmlUnsupported,
     EmlUninitialized,
+    EmlUnsupported,
+    EmlInvalidParameter,
+    EmlUnreachable,
     EmlPostconditionFailed,
     EmlUnknownError,
     EmlErrors,
@@ -23,6 +25,8 @@ eml_error_strs[EmlErrors] = {
     "SizeMismatch",
     "Uninitialized",
     "Unsupported",
+    "Invalid parameter",
+    "Hit unreachable code",
     "Postcondition failed",
     "Unknown error",
 };
@@ -40,7 +44,6 @@ eml_error_str(EmlError e) {
         return "Invalid error code";
     }
 }
-
 
 typedef void (*EmlDebugFunction)(EmlError code, const char *file, int line);
 
@@ -127,5 +130,15 @@ static inline
 float eml_min(float a, float b) {
     return (a < b) ? a : b;
 }
+
+static inline
+int eml_max_int(int a, int b) {
+    return (a > b) ? a : b;
+}
+static inline
+int eml_min_int(int a, int b) {
+    return (a < b) ? a : b;
+}
+
 
 #endif // EML_COMMON_H
