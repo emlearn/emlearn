@@ -92,6 +92,11 @@ def keras_mlp_binary_activation_params(features, activation='relu'):
                   metrics=['accuracy'])
     return model, dict(features=features, classes=2)
 
+# TODO: support separate Softmax and ReLU layers
+# TODO: support Input layer
+# TODO: support Dropout layer
+# TODO: support CNNs. Conv1D/2D, (ZeroPadding1D/2D), Average/MaxPooling1D/2D
+
 
 KERAS_MODELS = {
     'MPL.binary': keras_mlp_binary_activation_params(3),
@@ -121,8 +126,13 @@ def test_net_keras_predict(modelname):
 
         X_test = X_test[:3]
 
+        # TODO: support predict_proba, use that instead
         cpred = cmodel.predict(X_test)
         pred = model.predict(X_test)
+        if params['classes'] == 2:
+            pred = (pred[:,0] > 0.5).astype(int)
+        else:
+            pred = numpy.argmax(pred, axis=1)
 
         assert_equal(pred, cpred)
 
