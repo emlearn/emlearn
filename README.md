@@ -4,7 +4,6 @@
 Machine learning for microcontroller and embedded systems.
 Train in Python, then do inference on any device with a C99 compiler.
 
-
 ## Key features
 
 Embedded-friendly Inference
@@ -17,8 +16,8 @@ Embedded-friendly Inference
 
 Convenient Training
 
-* Using Python with [scikit-learn](http://scikit-learn.org)
-* C classifier accessible in Python using pybind11
+* Using Python with [scikit-learn](http://scikit-learn.org) or [Keras](https://keras.io/)
+* The generated C classifier is also accessible in Python
 
 [MIT licensed](./LICENSE.md)
 
@@ -31,9 +30,9 @@ Decision Trees using MATLAB Coder for C/C++ code generation.
 
 Classifiers:
 
-* `eml_trees`: Random Forests, ExtraTrees
-* `eml_net`: MultiLayerPerceptron
-* `eml_bayes`: GaussianNaiveBayes
+* `eml_trees`: sklearn.RandomForestClassifier, sklearn.ExtraTreesClassifier
+* `eml_net`: sklearn.MultiLayerPerceptron, Keras.Sequential with fully-connected layers
+* `eml_bayes`: sklearn.GaussianNaiveBayes
 
 Feature extraction:
 

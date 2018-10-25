@@ -35,8 +35,7 @@ Short audio buffers in, feature extraction, normalization, classifier, predictio
 ## nets
 
 - Support generating C definitions for the model
-- Support `convert()` for Sequential Keras models with Dense layers
-- Add support for 2d convolutional layers (Keras).
+- Add support for CNNs. 1D+2D convolutions, pooling (Keras).
 - Supports strides and dilation in convolution layers
 
 ## trees
