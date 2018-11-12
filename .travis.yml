@@ -1,7 +1,3 @@
-os:
-  - windows
-  - linux
-  - osx
 language: python
 dist: trusty
 sudo: false
