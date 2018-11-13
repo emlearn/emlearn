@@ -14,8 +14,6 @@ def build_classifier(cmodel, name, temp_dir, include_dir, func=None, compiler=No
 
     if compiler is None:
         compiler = 'gcc'
-        if platform.system() == 'Windows':
-            compiler += '.exe'
 
     if test_function is None:
         test_function = 'eml_test_read_csv'
@@ -53,7 +51,7 @@ def build_classifier(cmodel, name, temp_dir, include_dir, func=None, compiler=No
         '-I{}'.format(include_dir),
         '-I{}'.format(temp_dir),
     ]
-    subprocess.check_call(args)
+    subprocess.check_call(args, shell=True)
 
     return bin_path
 
