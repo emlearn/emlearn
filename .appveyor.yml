@@ -13,11 +13,15 @@ init:
 
 install:
   - "set PATH=%MINICONDA%;%MINICONDA%\\Scripts;%PATH%"
+  - where conda
+  - dir %MINICONDA%"
   - conda config --set always_yes yes --set changeps1 no
   - conda update -q conda
   - conda info -a
   - "conda create -c conda-forge -n test-environment python=%PYTHON_VERSION% numpy scipy pytest scikit-learn librosa keras tensorflow mingw"
   - activate test-environment
+  - echo %PATH%
+  - where gcc
   - pip install pytest-cov
   - pip install -r requirements.txt
   - pip install ./ -v
