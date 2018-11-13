@@ -21,6 +21,6 @@ install:
   - pip install ./ -v
 
 test_script:
-  - pytest
+  - pytest -v
 
 
