@@ -14,7 +14,7 @@ install:
   - conda update -q conda
   - conda info -a
   - "conda create -c conda-forge -n test-environment python=%PYTHON_VERSION% numpy scipy pytest scikit-learn librosa keras"
-  - conda install -n test-environment -c msys2 m2w64-toolchain
+  - conda install -n test-environment mingw
   - activate test-environment
   - pip install pytest-cov
   - pip install -r requirements.txt
