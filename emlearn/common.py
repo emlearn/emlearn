@@ -7,7 +7,7 @@ def get_include_dir():
     return os.path.join(os.path.dirname(__file__))
 
 
-def build_classifier(cmodel, name, temp_dir, include_dir, func=None, compiler='cc', test_function=None):
+def build_classifier(cmodel, name, temp_dir, include_dir, func=None, compiler='gcc', test_function=None):
     if not os.path.exists(temp_dir):
         os.makedirs(temp_dir)
 
