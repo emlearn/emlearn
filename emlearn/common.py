@@ -51,7 +51,7 @@ def build_classifier(cmodel, name, temp_dir, include_dir, func=None, compiler=No
         '-I{}'.format(include_dir),
         '-I{}'.format(temp_dir),
     ]
-    subprocess.check_call(args, shell=True)
+    subprocess.check_call(' '.join(args), shell=True)
 
     return bin_path
 
