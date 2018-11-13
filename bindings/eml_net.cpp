@@ -117,7 +117,7 @@ public:
         const int32_t n_features = in.shape()[1];
         const int32_t n_outputs = eml_net_outputs_proba(&model);
 
-        const auto out_shape = std::vector<ssize_t>{n_samples, n_outputs};
+        const auto out_shape = std::vector<int64_t>{n_samples, n_outputs};
 
         auto proba = py::array_t<float>(out_shape);
 

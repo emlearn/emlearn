@@ -2,14 +2,18 @@
 import os
 import os.path
 import subprocess
+import platform
 
 def get_include_dir():
     return os.path.join(os.path.dirname(__file__))
 
 
-def build_classifier(cmodel, name, temp_dir, include_dir, func=None, compiler='cc', test_function=None):
+def build_classifier(cmodel, name, temp_dir, include_dir, func=None, compiler=None, test_function=None):
     if not os.path.exists(temp_dir):
         os.makedirs(temp_dir)
+
+    if compiler is None:
+        compiler = 'gcc'
 
     if test_function is None:
         test_function = 'eml_test_read_csv'
@@ -47,7 +51,7 @@ def build_classifier(cmodel, name, temp_dir, include_dir, func=None, compiler='c
         '-I{}'.format(include_dir),
         '-I{}'.format(temp_dir),
     ]
-    subprocess.check_call(args)
+    subprocess.check_call(' '.join(args), shell=True)
 
     return bin_path
 

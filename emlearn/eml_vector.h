@@ -91,7 +91,8 @@ eml_vector_subtract_value(EmlVector v, float val) {
 EmlVector
 eml_vector_view(EmlVector orig, int start, int end) {
     const int length = end-start;
-    return (EmlVector){ orig.data+start, length };
+    const EmlVector view = { orig.data+start, length };
+    return view;
 }
 
 // Mean subtract normalization

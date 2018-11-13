@@ -35,7 +35,8 @@ rfft_py(py::array_t<float, py::array::c_style | py::array::forcecast> in) {
 
     const int status = eml_audio_fft(real, imag);
  
-    eml_vector_set((EmlVector){retdata,EML_AUDIOFFT_LENGTH}, real, 0);
+    EmlVector retv = { retdata, EML_AUDIOFFT_LENGTH };
+    eml_vector_set(retv, real, 0);
 
     if (status != 0) {
         throw std::runtime_error("SFT returned error");
@@ -59,13 +60,14 @@ melspectrogram_py(py::array_t<float, py::array::c_style | py::array::forcecast> 
 
     // Copy input to avoid modifying
     const int length = in.shape(0);
-    float inout_data[length];
-    float temp_data[length];
-    EmlVector inout = { inout_data, length };
-    EmlVector temp = { temp_data, length };
-    eml_vector_set(inout, (EmlVector){(float *)in.data(), length}, 0);
+    std::vector<float> inout(length);
+    std::vector<float> temp(length);
+    EmlVector inoutv = { (float *)inout.data(), length };
+    EmlVector tempv = { (float *)temp.data(), length };
+    EmlVector inv = {(float *)in.data(), length};
+    eml_vector_set(inoutv, inv, 0);
 
-    const int status = eml_audio_melspectrogram(params, inout, temp);
+    const int status = eml_audio_melspectrogram(params, inoutv, tempv);
 
     if (status != 0) {
         throw std::runtime_error("melspectrogram returned error: " + std::to_string(status));
@@ -73,7 +75,7 @@ melspectrogram_py(py::array_t<float, py::array::c_style | py::array::forcecast> 
 
     auto ret = py::array_t<float>(params.n_mels);
     EmlVector out = { (float *)ret.data(), params.n_mels };
-    eml_vector_set(out, eml_vector_view(inout, 0, params.n_mels), 0);
+    eml_vector_set(out, eml_vector_view(inoutv, 0, params.n_mels), 0);
 
     return ret;
 }

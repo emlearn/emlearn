@@ -112,8 +112,10 @@ def keras_dropout_relu_softmax(features, classes):
 KERAS_MODELS = {
     'MLP.binary': keras_mlp_binary_activation_params(3),
     'MLP.4ary.actlayer': keras_mlp_multiclass_activation_layers(3, 4),
-    'Dropout.Relu.Softmax': keras_dropout_relu_softmax(3, 4),
 }
+
+if getattr(keras.layers, 'ReLu', None):
+    KERAS_MODELS['Dropout.Relu.Softmax'] = keras_dropout_relu_softmax(3, 4),
 
 @pytest.mark.parametrize('modelname', KERAS_MODELS.keys())
 def test_net_keras_predict(modelname):

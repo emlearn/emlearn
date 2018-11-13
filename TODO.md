@@ -10,6 +10,9 @@
 
 * Setup documentation build (Sphinx?) 
 * Consolidate error handling. Use EmlError, EML_PRE/POSTCONDITION, EML_CHECK_ERROR everywhere
+
+Later
+
 * Implement some iterators like EML_APPLY(vector, 0, vector->length, func) and EML_MAP_INTO(in, out, 0, out->length, func);
 
 ## audio
@@ -24,6 +27,8 @@ Short audio buffers in, feature extraction, normalization, classifier, predictio
 0.4
 
 * Add an example. Wakeword detection? Keyword classification?
+* Implement low-level features.
+RMS, zero-crossings, spectral centroid, spectral flatness
 
 ## bayes
 
@@ -36,6 +41,8 @@ Short audio buffers in, feature extraction, normalization, classifier, predictio
 
 - Support generating C definitions for the model
 - Add support for CNNs. 1D+2D convolutions, pooling (Keras).
+- Add support for RNNs. SimpleRNN, LSTM, GRU
+- Support quantized models (8 bits)
 - Supports strides and dilation in convolution layers
 
 ## trees
