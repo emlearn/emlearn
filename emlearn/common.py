@@ -29,7 +29,7 @@ def build_classifier(cmodel, name, temp_dir, include_dir, func=None, compiler=No
     #include "{def_file_name}"
     #include <eml_test.h>
 
-    static void classify(const int32_t *values, int length, int row) {{
+    static void classify(const float *values, int length, int row) {{
         const int32_t class = {func};
         printf("%d,%d\\n", row, class);
     }}

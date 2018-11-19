@@ -86,9 +86,12 @@ eml_bayes_logpdf(eml_q16_t x, eml_q16_t mean, eml_q16_t std, eml_q16_t stdlog2)
 
 
 int32_t
-eml_bayes_predict(EmlBayesModel *model, const eml_q16_t values[], int32_t values_length) {
+eml_bayes_predict(EmlBayesModel *model, const float values[], int32_t values_length) {
    //printf("predict(%d), classes=%d features=%d\n",
    //      values_length, model->n_classes, model->n_features);
+
+   EML_PRECONDITION(model, EmlUninitialized);
+   EML_PRECONDITION(values, EmlUninitialized);
 
    const int MAX_CLASSES = 10;
    eml_q16_t class_probabilities[MAX_CLASSES];
@@ -99,7 +102,7 @@ eml_bayes_predict(EmlBayesModel *model, const eml_q16_t values[], int32_t values
       for (int value_idx = 0; value_idx<values_length; value_idx++) {
          const int32_t summary_idx = class_idx*model->n_features + value_idx;
          EmlBayesSummary summary = model->summaries[summary_idx];
-         const eml_q16_t val = values[value_idx];
+         const eml_q16_t val = EML_Q16_FROMFLOAT(values[value_idx]);
          const eml_q16_t plog = eml_bayes_logpdf(val, summary.mean, summary.std, summary.stdlog2);
 
          class_p += plog;
