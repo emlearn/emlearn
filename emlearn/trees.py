@@ -195,7 +195,21 @@ def generate_c_nodes(flat, name):
     nodes_length = len(flat)
     nodes = "EmlTreesNode {nodes_name}[{nodes_length}] = {{\n  {nodes_structs} \n}};".format(**locals());
 
-    return nodes
+    # FIXME: remove when having native support for floats
+    wrapper_func = """
+    int32_t eml_trees_predict_float(const EmlTrees *model, const float *features, int32_t features_length) {{
+        // Exposes a float based interface to outside.
+        int32_t features_int[features_length];
+        for (int32_t i=0; i < features_length; i++) {{
+            features_int[i] = features[i];
+        }}
+        return eml_trees_predict(model, features_int, features_length);
+    }}
+    """.format(**{})
+
+    out = nodes + wrapper_func
+
+    return out
 
 def generate_c_inlined(forest, name):
     nodes, roots = forest
@@ -270,10 +284,22 @@ def generate_c_inlined(forest, name):
       'n_classes': n_classes,
       'tree_predictions': '\n    '.join(tree_votes)
     })
+
+    # FIXME: remove in favor of 'native' float support    
+    wrapper_func = """
+    int32_t {function_name}_float(const float *features, int32_t features_length) {{
+        // Exposes a float based interface to outside.
+        int32_t features_int[features_length];
+        for (int32_t i=0; i < features_length; i++) {{
+            features_int[i] = features[i];
+        }}
+        return {function_name}(features_int, features_length);
+    }}
+    """.format(**{'function_name': name})
     
     tree_funcs = [tree_func(n, r) for n,r in zip(tree_names, roots)]
 
-    return '\n\n'.join(tree_funcs + [forest_func])
+    return '\n\n'.join(tree_funcs + [forest_func] + [wrapper_func])
 
 def generate_c_forest(forest, name='myclassifier'):
     nodes, roots = forest
@@ -286,6 +312,8 @@ def generate_c_forest(forest, name='myclassifier'):
     tree_roots_name = name+'_tree_roots';
     tree_roots_values = ', '.join(str(t) for t in roots)
     tree_roots = 'int32_t {tree_roots_name}[{tree_roots_length}] = {{ {tree_roots_values} }};'.format(**locals())
+
+    # TODO: generate a float wrapper
 
     forest_struct = """EmlTrees {name} = {{
         {nodes_length},
@@ -327,12 +355,12 @@ class Wrapper:
 
         elif classifier == 'loadable':
             name = 'mytree'
-            func = 'eml_trees_predict(&{}, values, length)'.format(name)
+            func = 'eml_trees_predict_float(&{}, values, length)'.format(name)
             code = self.save(name=name)
             self.classifier_ = common.CompiledClassifier(code, name=name, call=func)
         elif classifier == 'inline':
             name = 'myinlinetree'
-            func = '{}_predict(values, length)'.format(name)
+            func = '{}_predict_float(values, length)'.format(name)
             code = self.save(name=name)
             self.classifier_ = common.CompiledClassifier(code, name=name, call=func)
         else:
