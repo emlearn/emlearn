@@ -41,7 +41,7 @@ SKLEARN_PARAMS = [
 @pytest.mark.parametrize('modelparams,params', SKLEARN_PARAMS)
 def test_test_sklearn_predict(modelparams,params):
 
-    model = MLPClassifier(**modelparams, max_iter=20)
+    model = MLPClassifier(**modelparams, max_iter=10)
 
     for random in range(0, 3):
         # create dataset
@@ -134,7 +134,7 @@ def test_net_keras_predict(modelname):
         if params['classes'] != 2:
             y_train = keras.utils.to_categorical(y_train, num_classes=params['classes'])
 
-        model.fit(X_train, y_train, epochs=3, batch_size=10)
+        model.fit(X_train, y_train, epochs=1, batch_size=10)
         cmodel = emlearn.convert(model)
 
         X_test = X_test[:3]
