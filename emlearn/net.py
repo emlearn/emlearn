@@ -104,7 +104,7 @@ def c_generate_net(activations, weights, biases, prefix):
         n_in, n_out = l_weights.shape
         weights_name = '{prefix}_layer{layer_no}_weights'.format(**locals())
         biases_name = '{prefix}_layer{layer_no}_biases'.format(**locals())
-        activation_func = 'EmlActivation'+l_activation.title()
+        activation_func = 'EmlNetActivation'+l_activation.title()
         layer_name = '{prefix}_layer{layer_no}'.format(**locals())
     
         weight_values = numpy.array(l_weights).flatten(order='C')
@@ -118,8 +118,8 @@ def c_generate_net(activations, weights, biases, prefix):
         layer_lines.append(l)
 
     net_lines = [
-        c_array_declare(buf1_name, buffer_size),
-        c_array_declare(buf2_name, buffer_size),
+        c_array_declare(buf1_name, buffer_size, modifiers='static'),
+        c_array_declare(buf2_name, buffer_size, modifiers='static'),
         c_array_declare(layers_name, n_layers, dtype='EmlNetLayer'),
         init_net(prefix, n_layers, layers_name, buf1_name, buf2_name, buffer_size)
     ]

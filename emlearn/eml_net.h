@@ -29,15 +29,15 @@ eml_net_activation_function_strs[EmlNetActivationFunctions] = {
 typedef struct _EmlNetLayer {
     int32_t n_outputs;
     int32_t n_inputs;
-    float *weights;
-    float *biases;
+    const float *weights;
+    const float *biases;
     EmlNetActivationFunction activation;
 } EmlNetLayer;
 
 typedef struct _EmlNet {
     // Layers of the neural network
     int32_t n_layers;
-    EmlNetLayer *layers;
+    const EmlNetLayer *layers;
     // Buffers for storing activations
     float *activations1;
     float *activations2;
@@ -86,7 +86,7 @@ eml_net_softmax(float *input, size_t input_length)
 }
 
 int32_t
-eml_net_argmax(float *values, int32_t values_length) {
+eml_net_argmax(const float *values, int32_t values_length) {
 
     float vmax = -INFINITY;
     int32_t argmax = -1;
