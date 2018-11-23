@@ -1,7 +1,75 @@
 
-import numpy
+from . import common
 
 import eml_net
+
+def argmax(sequence):
+    max_idx = 0
+    max_value = sequence[0]
+    for i, value in enumerate(sequence):
+        if value > max_value:
+            max_idx = i
+            max_value = value
+    return max_idx
+
+
+class Wrapper:
+    def __init__(self, activations, weights, biases, classifier):
+
+        self.activations = activations
+        self.weights = weights
+        self.biases = biases
+        self.classifier = None
+
+        if classifier == 'pymodule':
+            self.classifier = eml_net.Classifier(activations, weights, biases)
+        elif classifier == 'loadable':
+            name = 'mynet'
+            func = 'eml_net_predict_proba(&{}, values, length)'.format(name)
+            code = self.save(name=name)
+            self.classifier = common.CompiledClassifier(code, name=name, call=func)
+        #elif classifier == 'inline':
+        else:
+            raise ValueError("Unsupported classifier method '{}'".format(classifier))
+
+    def predict_proba(self, X):
+        return self.classifier.predict_proba(X)
+
+    def predict(self, X):
+        classes = self.classifier.predict(X)
+        return classes
+
+    def save(self, name=None, file=None):
+        if name is None:
+            if file is None:
+                raise ValueError('Either name or file must be provided')
+            else:
+                name = os.path.splitext(os.path.basename(file))[0]
+
+        code = c_generate_net(self.weights, self.activations, self.biases, name)
+        if file:
+            with open(file) as f:
+                f.write(code)
+
+        return code
+
+def c_init(*args):
+    start = '{'
+    end = '}'
+    return start + args.join(', ') + end
+
+def c_generate_net(activations, weights, biases):
+    def init_net(n_layers, layers_name, buf1_name, buf2_name, buf_length):
+        return c_init(n_layers, layers_name, buf1_name, buf2_name, buf_length)
+    def init_layer(n_outputs, n_inputs, weigths_name, biases_name, activation_func):
+        return c_init(n_outputs, n_inputs, weights_name, biases_name, activation_func)
+
+    nodes_structs = ',\n  '.join(node(n) for n in flat)
+    nodes_name = name
+    nodes_length = len(flat)
+    nodes = "EmlTreesNode {nodes_name}[{nodes_length}] = {{\n  {nodes_structs} \n}};".format(**locals());
+
+    return nodes
 
 def convert_sklearn_mlp(model, method):
 
@@ -12,8 +80,7 @@ def convert_sklearn_mlp(model, method):
     biases = model.intercepts_
     activations = [model.activation]*(len(weights)-1) + [ model.out_activation_ ]
 
-    cmodel = eml_net.Classifier(activations, weights, biases)
-    return cmodel
+    return Wrapper(activations, weights, biases, classifier=method)
 
 def from_keras_activation(act):
     name = act.__name__
@@ -79,5 +146,5 @@ def convert_keras(model, method):
 
     assert len(activations) == len(biases) == len(layer_weights)
     
-    cmodel = eml_net.Classifier(activations, layer_weights, biases)
-    return cmodel
+    return Wrapper(activations, layer_weights, biases, classifier=method)
+
