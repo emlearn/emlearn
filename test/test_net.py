@@ -65,7 +65,7 @@ def test_test_sklearn_predict(modelparams,params):
             cpred = cmodel.predict(X_test)
             pred = model.predict(X_test)
 
-        assert_almost_equal(proba, cproba)
+        assert_almost_equal(proba, cproba, decimal=6)
         assert_equal(pred, cpred)
 
 
