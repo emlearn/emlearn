@@ -2,6 +2,10 @@
 #ifndef EML_COMMON_H
 #define EML_COMMON_H
 
+#include <stdbool.h>
+#include <stdint.h>
+#include <stddef.h>
+
 // Return errorcode if expr not satisfied
 #define EML_PRECONDITION(expr, errorcode) \
     do { \

@@ -2,9 +2,7 @@
 #ifndef EML_BAYES_H
 #define EML_BAYES_H
 
-#include <stdint.h>
-#include <stddef.h>
-
+#include "eml_common.h"
 #include "eml_fixedpoint.h"
 
 
