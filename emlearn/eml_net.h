@@ -45,16 +45,6 @@ typedef struct _EmlNet {
 } EmlNet;
 
 
-void
-print_array(const float *values, int32_t length) {
-    printf("n=%d [", length);
-    for (int i=0; i<length; i++) {
-        printf("%f,", values[i]);
-    }
-    printf("]\n");    
-} 
-
-
 static float
 eml_net_relu(float in) {
     return (in <= 0.0f) ? 0.0f : in; 
