@@ -10,9 +10,9 @@
 // TODO: implement HardSigmoid
 typedef enum _EmlNetActivationFunction {
     EmlNetActivationIdentity = 0,
-    EmlNetActivationReLu,
+    EmlNetActivationRelu,
     EmlNetActivationLogistic,
-    EmlNetActivationSoftMax,
+    EmlNetActivationSoftmax,
     EmlNetActivationTanh,
     EmlNetActivationFunctions,
 } EmlNetActivationFunction;
@@ -204,7 +204,7 @@ eml_net_layer_forward(const EmlNetLayer *layer,
     // apply activation function
     if (layer->activation == EmlNetActivationIdentity) {
         // no-op
-    } else if (layer->activation == EmlNetActivationReLu) {
+    } else if (layer->activation == EmlNetActivationRelu) {
         for (int i=0; i<layer->n_outputs; i++) {
             out[i] = eml_net_relu(out[i]);
         }
@@ -216,7 +216,7 @@ eml_net_layer_forward(const EmlNetLayer *layer,
         for (int i=0; i<layer->n_outputs; i++) {
             out[i] = eml_net_tanh(out[i]);
         }
-    } else if (layer->activation == EmlNetActivationSoftMax) {
+    } else if (layer->activation == EmlNetActivationSoftmax) {
         eml_net_softmax(out, layer->n_outputs);
     } else {
         return EmlUnsupported;
