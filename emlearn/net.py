@@ -76,11 +76,11 @@ def c_array_declare(name, size, dtype='float', modifiers='static const',
 def c_generate_net(activations, weights, biases, prefix):
     def init_net(name, n_layers, layers_name, buf1_name, buf2_name, buf_length):
         init = c_struct_init(n_layers, layers_name, buf1_name, buf2_name, buf_length)
-        o = 'EmlNet {name} = {init};'.format(**locals())
+        o = 'static const EmlNet {name} = {init};'.format(**locals())
         return o
     def init_layer(name, n_outputs, n_inputs, weigths_name, biases_name, activation_func):
         init = c_struct_init(n_outputs, n_inputs, weights_name, biases_name, activation_func)
-        o = 'EmlNetLayer {name} = {init};'.format(**locals())
+        o = 'static const EmlNetLayer {name} = {init};'.format(**locals())
         return o
 
     buffer_sizes = [ w.shape[0] for w in weights ] + [ w.shape[1] for w in weights ]
@@ -95,6 +95,7 @@ def c_generate_net(activations, weights, biases, prefix):
         '#include <eml_net.h>'    
     ]
 
+    layer_names = []
     layer_lines = []
     for layer_no in range(0, n_layers):
         l_weights = weights[layer_no]
@@ -116,12 +117,13 @@ def c_generate_net(activations, weights, biases, prefix):
 
         l = init_layer(layer_name, n_out, n_in, weights_name, biases_name, activation_func)
         layer_lines.append(l)
+        layer_names.append(layer_name)
 
     net_lines = [
         c_array_declare(buf1_name, buffer_size, modifiers='static'),
         c_array_declare(buf2_name, buffer_size, modifiers='static'),
-        c_array_declare(layers_name, n_layers, dtype='EmlNetLayer'),
-        init_net(prefix, n_layers, layers_name, buf1_name, buf2_name, buffer_size)
+        c_array_declare(layers_name, n_layers, dtype='EmlNetLayer', values=layer_names),
+        init_net(prefix, n_layers, layers_name, buf1_name, buf2_name, buffer_size),
     ]
 
     lines = head_lines + layer_lines + net_lines 
