@@ -2,9 +2,7 @@
 #ifndef EML_BAYES_H
 #define EML_BAYES_H
 
-#include <stdint.h>
-#include <stddef.h>
-
+#include "eml_common.h"
 #include "eml_fixedpoint.h"
 
 
@@ -88,9 +86,12 @@ eml_bayes_logpdf(eml_q16_t x, eml_q16_t mean, eml_q16_t std, eml_q16_t stdlog2)
 
 
 int32_t
-eml_bayes_predict(EmlBayesModel *model, const eml_q16_t values[], int32_t values_length) {
-   //printf("predict(%d), classes=%d features=%d\n",
-   //      values_length, model->n_classes, model->n_features);
+eml_bayes_predict(EmlBayesModel *model, const float values[], int32_t values_length) {
+   //fprintf(stderr, "predict(%d), classes=%d features=%d f0=%f\n",
+   //      values_length, model->n_classes, model->n_features, values[0]);
+
+   EML_PRECONDITION(model, -EmlUninitialized);
+   EML_PRECONDITION(values, -EmlUninitialized);
 
    const int MAX_CLASSES = 10;
    eml_q16_t class_probabilities[MAX_CLASSES];
@@ -101,11 +102,10 @@ eml_bayes_predict(EmlBayesModel *model, const eml_q16_t values[], int32_t values
       for (int value_idx = 0; value_idx<values_length; value_idx++) {
          const int32_t summary_idx = class_idx*model->n_features + value_idx;
          EmlBayesSummary summary = model->summaries[summary_idx];
-         const eml_q16_t val = values[value_idx];
+         const eml_q16_t val = EML_Q16_FROMFLOAT(values[value_idx]);
          const eml_q16_t plog = eml_bayes_logpdf(val, summary.mean, summary.std, summary.stdlog2);
 
          class_p += plog;
-
       }
       class_probabilities[class_idx] = class_p;
       //printf("class %d : %f\n", class_idx, p);

@@ -315,37 +315,3 @@ eml_net_predict(EmlNet *model, const float *features, int32_t features_length) {
     return _class;
 }
 
-
-
-
-#if 0 
-EmlError
-eml_net_parse_csv_line(const char *buffer, float *values, int32_t values_length) {
-        
-    int field_no = 0;
-    const char seps[] = ",;";
-    char *token = strtok(buffer, seps);
-
-    while (token != NULL)
-    {
-        long value;
-        sscanf(token, "%ld", &value);
-
-        if (field_no >= values_length) {
-            return EmlNetSizeMismatch;
-        }
-
-        values[field_no] = value; 
-        field_no++;
-        token = strtok(NULL, seps);
-    }
-
-    return EmlNetOk;
-}
-
-#endif
-
-
-
-
-

@@ -83,7 +83,7 @@ class Wrapper(object):
             name = 'mybayes'
             func = 'eml_bayes_predict(&{}_model, values, length)'.format(name)
             code = self.save(name=name)
-            self.classifier = common.CompiledClassifier(code, name=name, call=func, test_function='eml_bayes_test_read_csv')
+            self.classifier = common.CompiledClassifier(code, name=name, call=func)
         elif method == 'inline':
             raise NotImplementedError('NaiveBayes does not support inline C code generation')
         else:
