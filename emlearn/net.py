@@ -76,7 +76,7 @@ def c_array_declare(name, size, dtype='float', modifiers='static const',
 def c_generate_net(activations, weights, biases, prefix):
     def init_net(name, n_layers, layers_name, buf1_name, buf2_name, buf_length):
         init = c_struct_init(n_layers, layers_name, buf1_name, buf2_name, buf_length)
-        o = 'static const EmlNet {name} = {init};'.format(**locals())
+        o = 'static EmlNet {name} = {init};'.format(**locals())
         return o
     def init_layer(name, n_outputs, n_inputs, weigths_name, biases_name, activation_func):
         init = c_struct_init(n_outputs, n_inputs, weights_name, biases_name, activation_func)
