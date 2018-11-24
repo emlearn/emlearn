@@ -52,18 +52,11 @@ public:
         const int64_t n_samples = in.shape()[0];
         const int32_t n_features = in.shape()[1];
 
-        // FIXME: use floats primarily
-        std::vector<eml_q16_t> values(n_features);
-
         auto classes = py::array_t<int32_t>(n_samples);
         auto r = classes.mutable_unchecked<1>(); 
         for (int i=0; i<n_samples; i++) {
-            const float *floats = in.data(i);
-
-            for (int i=0; i<n_features; i++) {
-                values[i] = EML_Q16_FROMFLOAT(floats[i]);
-            }
-            const int32_t p = eml_bayes_predict(&model, values.data(), n_features);
+            const float *features = in.data(i);
+            const int32_t p = eml_bayes_predict(&model, features, n_features);
             if (p < 0) {
                 throw std::runtime_error("Unknown error");
             }
