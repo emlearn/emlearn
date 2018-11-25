@@ -68,13 +68,12 @@ eml_benchmark_fill(float *values, int features) {
 
 
 EmlError
-eml_benchmark_melspectrogram(EmlAudioMel mel_params, int n_repetitions, float *times)
+eml_benchmark_melspectrogram(EmlAudioMel mel_params,
+                    float *input_data, float *temp_data, 
+                    int n_repetitions, float *times)
 {
     // prepare data
-    // FIXME: unhardcode lengths, pass in from outside
-    float input_data[EML_AUDIOFFT_LENGTH];
-    float temp_data[EML_AUDIOFFT_LENGTH];
-
+    // FIXME: unhardcode lengths
     EmlVector input = { input_data, EML_AUDIOFFT_LENGTH };
     EmlVector temp = { temp_data, EML_AUDIOFFT_LENGTH };
 

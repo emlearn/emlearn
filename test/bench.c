@@ -11,9 +11,12 @@ bench_melspec()
     const EmlAudioMel mel = { 64, 0, 20000, 1024, 44100 };
     float times[n_reps];
 
+    float input_data[EML_AUDIOFFT_LENGTH] = {0};
+    float temp_data[EML_AUDIOFFT_LENGTH] = {0};
+
     eml_benchmark_fill(times, n_reps);
 
-    eml_benchmark_melspectrogram(mel, n_reps, times);
+    eml_benchmark_melspectrogram(mel, input_data, temp_data, n_reps, times);
     EmlVector t = { times, n_reps };
 
     const float mean = eml_vector_mean(t);
