@@ -4,7 +4,6 @@
 0.3
 
 * Standalone example on microcontroller. XOR?
-* Use absolute path by default for library imports in generated code
 
 0.4
 
@@ -30,16 +29,9 @@ Short audio buffers in, feature extraction, normalization, classifier, predictio
 * Implement low-level features.
 RMS, zero-crossings, spectral centroid, spectral flatness
 
-## bayes
-
-0.3
-
-* Use floats by default. At least external API
-* Move fixed-point somewhere reusable, add missing namespace
 
 ## nets
 
-- Support generating C definitions for the model
 - Add support for CNNs. 1D+2D convolutions, pooling (Keras).
 - Add support for RNNs. SimpleRNN, LSTM, GRU
 - Support quantized models (8 bits)
@@ -50,10 +42,6 @@ RMS, zero-crossings, spectral centroid, spectral flatness
 0.3
 
 * Use floats by default
-
-1.0
-
-* Support returning probabilities
 
 Probably
 
