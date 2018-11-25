@@ -6,7 +6,11 @@
 extern "C" {
 #endif
 
+#include "eml_common.h"
 #include "eml_vector.h"
+#include "eml_fft.h" 
+
+#include <math.h>
 
 // Double buffering
 typedef struct _EmlAudioBufferer {

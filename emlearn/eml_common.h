@@ -66,4 +66,8 @@ eml_error_str(EmlError e) {
     }
 }
 
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
+
 #endif // EML_COMMON_H

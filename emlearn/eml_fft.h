@@ -33,12 +33,8 @@ extern "C" {
 
 
 #include <math.h>
-#include <stddef.h>
-#include <stdint.h>
 
-#ifndef M_PI
-#define M_PI 3.14159265358979323846
-#endif
+#include "eml_common.h"
 
 static size_t reverse_bits(size_t x, int n) {
 	size_t result = 0;

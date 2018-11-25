@@ -6,9 +6,13 @@
 extern "C" {
 #endif
 
+#include "eml_common.h"
+#include <math.h>
+#include <stdlib.h>
+
 typedef struct {
     float *data;
-    ssize_t length;
+    int length;
 } EmlVector;
 
 
@@ -55,7 +59,7 @@ eml_vector_max_into(EmlVector a, EmlVector b) {
         return -1;
     }
 
-    for (ssize_t i=0; i<a.length; i++) {
+    for (int32_t i=0; i<a.length; i++) {
         a.data[i] = EM_MAX(a.data[i], b.data[i]);
     }
     return 0;
@@ -63,7 +67,7 @@ eml_vector_max_into(EmlVector a, EmlVector b) {
 
 int
 eml_vector_set_value(EmlVector a, float val) {
-    for (ssize_t i=0; i<a.length; i++) {
+    for (int32_t i=0; i<a.length; i++) {
         a.data[i] = val;
     }
     return 0;
@@ -72,7 +76,7 @@ eml_vector_set_value(EmlVector a, float val) {
 float
 eml_vector_mean(EmlVector v) {
     float sum = 0.0f;
-    for (ssize_t i=0; i<v.length; i++) {
+    for (int32_t i=0; i<v.length; i++) {
         sum += v.data[i];
     }
     float mean = sum/v.length; 
@@ -82,7 +86,7 @@ eml_vector_mean(EmlVector v) {
 int
 eml_vector_subtract_value(EmlVector v, float val) {
 
-    for (ssize_t i=0; i<v.length; i++) {
+    for (int32_t i=0; i<v.length; i++) {
         v.data[i] -= val;
     }
     return 0;
