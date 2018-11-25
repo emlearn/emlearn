@@ -10,9 +10,9 @@
 // TODO: implement HardSigmoid
 typedef enum _EmlNetActivationFunction {
     EmlNetActivationIdentity = 0,
-    EmlNetActivationReLu,
+    EmlNetActivationRelu,
     EmlNetActivationLogistic,
-    EmlNetActivationSoftMax,
+    EmlNetActivationSoftmax,
     EmlNetActivationTanh,
     EmlNetActivationFunctions,
 } EmlNetActivationFunction;
@@ -29,30 +29,20 @@ eml_net_activation_function_strs[EmlNetActivationFunctions] = {
 typedef struct _EmlNetLayer {
     int32_t n_outputs;
     int32_t n_inputs;
-    float *weights;
-    float *biases;
+    const float *weights;
+    const float *biases;
     EmlNetActivationFunction activation;
 } EmlNetLayer;
 
 typedef struct _EmlNet {
     // Layers of the neural network
     int32_t n_layers;
-    EmlNetLayer *layers;
+    const EmlNetLayer *layers;
     // Buffers for storing activations
     float *activations1;
     float *activations2;
     int32_t activations_length;
 } EmlNet;
-
-
-void
-print_array(const float *values, int32_t length) {
-    printf("n=%d [", length);
-    for (int i=0; i<length; i++) {
-        printf("%f,", values[i]);
-    }
-    printf("]\n");    
-} 
 
 
 static float
@@ -96,7 +86,7 @@ eml_net_softmax(float *input, size_t input_length)
 }
 
 int32_t
-eml_net_argmax(float *values, int32_t values_length) {
+eml_net_argmax(const float *values, int32_t values_length) {
 
     float vmax = -INFINITY;
     int32_t argmax = -1;
@@ -204,7 +194,7 @@ eml_net_layer_forward(const EmlNetLayer *layer,
     // apply activation function
     if (layer->activation == EmlNetActivationIdentity) {
         // no-op
-    } else if (layer->activation == EmlNetActivationReLu) {
+    } else if (layer->activation == EmlNetActivationRelu) {
         for (int i=0; i<layer->n_outputs; i++) {
             out[i] = eml_net_relu(out[i]);
         }
@@ -216,7 +206,7 @@ eml_net_layer_forward(const EmlNetLayer *layer,
         for (int i=0; i<layer->n_outputs; i++) {
             out[i] = eml_net_tanh(out[i]);
         }
-    } else if (layer->activation == EmlNetActivationSoftMax) {
+    } else if (layer->activation == EmlNetActivationSoftmax) {
         eml_net_softmax(out, layer->n_outputs);
     } else {
         return EmlUnsupported;

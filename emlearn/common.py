@@ -50,6 +50,7 @@ def build_classifier(cmodel, name, temp_dir, include_dir, func=None, compiler=No
         code_file, '-o', bin_path,
         '-I{}'.format(include_dir),
         '-I{}'.format(temp_dir),
+        '-lm',
     ]
     subprocess.check_call(' '.join(args), shell=True)
 

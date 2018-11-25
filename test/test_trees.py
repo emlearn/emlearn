@@ -28,7 +28,7 @@ METHODS = ['pymodule', 'loadable', 'inline']
 @pytest.mark.parametrize("data", DATASETS.keys())
 @pytest.mark.parametrize("model", MODELS.keys())
 @pytest.mark.parametrize("method", METHODS)
-def test_prediction_equals_sklearn(data, model, method):
+def test_trees_sklearn_predict(data, model, method):
     X, y = DATASETS[data]
     estimator = MODELS[model]
 

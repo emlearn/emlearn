@@ -39,9 +39,9 @@ SKLEARN_PARAMS = [
 ]
 
 @pytest.mark.parametrize('modelparams,params', SKLEARN_PARAMS)
-def test_test_sklearn_predict(modelparams,params):
+def test_sklearn_predict(modelparams,params):
 
-    model = MLPClassifier(**modelparams, max_iter=20)
+    model = MLPClassifier(**modelparams, max_iter=10)
 
     for random in range(0, 3):
         # create dataset
@@ -65,7 +65,7 @@ def test_test_sklearn_predict(modelparams,params):
             cpred = cmodel.predict(X_test)
             pred = model.predict(X_test)
 
-        assert_almost_equal(proba, cproba)
+        assert_almost_equal(proba, cproba, decimal=6)
         assert_equal(pred, cpred)
 
 
@@ -117,6 +117,19 @@ KERAS_MODELS = {
 if getattr(keras.layers, 'ReLu', None):
     KERAS_MODELS['Dropout.Relu.Softmax'] = keras_dropout_relu_softmax(3, 4),
 
+def assert_equivalent(model, X_test, n_classes, method):
+    cmodel = emlearn.convert(model, method=method)
+
+    # TODO: support predict_proba, use that instead
+    cpred = cmodel.predict(X_test)
+    pred = model.predict(X_test)
+    if n_classes == 2:
+        pred = (pred[:,0] > 0.5).astype(int)
+    else:
+        pred = numpy.argmax(pred, axis=1)
+
+    assert_equal(pred, cpred)
+
 @pytest.mark.parametrize('modelname', KERAS_MODELS.keys())
 def test_net_keras_predict(modelname):
     model, params = KERAS_MODELS[modelname]
@@ -134,19 +147,10 @@ def test_net_keras_predict(modelname):
         if params['classes'] != 2:
             y_train = keras.utils.to_categorical(y_train, num_classes=params['classes'])
 
-        model.fit(X_train, y_train, epochs=3, batch_size=10)
-        cmodel = emlearn.convert(model)
-
+        model.fit(X_train, y_train, epochs=1, batch_size=10)
         X_test = X_test[:3]
 
-        # TODO: support predict_proba, use that instead
-        cpred = cmodel.predict(X_test)
-        pred = model.predict(X_test)
-        if params['classes'] == 2:
-            pred = (pred[:,0] > 0.5).astype(int)
-        else:
-            pred = numpy.argmax(pred, axis=1)
-
-        assert_equal(pred, cpred)
-
+        # check each method. Done here instead of using parameters to save time, above is slow
+        assert_equivalent(model, X_test[:3], params['classes'], method='pymodule')
+        assert_equivalent(model, X_test[:3], params['classes'], method='loadable')
 
