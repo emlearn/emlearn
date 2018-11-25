@@ -4,6 +4,8 @@ numpy.seterr(all='raise')
 from . import common
 import eml_bayes
 
+import os.path
+
 def prob_ref(x, mean, std):
     exponent = (- ((x - mean)**2 / (2 * std**2)))
     sigma_max = 100
@@ -102,7 +104,7 @@ class Wrapper(object):
 
         code = generate_c(self.model, name)
         if file:
-            with open(file) as f:
+            with open(file, 'w') as f:
                 f.write(code)
 
         return code

@@ -1,9 +1,10 @@
 
 from . import common
-
 import eml_net
 
 import numpy
+
+import os.path
 
 def argmax(sequence):
     max_idx = 0
@@ -50,7 +51,7 @@ class Wrapper:
 
         code = c_generate_net(self.activations, self.weights, self.biases, name)
         if file:
-            with open(file) as f:
+            with open(file, 'w') as f:
                 f.write(code)
 
         return code
@@ -126,10 +127,6 @@ def c_generate_net(activations, weights, biases, prefix):
 
     lines = head_lines + layer_lines + net_lines 
     out = '\n'.join(lines)
-
-
-    print('o', out)
-
 
     return out
 

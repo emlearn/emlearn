@@ -379,7 +379,7 @@ class Wrapper:
 
         code = generate_c_forest(self.forest_, name)
         if file:
-            with open(file) as f:
+            with open(file, 'w') as f:
                 f.write(code)
 
         return code
