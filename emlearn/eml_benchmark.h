@@ -2,9 +2,48 @@
 #ifndef EML_BENCHMARK_H
 #define EML_BENCHMARK_H
 
+#include "eml_common.h"
+
+#if defined (__unix__) || (defined (__APPLE__) && defined (__MACH__))
+// Unix-like system
+#define _POSIX_C_SOURCE 199309L
+#define EML_HAVE_SYS_TIME 1
+#endif
+
+
+#ifdef EML_HAVE_SYS_TIME
+#include <sys/time.h>
+int64_t eml_benchmark_micros() {
+    struct timeval spec;
+    gettimeofday(&spec, NULL);
+    //struct timespec spec; 
+    //clock_gettime(CLOCK_MONOTONIC, &spec);
+    const int64_t micros = (int64_t)(spec.tv_sec)*1000LL*1000LL + spec.tv_usec;
+    return micros;
+}
+#endif
+
+#ifdef _WIN32
+#include <windows.h>
+int64_t eml_benchmark_micros(void)
+{
+    LARGE_INTEGER t, f;
+    QueryPerformanceCounter(&t);
+    QueryPerformanceFrequency(&f);
+    double sec = (double)t.QuadPart/(double)f.QuadPart;
+    return sec * 1000000LL;
+}
+#endif
+
+#ifdef ARDUINO
+int64_t eml_benchmark_micros() {
+    return micros();
+}
+#endif
+
 // https://en.wikipedia.org/wiki/Lehmer_random_number_generator#Parameters_in_common_use
 static uint32_t
-lcg_parkmiller(uint32_t *state) {
+eml_lcg_parkmiller(uint32_t *state) {
     const uint32_t N = 0x7fffffff;
     const uint32_t G = 48271u;
 
@@ -17,33 +56,42 @@ lcg_parkmiller(uint32_t *state) {
     return *state = (a > b) ? (a - b) : (a + (N - b));
 }
 
-void
-eml_benchmark_fill(int32_t *values, int rows, int features) {
+EmlError
+eml_benchmark_fill(float *values, int features) {
     uint32_t rng_state = 1;    
 
-    for (int row=0; row<rows; row++) {
-        for (int feature=0; feature<features; feature++) {
-            const int idx = (row * features) + feature;
-            values[idx] = (int32_t)lcg_parkmiller(&rng_state);
-        }
+    for (int i=0; i<features; i++) {
+        values[i] = (int32_t)eml_lcg_parkmiller(&rng_state);
     }
+    return EmlOk;
 }
 
 
-int
-eml_benchmark_run(EmlTrees *trees, int32_t *values, int rows, int features, int repetitions) {
+EmlError
+eml_benchmark_melspectrogram(EmlAudioMel mel_params, int n_repetitions, float *times)
+{
+    // prepare data
+    // FIXME: unhardcode lengths, pass in from outside
+    float input_data[EML_AUDIOFFT_LENGTH];
+    float temp_data[EML_AUDIOFFT_LENGTH];
 
-    int32_t class_sum = 0; // do something with data, prevents dead-code opt
+    EmlVector input = { input_data, EML_AUDIOFFT_LENGTH };
+    EmlVector temp = { temp_data, EML_AUDIOFFT_LENGTH };
 
-    for (int r=0; r<repetitions; r++) {
-        for (int row=0; row<rows; row++) {
-            int32_t *vals = values + (row * features); 
-            const int32_t class_ = eml_predict(trees, vals, features);
-            class_sum += class_;
-        }
+    // run tests
+    float sum = 0;
+    for (int i=0; i<n_repetitions; i++) {
+        const int64_t start = eml_benchmark_micros();
+
+        eml_audio_melspectrogram(mel_params, input, temp);
+        sum += input.data[0];
+
+        const int64_t end = eml_benchmark_micros();
+        times[i] = end - start;
     }
 
-    return class_sum;
+    // summarize results 
+    return EmlOk;
 }
 
 
