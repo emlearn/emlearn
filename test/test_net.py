@@ -39,7 +39,7 @@ SKLEARN_PARAMS = [
 ]
 
 @pytest.mark.parametrize('modelparams,params', SKLEARN_PARAMS)
-def test_test_sklearn_predict(modelparams,params):
+def test_sklearn_predict(modelparams,params):
 
     model = MLPClassifier(**modelparams, max_iter=10)
 
