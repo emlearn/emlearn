@@ -8,10 +8,21 @@ import numpy.testing
 import emlearn
 import eml_audio
 
-def test_rfft_simple():
-    ss = numpy.arange(0, 1024)
-    ref = numpy.fft.fft(ss, n=1024).real
-    out = eml_audio.rfft(ss)
+FFT_SIZES = [
+    64,
+    128,
+    256,
+    512,
+    1024,
+    2048,
+]
+@pytest.mark.parametrize('n_fft', FFT_SIZES)
+def test_rfft_simple(n_fft):
+    signal = numpy.arange(0, n_fft)
+
+    ref = numpy.fft.fft(signal, n=n_fft).real
+    out = eml_audio.rfft(signal)
+    diff = (out - ref)
 
     numpy.testing.assert_allclose(out, ref, rtol=1e-5)
 
