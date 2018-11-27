@@ -13,6 +13,7 @@ def compile_program(input, out):
         '-std=c99',
         '-O3',
         '-g',
+        '-fno-omit-frame-pointer',
         '-lm',
         '-Wall',
         '-Werror',

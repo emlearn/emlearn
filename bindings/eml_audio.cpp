@@ -19,27 +19,35 @@ rfft_py(py::array_t<float, py::array::c_style | py::array::forcecast> in) {
         throw std::runtime_error("SFT input must have dimensions 1");
     }
 
-    if (in.shape(0) != EML_AUDIOFFT_LENGTH) {
-        throw std::runtime_error("SFT must have length EML_AUDIOFFT_LENGTH");
+    const int n_fft = in.shape(0);
+
+    // Precompute FFT table
+    const int n_fft_table = n_fft/2;
+    std::vector<double> fft_sin(n_fft_table);
+    std::vector<double> fft_cos(n_fft_table);
+    EmlFFT fft = { n_fft_table, fft_sin.data(), fft_cos.data() };
+    eml_fft_fill(fft, n_fft);
+
+    // Setup working buffers
+    const float * in_data = (const float *)in.data();
+    std::vector<float> imag(n_fft);
+    std::vector<float> real(n_fft);
+    for (size_t i=0; i<real.size(); i++) {
+        real[i] = in_data[i];
+    }
+    std::fill(imag.begin(), imag.end(), 0);
+
+    // Do FFT
+    const int status = eml_fft_forward(fft, real.data(), imag.data(), n_fft);
+
+    if (status != EmlOk) {
+        throw std::runtime_error("eml_fft error");
     }
 
-    auto ret = py::array_t<float>(in.shape(0));
-
-    float *samples = (float *)in.data();
-    float *retdata = (float *)ret.data();
-
-    float imag_data[EML_AUDIOFFT_LENGTH];
-    EmlVector real = { samples, EML_AUDIOFFT_LENGTH };
-    EmlVector imag = { imag_data, EML_AUDIOFFT_LENGTH };
-    eml_vector_set_value(imag, 0.0f);
-
-    const int status = eml_audio_fft(real, imag);
- 
-    EmlVector retv = { retdata, EML_AUDIOFFT_LENGTH };
-    eml_vector_set(retv, real, 0);
-
-    if (status != 0) {
-        throw std::runtime_error("SFT returned error");
+    // Copy to output
+    auto ret = py::array_t<float>(n_fft);
+    for (size_t i=0; i<real.size(); i++) {
+        ((float *)ret.data())[i] = real[i];
     }
 
     return ret;
@@ -56,6 +64,13 @@ melspectrogram_py(py::array_t<float, py::array::c_style | py::array::forcecast> 
         throw std::runtime_error("spectrogram input must have dimensions 1");
     }
 
+    // FFT table
+    const int n_fft_table = n_fft/2;
+    std::vector<double> fft_sin(n_fft_table);
+    std::vector<double> fft_cos(n_fft_table);
+    EmlFFT fft = { n_fft_table, fft_sin.data(), fft_cos.data() };
+    eml_fft_fill(fft, n_fft);
+
     const EmlAudioMel params = { n_mels, fmin, fmax, n_fft, samplerate };
 
     // Copy input to avoid modifying
@@ -67,7 +82,7 @@ melspectrogram_py(py::array_t<float, py::array::c_style | py::array::forcecast> 
     EmlVector inv = {(float *)in.data(), length};
     eml_vector_set(inoutv, inv, 0);
 
-    const int status = eml_audio_melspectrogram(params, inoutv, tempv);
+    const int status = eml_audio_melspectrogram(params, fft, inoutv, tempv);
 
     if (status != 0) {
         throw std::runtime_error("melspectrogram returned error: " + std::to_string(status));

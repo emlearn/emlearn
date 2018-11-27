@@ -17,7 +17,7 @@ def test_rfft_simple():
 
 def test_rfft_not_power2_length():
     with pytest.raises(Exception) as e:
-        eml_audio.rfft(numpy.array([1,3,4,5]))
+        eml_audio.rfft(numpy.array([0,1,3,4,5]))
 
 @pytest.mark.skip('wrong scaling?')
 def test_melspectrogram():

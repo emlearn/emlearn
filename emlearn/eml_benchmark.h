@@ -69,27 +69,26 @@ eml_benchmark_fill(float *values, int features) {
 
 EmlError
 eml_benchmark_melspectrogram(EmlAudioMel mel_params,
+                    EmlFFT fft,
                     float *input_data, float *temp_data, 
                     int n_repetitions, float *times)
 {
     // prepare data
-    // FIXME: unhardcode lengths
-    EmlVector input = { input_data, EML_AUDIOFFT_LENGTH };
-    EmlVector temp = { temp_data, EML_AUDIOFFT_LENGTH };
+    EmlVector input = { input_data, mel_params.n_fft };
+    EmlVector temp = { temp_data, mel_params.n_fft };
 
     // run tests
     float sum = 0;
     for (int i=0; i<n_repetitions; i++) {
         const int64_t start = eml_benchmark_micros();
 
-        eml_audio_melspectrogram(mel_params, input, temp);
+        eml_audio_melspectrogram(mel_params, fft, input, temp);
         sum += input.data[0];
 
         const int64_t end = eml_benchmark_micros();
         times[i] = end - start;
     }
 
-    // summarize results 
     return EmlOk;
 }
 

@@ -7,16 +7,24 @@
 EmlError
 bench_melspec()
 {
-    const int n_reps = 100;
-    const EmlAudioMel mel = { 64, 0, 20000, 1024, 44100 };
+    const int n_fft = 1024;
+    const int n_reps = 1000;
+    const EmlAudioMel mel = { 64, 0, 20000, n_fft, 44100 };
     float times[n_reps];
 
-    float input_data[EML_AUDIOFFT_LENGTH] = {0};
-    float temp_data[EML_AUDIOFFT_LENGTH] = {0};
+    const int frame_length = 1024;
 
-    eml_benchmark_fill(times, n_reps);
+    float input_data[frame_length];
+    float temp_data[frame_length];
+    eml_benchmark_fill(input_data, frame_length);
 
-    eml_benchmark_melspectrogram(mel, input_data, temp_data, n_reps, times);
+    const int n_fft_table = n_fft/2;
+    double fft_sin[n_fft_table];
+    double fft_cos[n_fft_table];
+    EmlFFT fft = { n_fft_table, fft_sin, fft_cos };
+    EML_CHECK_ERROR(eml_fft_fill(fft, n_fft));
+
+    eml_benchmark_melspectrogram(mel, fft, input_data, temp_data, n_reps, times);
     EmlVector t = { times, n_reps };
 
     const float mean = eml_vector_mean(t);

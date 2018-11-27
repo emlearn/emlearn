@@ -51,26 +51,6 @@ eml_audio_bufferer_add(EmlAudioBufferer *self, float s) {
     }
 }
 
-#define EML_AUDIOFFT_LENGTH 1024
-#define FFT_TABLE_SIZE EML_AUDIOFFT_LENGTH/2
-
-int
-eml_audio_fft(EmlVector real, EmlVector imag) {  
-
-    if (real.length != EML_AUDIOFFT_LENGTH) {
-        return -1;
-    }
-    if (imag.length != EML_AUDIOFFT_LENGTH) {
-        return -2;
-    }
-
-    const bool success = eml_fft_transform(real.data, imag.data, EML_AUDIOFFT_LENGTH);
-    if (!success) {
-        return -3;
-    }
-
-    return 0;
-}
 
 // Power spectrogram
 // TODO: operate in-place
@@ -182,8 +162,8 @@ eml_audio_melspec(EmlAudioMel mel, EmlVector spec, EmlVector mels) {
     } while(0);
 
 int
-eml_audio_melspectrogram(EmlAudioMel mel_params, EmlVector inout, EmlVector temp) {
-
+eml_audio_melspectrogram(EmlAudioMel mel_params, EmlFFT fft, EmlVector inout, EmlVector temp)
+{
     const int n_fft = mel_params.n_fft;
     const int s_length = 1+n_fft/2;
     const int n_mels = mel_params.n_mels;
@@ -193,7 +173,7 @@ eml_audio_melspectrogram(EmlAudioMel mel_params, EmlVector inout, EmlVector temp
 
     // Perform (short-time) FFT
     EM_RETURN_IF_ERROR(eml_vector_set_value(temp, 0.0f));
-    EM_RETURN_IF_ERROR(eml_audio_fft(inout, temp));
+    EML_CHECK_ERROR(eml_fft_forward(fft, inout.data, temp.data, inout.length));
 
     // Compute mel-spectrogram
     EM_RETURN_IF_ERROR(eml_audio_power_spectrogram(inout, eml_vector_view(temp, 0, s_length), n_fft));
