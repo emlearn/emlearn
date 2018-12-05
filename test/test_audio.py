@@ -14,7 +14,6 @@ FFT_SIZES = [
     256,
     512,
     1024,
-    2048,
 ]
 @pytest.mark.parametrize('n_fft', FFT_SIZES)
 def test_rfft_simple(n_fft):

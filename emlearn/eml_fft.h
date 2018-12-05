@@ -45,8 +45,8 @@ static size_t reverse_bits(size_t x, int n) {
 
 typedef struct _EmlFFT {
     int length; // (n/2)
-    double *sin;    
-    double *cos;
+    float *sin;
+    float *cos;
 } EmlFFT;
 
 
@@ -77,7 +77,7 @@ eml_fft_forward(EmlFFT table, float real[], float imag[], size_t n) {
 	for (size_t i = 0; i < n; i++) {
 		size_t j = reverse_bits(i, levels);
 		if (j > i) {
-			double temp = real[i];
+			float temp = real[i];
 			real[i] = real[j];
 			real[j] = temp;
 			temp = imag[i];
@@ -93,8 +93,8 @@ eml_fft_forward(EmlFFT table, float real[], float imag[], size_t n) {
 		for (size_t i = 0; i < n; i += size) {
 			for (size_t j = i, k = 0; j < i + halfsize; j++, k += tablestep) {
 				size_t l = j + halfsize;
-				double tpre =  real[l] * table.cos[k] + imag[l] * table.sin[k];
-				double tpim = -real[l] * table.sin[k] + imag[l] * table.cos[k];
+				float tpre =  real[l] * table.cos[k] + imag[l] * table.sin[k];
+				float tpim = -real[l] * table.sin[k] + imag[l] * table.cos[k];
 				real[l] = real[j] - tpre;
 				imag[l] = imag[j] - tpim;
 				real[j] += tpre;

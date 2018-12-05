@@ -23,8 +23,8 @@ rfft_py(py::array_t<float, py::array::c_style | py::array::forcecast> in) {
 
     // Precompute FFT table
     const int n_fft_table = n_fft/2;
-    std::vector<double> fft_sin(n_fft_table);
-    std::vector<double> fft_cos(n_fft_table);
+    std::vector<float> fft_sin(n_fft_table);
+    std::vector<float> fft_cos(n_fft_table);
     EmlFFT fft = { n_fft_table, fft_sin.data(), fft_cos.data() };
     eml_fft_fill(fft, n_fft);
 
@@ -66,8 +66,8 @@ melspectrogram_py(py::array_t<float, py::array::c_style | py::array::forcecast> 
 
     // FFT table
     const int n_fft_table = n_fft/2;
-    std::vector<double> fft_sin(n_fft_table);
-    std::vector<double> fft_cos(n_fft_table);
+    std::vector<float> fft_sin(n_fft_table);
+    std::vector<float> fft_cos(n_fft_table);
     EmlFFT fft = { n_fft_table, fft_sin.data(), fft_cos.data() };
     eml_fft_fill(fft, n_fft);
 

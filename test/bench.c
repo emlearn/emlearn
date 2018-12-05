@@ -19,8 +19,8 @@ bench_melspec()
     eml_benchmark_fill(input_data, frame_length);
 
     const int n_fft_table = n_fft/2;
-    double fft_sin[n_fft_table];
-    double fft_cos[n_fft_table];
+    float fft_sin[n_fft_table];
+    float fft_cos[n_fft_table];
     EmlFFT fft = { n_fft_table, fft_sin, fft_cos };
     EML_CHECK_ERROR(eml_fft_fill(fft, n_fft));
 
