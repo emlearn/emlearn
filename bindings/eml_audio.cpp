@@ -6,6 +6,7 @@
 #include <pybind11/stl.h>
 #include <pybind11/numpy.h>
 
+#define EML_DEBUG 1
 
 #include <eml_fft.h>
 #include <eml_audio.h>
