@@ -64,6 +64,10 @@ melspectrogram_py(py::array_t<float, py::array::c_style | py::array::forcecast> 
         throw std::runtime_error("spectrogram input must have dimensions 1");
     }
 
+    if (in.shape(0) != n_fft) {
+        throw std::runtime_error("melspectrogram framing not implented");
+    }
+
     // FFT table
     const int n_fft_table = n_fft/2;
     std::vector<float> fft_sin(n_fft_table);
@@ -81,11 +85,12 @@ melspectrogram_py(py::array_t<float, py::array::c_style | py::array::forcecast> 
     EmlVector tempv = { (float *)temp.data(), length };
     EmlVector inv = {(float *)in.data(), length};
     eml_vector_set(inoutv, inv, 0);
+    eml_vector_set_value(tempv, 0);
 
-    const int status = eml_audio_melspectrogram(params, fft, inoutv, tempv);
+    const EmlError error = eml_audio_melspectrogram(params, fft, inoutv, tempv);
 
-    if (status != 0) {
-        throw std::runtime_error("melspectrogram returned error: " + std::to_string(status));
+    if (error != EmlOk) {
+        throw std::runtime_error("melspectrogram returned error: " + std::string(eml_error_str(error)));
     }
 
     auto ret = py::array_t<float>(params.n_mels);
