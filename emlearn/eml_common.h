@@ -118,4 +118,14 @@ static EmlDebugFunction eml_debug = eml_debug_stderr;
 #define M_PI 3.14159265358979323846
 #endif
 
+
+static inline
+float eml_max(float a, float b) {
+    return (a > b) ? a : b;
+}
+static inline
+float eml_min(float a, float b) {
+    return (a < b) ? a : b;
+}
+
 #endif // EML_COMMON_H

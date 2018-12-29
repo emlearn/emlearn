@@ -90,9 +90,8 @@ typedef struct _EmlAudioMel {
 } EmlAudioMel;
 
 
-static int
-mel_bin(EmlAudioMel params, int n) {
-
+float
+eml_audio_mel_center(EmlAudioMel params, int n) {
     // Filters are spaced evenly in mel space
     const float melmin = eml_audio_mels_from_hz(params.fmin);
     const float melmax = eml_audio_mels_from_hz(params.fmax);
@@ -100,12 +99,27 @@ mel_bin(EmlAudioMel params, int n) {
 
     const float mel = melmin + (n * melstep);
     const float hz = eml_audio_mels_to_hz(mel);
+    return hz;
+}
+int
+eml_audio_mel_bin(EmlAudioMel params, float hz) {
     const int bin = floor((params.n_fft+1)*(hz/params.samplerate));
     return bin;
 }
+static int
+mel_bin(EmlAudioMel params, int n) {
+    const float hz = eml_audio_mel_center(params, n);
+    return eml_audio_mel_bin(params, hz);
+}
+
+float
+eml_fft_freq(EmlAudioMel params, int n) {
+    const float end = params.samplerate/2.0f;
+    const int steps = (1+params.n_fft/2) - 1;
+    return (n*end)/steps;
+}
 
 
-// https://haythamfayek.com/2016/04/21/speech-processing-for-machine-learning.html
 EmlError
 eml_audio_melspec(EmlAudioMel mel, EmlVector spec, EmlVector mels) {
 
@@ -118,23 +132,37 @@ eml_audio_melspec(EmlAudioMel mel, EmlVector spec, EmlVector mels) {
         const int left = mel_bin(mel, m-1);
         const int center = mel_bin(mel, m);
         const int right = mel_bin(mel, m+1);
-    
+
         if (left < 0) {
             return EmlUnknownError;
         }
         if (right > max_bin) {
             return EmlUnknownError;
-        } 
+        }
+
+        const float fdifflow = eml_audio_mel_center(mel, m) - eml_audio_mel_center(mel, m-1);
+        const float fdiffupper = eml_audio_mel_center(mel, m+1) - eml_audio_mel_center(mel, m);
+
+        //fprintf(stderr, "mel %d:(%d, %d, %d) \n", m, left, center, right);
 
         float val = 0.0f;
-        for (int k=left; k<center; k++) {
-            const float weight = (float)(k - left)/(center - left);
+        for (int k=left; k<=center; k++) {
+            const float r = eml_audio_mel_center(mel, m-1) - eml_fft_freq(mel, k);
+            const float weight = eml_max(eml_min(-r/fdifflow, 1.0f), 0.0f);
+            //if (m == 2) {
+            //    fprintf(stderr, "k=%d wl=%f \n", k, weight);
+            //}
             val += spec.data[k] * weight;
         }
         for (int k=center; k<right; k++) {
-            const float weight = (float)(right - k)/(right - center);
-            val += spec.data[k] * weight;
+            const float r = eml_audio_mel_center(mel, m+1) - eml_fft_freq(mel, k+1);
+            const float weight = eml_max(eml_min(r/fdiffupper, 1.0f), 0.0f);
+            //if (m == 2) {
+            //    fprintf(stderr, "k=%d, wr=%f \n", k, weight);
+            //}
+            val += spec.data[k+1] * weight;
         }
+        //fprintf(stderr, "mel %d: val=%f\n", m, val);
 
         mels.data[m-1] = val;
     }

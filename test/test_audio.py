@@ -36,18 +36,129 @@ def test_rfft_not_power2_length():
     with pytest.raises(Exception) as e:
         eml_audio.rfft(numpy.array([0,1,3,4,5]))
 
+def fft_freqs(sr, n_fft):
+    return numpy.linspace(0, float(sr)/2, int(1 + n_fft//2), endpoint=True)
+
+def fft_freq(sr, n_fft, n):
+    end = float(sr)/2
+    steps = int(1 + n_fft//2) - 1
+    return n*end/steps
+
+def fft_freqs2(sr, n_fft):
+    steps = int(1 + n_fft//2)
+    return numpy.array([ fft_freq(sr, n_fft, n) for n in range(steps) ])
+
+# Based on librosa
+def melfilter(frames, sr, n_fft, n_mels=128, fmin=0.0, fmax=None, htk=True, norm=None):
+    np = numpy
+    if fmax is None:
+        fmax = float(sr) / 2
+    if norm is not None and norm != 1 and norm != np.inf:
+        raise ParameterError('Unsupported norm: {}'.format(repr(norm)))
+
+    # Initialize the weights
+    n_mels = int(n_mels)
+    weights = np.zeros((n_mels, int(1 + n_fft // 2)))
+
+    # Center freqs of each FFT bin
+    fftfreqs = fft_freqs(sr=sr, n_fft=n_fft)
+    fftfreqs2 = fft_freqs2(sr=sr, n_fft=n_fft)
+    assert fftfreqs.shape == fftfreqs2.shape
+    numpy.testing.assert_almost_equal(fftfreqs, fftfreqs2)
+
+    # 'Center freqs' of mel bands - uniformly spaced between limits
+    mel_f = librosa.core.time_frequency.mel_frequencies(n_mels + 2, fmin=fmin, fmax=fmax, htk=htk)
+
+    fdiff = np.diff(mel_f)
+    #ramps = np.subtract.outer(mel_f, fftfreqs)
+
+    for i in range(n_mels):
+        # lower and upper slopes for all bins
+        rlow = mel_f[i] - fftfreqs
+        rupper = mel_f[i+2] - fftfreqs
+
+        lower = -rlow / fdiff[i]
+        upper = rupper / fdiff[i+1]
+
+        # .. then intersect them with each other and zero
+        w = np.maximum(0, np.minimum(lower, upper))
+        if i == 4:
+            print('wei', i, w[10:40])
+        weights[i] = w
+
+    refweighs = librosa.filters.mel(sr, n_fft, n_mels, fmin, fmax, htk=htk, norm=norm)
+    numpy.testing.assert_allclose(weights, refweighs)
+
+    return numpy.dot(frames, weights.T)
+    #return numpy.dot(weights, frames)
+
+
+# Basis for our C implementation,
+# a mix of https://haythamfayek.com/2016/04/21/speech-processing-for-machine-learning.html
+# and librosa
+def melfilter_ref(pow_frames, sr, n_mels, n_fft):
+    NFFT=n_fft
+    sample_rate=sr
+    nfilt=n_mels
+
+    low_freq_mel = 0
+    high_freq_mel = (2595 * numpy.log10(1 + (sample_rate / 2) / 700))  # Convert Hz to Mel
+    mel_points = numpy.linspace(low_freq_mel, high_freq_mel, nfilt + 2)  # Equally spaced in Mel scale
+    hz_points = (700 * (10 ** (mel_points / 2595) - 1))  # Convert Mel to Hz
+    bin = numpy.floor((NFFT + 1) * hz_points / sample_rate)
+    fftfreqs = fft_freqs2(sr=sr, n_fft=n_fft)
+
+    fbank = numpy.zeros((nfilt, int(numpy.floor(NFFT / 2 + 1))))
+    for m in range(1, nfilt + 1):
+        f_m_minus = int(bin[m - 1])  # left
+        f_m = int(bin[m])  # center
+        f_m_plus = int(bin[m + 1])  # right
+
+        i = m-1
+        fdifflow = hz_points[m] - hz_points[m - 1]
+        fdiffupper = hz_points[m + 1] - hz_points[m]
+
+        # TODO: fix/check divergence with librosa, who seems to compute
+        # the peak filter value twice and select the lowest
+        # sometimes the one below can give over 1.0 results at the center,
+        # hence the clamp to 1.0, which does not seem right
+        for k in range(f_m_minus, f_m+1):
+            ramp = hz_points[i] - fftfreqs[k]
+            w = -ramp / fdifflow
+            w = max(min(w, 1), 0)
+            fbank[i, k] = w
+        for k in range(f_m, f_m_plus):
+            ramp = hz_points[i+2] - fftfreqs[k+1]
+            w = ramp / fdiffupper
+            w = max(min(w, 1), 0)
+            fbank[i, k+1] = w
+        if i == 4:
+            print('f', i, fbank[i][10:40])
+
+    refweighs = librosa.filters.mel(sr, n_fft, n_mels, fmin=0, fmax=22050//2, htk=True, norm=None)
+    #numpy.testing.assert_allclose(fbank, refweighs)
+
+    filtered = numpy.dot(pow_frames, fbank.T)
+    return filtered
 
 def test_melfilter_basic():
-    n_mels = 32
+    n_mels = 16
     n_fft = 512
     length = 1 + n_fft//2
     sr = 22050
     fmin = 0
     fmax = sr//2
 
-    input = numpy.ones(shape=length)
+    #input = numpy.ones(shape=length)
+    input = numpy.random.rand(length)
     out = eml_audio.melfilter(input, sr, n_fft, n_mels, fmin, fmax)
     ref = librosa.feature.melspectrogram(S=input, htk=True, norm=None, sr=sr, n_fft=n_fft, n_mels=n_mels, fmin=fmin, fmax=fmax)
+    ref2 = melfilter(input, sr, n_mels=n_mels, n_fft=n_fft)
+
+    numpy.testing.assert_allclose(ref2, ref, rtol=1e-5)
+    ref3 = melfilter_ref(input, sr, n_mels, n_fft)
+    numpy.testing.assert_allclose(ref3, ref, rtol=1e-3)
+
     diff = out - ref
 
     fig, (ref_ax, out_ax, diff_ax) = plt.subplots(3)
@@ -57,7 +168,7 @@ def test_melfilter_basic():
     fig.savefig('melfilter.basic.png')
 
     assert ref.shape == out.shape
-    numpy.testing.assert_allclose(out, ref, rtol=0.30) # FIXME: should be 0.01 or better
+    numpy.testing.assert_allclose(out, ref, rtol=1e-3)
 
 
 def test_melfilter_librosa():
@@ -67,7 +178,7 @@ def test_melfilter_librosa():
     hop_length = 256
     fmin = 500
     fmax = 5000
-    n_mels = 32
+    n_mels = 16
 
     spec = numpy.abs(librosa.core.stft(y, n_fft=n_fft, hop_length=hop_length))**2
     spec1 = spec[:,0]
@@ -84,7 +195,7 @@ def test_melfilter_librosa():
     fig.savefig('melfilter.librosa.png')
 
     assert ref.shape == out.shape
-    numpy.testing.assert_allclose(ref, out, rtol=0.9, atol=1) # FIXME: should be 0.01 or better
+    numpy.testing.assert_allclose(ref, out, rtol=0.01)
 
 
 @pytest.mark.skip('broken')
