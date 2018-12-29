@@ -54,23 +54,19 @@ eml_audio_bufferer_add(EmlAudioBufferer *self, float s) {
 
 // Power spectrogram
 // TODO: operate in-place
-int
+EmlError
 eml_audio_power_spectrogram(EmlVector rfft, EmlVector out, int n_fft) {
     const int spec_length = 1+n_fft/2;
 
-    if (rfft.length < spec_length) {
-        return -1;
-    }
-    if (out.length != spec_length) {
-        return -2;
-    }
+    EML_PRECONDITION(rfft.length > spec_length, EmlSizeMismatch);
+    EML_PRECONDITION(out.length == spec_length, EmlSizeMismatch);
 
     const float scale = 1.0f/n_fft;
     for (int i=0; i<spec_length; i++) {
         const float a = fabs(rfft.data[i]);
         out.data[i] = scale * powf(a, 2);
     }
-    return 0;
+    return EmlOk;
 }
 
 // Simple formula, from Hidden Markov Toolkit
@@ -110,29 +106,24 @@ mel_bin(EmlAudioMel params, int n) {
 
 
 // https://haythamfayek.com/2016/04/21/speech-processing-for-machine-learning.html
-int
+EmlError
 eml_audio_melspec(EmlAudioMel mel, EmlVector spec, EmlVector mels) {
 
     const int max_bin = 1+mel.n_fft/2;
-    if (max_bin > spec.length) {
-        return -1;
-    }
-    if (mel.n_mels != mels.length) {
-        return -2;
-    }
+    EML_PRECONDITION(max_bin <= spec.length, EmlSizeMismatch);
+    EML_PRECONDITION(mel.n_mels == mels.length, EmlSizeMismatch);
 
     // Note: no normalization
-
     for (int m=1; m<mel.n_mels+1; m++) {
         const int left = mel_bin(mel, m-1);
         const int center = mel_bin(mel, m);
         const int right = mel_bin(mel, m+1);
     
         if (left < 0) {
-            return -3;
+            return EmlUnknownError;
         }
         if (right > max_bin) {
-            return -4;
+            return EmlUnknownError;
         } 
 
         float val = 0.0f;
@@ -148,20 +139,11 @@ eml_audio_melspec(EmlAudioMel mel, EmlVector spec, EmlVector mels) {
         mels.data[m-1] = val;
     }
 
-    return 0;
+    return EmlOk;
 }
 
 
-
-#define EM_RETURN_IF_ERROR(expr) \
-    do { \
-        const int _e = (expr); \
-        if (_e != 0) { \
-            return _e; \
-        } \
-    } while(0);
-
-int
+EmlError
 eml_audio_melspectrogram(EmlAudioMel mel_params, EmlFFT fft, EmlVector inout, EmlVector temp)
 {
     const int n_fft = mel_params.n_fft;
@@ -169,17 +151,17 @@ eml_audio_melspectrogram(EmlAudioMel mel_params, EmlFFT fft, EmlVector inout, Em
     const int n_mels = mel_params.n_mels;
  
     // Apply window
-    EM_RETURN_IF_ERROR(eml_vector_hann_apply(inout));
+    EML_CHECK_ERROR(eml_vector_hann_apply(inout));
 
     // Perform (short-time) FFT
-    EM_RETURN_IF_ERROR(eml_vector_set_value(temp, 0.0f));
+    EML_CHECK_ERROR(eml_vector_set_value(temp, 0.0f));
     EML_CHECK_ERROR(eml_fft_forward(fft, inout.data, temp.data, inout.length));
 
     // Compute mel-spectrogram
-    EM_RETURN_IF_ERROR(eml_audio_power_spectrogram(inout, eml_vector_view(temp, 0, s_length), n_fft));
-    EM_RETURN_IF_ERROR(eml_audio_melspec(mel_params, temp, eml_vector_view(inout, 0, n_mels)));
+    EML_CHECK_ERROR(eml_audio_power_spectrogram(inout, eml_vector_view(temp, 0, s_length), n_fft));
+    EML_CHECK_ERROR(eml_audio_melspec(mel_params, temp, eml_vector_view(inout, 0, n_mels)));
 
-    return 0;
+    return EmlOk;
 }
 
 #ifdef __cplusplus

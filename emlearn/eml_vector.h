@@ -65,12 +65,12 @@ eml_vector_max_into(EmlVector a, EmlVector b) {
     return 0;
 }
 
-int
+EmlError
 eml_vector_set_value(EmlVector a, float val) {
     for (int32_t i=0; i<a.length; i++) {
         a.data[i] = val;
     }
-    return 0;
+    return EmlOk;
 }
 
 float
@@ -111,7 +111,7 @@ eml_vector_meansub(EmlVector inout) {
 
 
 // Hann window
-int
+EmlError
 eml_vector_hann_apply(EmlVector out) {
 
     const long len = out.length;
@@ -119,7 +119,7 @@ eml_vector_hann_apply(EmlVector out) {
         float m = 0.5 * (1 - cos(2*M_PI*i/(len-1)));
         out.data[i] = m * out.data[i];
     }
-    return 0;
+    return EmlOk;
 }
 
 #ifdef __cplusplus

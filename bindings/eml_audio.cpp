@@ -56,7 +56,7 @@ rfft_py(py::array_t<float, py::array::c_style | py::array::forcecast> in) {
 
 py::array_t<float>
 melspectrogram_py(py::array_t<float, py::array::c_style | py::array::forcecast> in,
-    int n_mels, float fmin, float fmax, int n_fft, int samplerate
+    int samplerate, int n_fft, int n_mels, float fmin, float fmax
 )
 
 {
