@@ -54,6 +54,34 @@ rfft_py(py::array_t<float, py::array::c_style | py::array::forcecast> in) {
     return ret;
 }
 
+py::array_t<float>
+melfilter_py(py::array_t<float, py::array::c_style | py::array::forcecast> in,
+    int samplerate, int n_fft, int n_mels, float fmin, float fmax
+)
+{
+    if (in.ndim() != 1) {
+        throw std::runtime_error("melfilter() input must have dimensions 1");
+    }
+    if (in.shape(0) != 1+(n_fft/2)) {
+        throw std::runtime_error("framing not implented");
+    }
+
+    const EmlAudioMel params = { n_mels, fmin, fmax, n_fft, samplerate };
+
+    // Copy input to avoid modifying
+    const int length = in.shape(0);
+    EmlVector inv = {(float *)in.data(), length};
+    // Prepare output
+    auto ret = py::array_t<float>(params.n_mels);
+    EmlVector outv = { (float *)ret.data(), params.n_mels };
+    // Run
+    const EmlError error = eml_audio_melspec(params, inv, outv);
+    if (error != EmlOk) {
+        throw std::runtime_error("melspec() returned error: " + std::string(eml_error_str(error)));
+    }
+    return ret;
+}
+
 
 py::array_t<float>
 melspectrogram_py(py::array_t<float, py::array::c_style | py::array::forcecast> in,
@@ -101,10 +129,15 @@ melspectrogram_py(py::array_t<float, py::array::c_style | py::array::forcecast> 
     return ret;
 }
 
+
+
 PYBIND11_MODULE(eml_audio, m) {
     m.doc() = "Audio machine learning for microcontrollers and embedded devices";
 
     m.def("rfft", rfft_py);
+    m.def("melfilter", melfilter_py);
+
     m.def("melspectrogram", melspectrogram_py);
+
 }
 
