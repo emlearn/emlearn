@@ -1,43 +1,47 @@
 
-#include <eml_trees.h>
+#include <eml_audio.h>
 #include <eml_benchmark.h>
 
-#include <sys/time.h>
 #include <stdio.h>
-#include <stdlib.h>
 
-#include "mytree.h"
+EmlError
+bench_melspec()
+{
+    const int n_fft = 1024;
+    const int n_reps = 1000;
+    const EmlAudioMel mel = { 64, 0, 20000, n_fft, 44100 };
+    float times[n_reps];
 
-long long current_timestamp() {
-    struct timeval te; 
-    gettimeofday(&te, NULL); 
-    long long milliseconds = te.tv_sec*1000LL + te.tv_usec/1000;
-    return milliseconds;
+    const int frame_length = 1024;
+
+    float input_data[frame_length];
+    float temp_data[frame_length];
+    eml_benchmark_fill(input_data, frame_length);
+
+    const int n_fft_table = n_fft/2;
+    float fft_sin[n_fft_table];
+    float fft_cos[n_fft_table];
+    EmlFFT fft = { n_fft_table, fft_sin, fft_cos };
+    EML_CHECK_ERROR(eml_fft_fill(fft, n_fft));
+
+    eml_benchmark_melspectrogram(mel, fft, input_data, temp_data, n_reps, times);
+    EmlVector t = { times, n_reps };
+
+    const float mean = eml_vector_mean(t);
+    printf("melspec;%d;%f\n", n_reps, mean);
+    return EmlOk;
+}
+
+EmlError
+bench_all()
+{
+    printf("task;repetitions;avg_time_us\n");
+    EML_CHECK_ERROR(bench_melspec());
+    return EmlOk;
 }
 
 int main() {
 
-    const int n_rows = 1000;
-    const int n_features = 61;
-    const int n_repetitions = 1000;
-    EmlTrees *trees = &myclassifier;
-    int32_t *values = (int32_t *)malloc(n_rows*n_features*sizeof(int32_t));
-
-    eml_benchmark_fill(values, n_rows, n_features);
-    
-    printf("%d trees, %d nodes\n", trees->n_trees, trees->n_nodes);
-    printf("%d repetitions of %d rows with %d features\n",
-            n_repetitions, n_rows, n_features);
-
-    const long long pre = current_timestamp();
-    const int32_t s = eml_benchmark_run(trees, values, n_rows, n_features, n_repetitions);
-    const long long post = current_timestamp();
-    const long time_taken = post - pre; 
-    const long n_classifications = n_rows * n_repetitions;    
-
-    printf("took %ld milliseconds\n", time_taken);
-    printf("%ld classifications/msec\n", n_classifications / time_taken);
-    printf("class sum: %d\n", s);
-
-    free(values);
+    const EmlError e = bench_all();
+    return -(int)e;
 }

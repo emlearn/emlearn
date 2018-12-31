@@ -6,7 +6,11 @@
 extern "C" {
 #endif
 
+#include "eml_common.h"
 #include "eml_vector.h"
+#include "eml_fft.h" 
+
+#include <math.h>
 
 // Double buffering
 typedef struct _EmlAudioBufferer {
@@ -47,46 +51,22 @@ eml_audio_bufferer_add(EmlAudioBufferer *self, float s) {
     }
 }
 
-#define EML_AUDIOFFT_LENGTH 1024
-#define FFT_TABLE_SIZE EML_AUDIOFFT_LENGTH/2
-
-int
-eml_audio_fft(EmlVector real, EmlVector imag) {  
-
-    if (real.length != EML_AUDIOFFT_LENGTH) {
-        return -1;
-    }
-    if (imag.length != EML_AUDIOFFT_LENGTH) {
-        return -2;
-    }
-
-    const bool success = eml_fft_transform(real.data, imag.data, EML_AUDIOFFT_LENGTH);
-    if (!success) {
-        return -3;
-    }
-
-    return 0;
-}
 
 // Power spectrogram
 // TODO: operate in-place
-int
+EmlError
 eml_audio_power_spectrogram(EmlVector rfft, EmlVector out, int n_fft) {
     const int spec_length = 1+n_fft/2;
 
-    if (rfft.length < spec_length) {
-        return -1;
-    }
-    if (out.length != spec_length) {
-        return -2;
-    }
+    EML_PRECONDITION(rfft.length > spec_length, EmlSizeMismatch);
+    EML_PRECONDITION(out.length == spec_length, EmlSizeMismatch);
 
     const float scale = 1.0f/n_fft;
     for (int i=0; i<spec_length; i++) {
         const float a = fabs(rfft.data[i]);
         out.data[i] = scale * powf(a, 2);
     }
-    return 0;
+    return EmlOk;
 }
 
 // Simple formula, from Hidden Markov Toolkit
@@ -110,9 +90,8 @@ typedef struct _EmlAudioMel {
 } EmlAudioMel;
 
 
-static int
-mel_bin(EmlAudioMel params, int n) {
-
+float
+eml_audio_mel_center(EmlAudioMel params, int n) {
     // Filters are spaced evenly in mel space
     const float melmin = eml_audio_mels_from_hz(params.fmin);
     const float melmax = eml_audio_mels_from_hz(params.fmax);
@@ -120,82 +99,97 @@ mel_bin(EmlAudioMel params, int n) {
 
     const float mel = melmin + (n * melstep);
     const float hz = eml_audio_mels_to_hz(mel);
+    return hz;
+}
+int
+eml_audio_mel_bin(EmlAudioMel params, float hz) {
     const int bin = floor((params.n_fft+1)*(hz/params.samplerate));
     return bin;
 }
+static int
+mel_bin(EmlAudioMel params, int n) {
+    const float hz = eml_audio_mel_center(params, n);
+    return eml_audio_mel_bin(params, hz);
+}
+
+float
+eml_fft_freq(EmlAudioMel params, int n) {
+    const float end = params.samplerate/2.0f;
+    const int steps = (1+params.n_fft/2) - 1;
+    return (n*end)/steps;
+}
 
 
-// https://haythamfayek.com/2016/04/21/speech-processing-for-machine-learning.html
-int
+EmlError
 eml_audio_melspec(EmlAudioMel mel, EmlVector spec, EmlVector mels) {
 
     const int max_bin = 1+mel.n_fft/2;
-    if (max_bin > spec.length) {
-        return -1;
-    }
-    if (mel.n_mels != mels.length) {
-        return -2;
-    }
+    EML_PRECONDITION(max_bin <= spec.length, EmlSizeMismatch);
+    EML_PRECONDITION(mel.n_mels == mels.length, EmlSizeMismatch);
 
     // Note: no normalization
-
     for (int m=1; m<mel.n_mels+1; m++) {
         const int left = mel_bin(mel, m-1);
         const int center = mel_bin(mel, m);
         const int right = mel_bin(mel, m+1);
-    
+
         if (left < 0) {
-            return -3;
+            return EmlUnknownError;
         }
         if (right > max_bin) {
-            return -4;
-        } 
+            return EmlUnknownError;
+        }
+
+        const float fdifflow = eml_audio_mel_center(mel, m) - eml_audio_mel_center(mel, m-1);
+        const float fdiffupper = eml_audio_mel_center(mel, m+1) - eml_audio_mel_center(mel, m);
+
+        //fprintf(stderr, "mel %d:(%d, %d, %d) \n", m, left, center, right);
 
         float val = 0.0f;
-        for (int k=left; k<center; k++) {
-            const float weight = (float)(k - left)/(center - left);
+        for (int k=left; k<=center; k++) {
+            const float r = eml_audio_mel_center(mel, m-1) - eml_fft_freq(mel, k);
+            const float weight = eml_max(eml_min(-r/fdifflow, 1.0f), 0.0f);
+            //if (m == 2) {
+            //    fprintf(stderr, "k=%d wl=%f \n", k, weight);
+            //}
             val += spec.data[k] * weight;
         }
         for (int k=center; k<right; k++) {
-            const float weight = (float)(right - k)/(right - center);
-            val += spec.data[k] * weight;
+            const float r = eml_audio_mel_center(mel, m+1) - eml_fft_freq(mel, k+1);
+            const float weight = eml_max(eml_min(r/fdiffupper, 1.0f), 0.0f);
+            //if (m == 2) {
+            //    fprintf(stderr, "k=%d, wr=%f \n", k, weight);
+            //}
+            val += spec.data[k+1] * weight;
         }
+        //fprintf(stderr, "mel %d: val=%f\n", m, val);
 
         mels.data[m-1] = val;
     }
 
-    return 0;
+    return EmlOk;
 }
 
 
-
-#define EM_RETURN_IF_ERROR(expr) \
-    do { \
-        const int _e = (expr); \
-        if (_e != 0) { \
-            return _e; \
-        } \
-    } while(0);
-
-int
-eml_audio_melspectrogram(EmlAudioMel mel_params, EmlVector inout, EmlVector temp) {
-
+EmlError
+eml_audio_melspectrogram(EmlAudioMel mel_params, EmlFFT fft, EmlVector inout, EmlVector temp)
+{
     const int n_fft = mel_params.n_fft;
     const int s_length = 1+n_fft/2;
     const int n_mels = mel_params.n_mels;
  
     // Apply window
-    EM_RETURN_IF_ERROR(eml_vector_hann_apply(inout));
+    EML_CHECK_ERROR(eml_vector_hann_apply(inout));
 
     // Perform (short-time) FFT
-    EM_RETURN_IF_ERROR(eml_vector_set_value(temp, 0.0f));
-    EM_RETURN_IF_ERROR(eml_audio_fft(inout, temp));
+    EML_CHECK_ERROR(eml_vector_set_value(temp, 0.0f));
+    EML_CHECK_ERROR(eml_fft_forward(fft, inout.data, temp.data, inout.length));
 
     // Compute mel-spectrogram
-    EM_RETURN_IF_ERROR(eml_audio_power_spectrogram(inout, eml_vector_view(temp, 0, s_length), n_fft));
-    EM_RETURN_IF_ERROR(eml_audio_melspec(mel_params, temp, eml_vector_view(inout, 0, n_mels)));
+    EML_CHECK_ERROR(eml_audio_power_spectrogram(inout, eml_vector_view(temp, 0, s_length), n_fft));
+    EML_CHECK_ERROR(eml_audio_melspec(mel_params, temp, eml_vector_view(inout, 0, n_mels)));
 
-    return 0;
+    return EmlOk;
 }
 
 #ifdef __cplusplus

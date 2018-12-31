@@ -1,9 +1,10 @@
 
-#include <eml_trees.h>
-#include <eml_benchmark.h>
+//#include "emlearn/eml_trees.h"
+#include "emlearn/eml_audio.h"
+#include "emlearn/eml_benchmark.h"
 
-#include "digits.h"
 
+#if 0
 
 void send_reply(int32_t request, int32_t time_taken,
               int32_t prediction, int32_t n_repetitions)
@@ -67,10 +68,38 @@ void parse_predict_reply(char *buffer, float *values, int32_t values_length)
   send_reply(request, time_taken, prediction, n_repetitions);
 }
 
+#endif
+
+#define N_REPS 10
+float input_data[EML_AUDIOFFT_LENGTH] = {0};
+float temp_data[EML_AUDIOFFT_LENGTH] = {0};
+float times[N_REPS];
+
+EmlError
+bench_melspec()
+{
+    const int n_reps = N_REPS;
+    const EmlAudioMel mel = { 64, 0, 20000, 1024, 44100 };
+
+    eml_benchmark_melspectrogram(mel, input_data, temp_data, n_reps, times);
+    EmlVector t = { times, n_reps };
+
+    const float mean = eml_vector_mean(t);
+    printf("melspec ms: %f\n", mean/1000);
+    return EmlOk;
+}
+
+
 
 void setup() {
   Serial.begin(115200);
+
+  Serial.write("starting\n");
+  delay(100);
+  bench_melspec();
+  Serial.write("benchmarks done\n");
 }
+
 
 void loop() {
   const int32_t n_features = 64;
@@ -89,15 +118,15 @@ void loop() {
 
     if (receive_idx >= buffer_length-1) {
         receive_idx = 0;
-        memset(receive_buffer, buffer_length, 0);
+        memset(receive_buffer, 0, buffer_length);
         Serial.println("Error, buffer overflow");
     }
     
     if (ch == '\n') {
-        parse_predict_reply();
+        //parse_predict_reply();
 
         receive_idx = 0;
-        memset(receive_buffer, buffer_length, 0);
+        memset(receive_buffer, 0, buffer_length);
     }
   }
 }
