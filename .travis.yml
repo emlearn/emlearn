@@ -1,6 +1,10 @@
 language: python
-dist: trusty
+dist: xenial
 sudo: false
+addons:
+  apt:
+    packages:
+    - ffmpeg
 python:
 - '3.6'
 install:
