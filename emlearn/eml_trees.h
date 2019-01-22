@@ -90,4 +90,31 @@ eml_trees_predict(const EmlTrees *forest, const float *features, int8_t features
     return most_voted_class;
 }
 
+
+int32_t
+eml_trees_gbm_predict(const Emtrees *model,
+        const EmtreesValues *features, int8_t features_length) {
+ 
+    float scores[EMTREES_MAX_CLASSES];
+    // FIXME: support multi-class, not just binary  
+ 
+    // FIXME: pre-compute in the scale factor
+    float scale = 0.1;
+ 
+    // Additive trees
+    float score = 0.0;
+    for (int32_t i=0; i<forest->n_trees; i++) {
+        const float val = emtrees_tree_predict(forest, forest->tree_roots[i],
+                                               features, features_length);
+        score += scale * val;
+
+    // Apply loss
+    // TODO: support other loss types
+    const float p = eml_expit(score);
+    // Decide winner
+    return ( p > (1.0f-p)  ) ? 1 : 0;
+}
+
+
+
 #endif // EMTREES_H

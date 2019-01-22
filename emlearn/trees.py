@@ -318,13 +318,27 @@ class Wrapper:
 
         self.dtype = dtype
 
+        is_gbm = hasattr(estimator, 'estimator_') and hasattr(estimator.estimator_, 'shape')
+
         if hasattr(estimator, 'estimators_'):
             trees = [ e.tree_ for e in estimator.estimators_]
         else:
             trees = [ estimator.tree_ ]
 
-        self.forest_ = flatten_forest(trees)
-        self.forest_ = remove_duplicate_leaves(self.forest_)
+        if is_gbm:
+            # one list of regressor trees per class
+            # essentially one RegressionForest per class, then softmax output?
+
+            print('est', estimator.estimators_.shape)
+            for class_idx in range(estimator.estimators_.shape[1]):
+                est = estimator.estimators_[:, class_idx]
+                print('E', class_idx, type(est), est.shape)
+                f = flatten_forest([ e.tree_ for e in est ])
+
+        else:
+            # one list of classifier trees
+            self.forest_ = flatten_forest(trees)
+            self.forest_ = remove_duplicate_leaves(self.forest_)
 
         if classifier == 'pymodule':
             # FIXME: use Nodes,Roots directly, as Numpy Array

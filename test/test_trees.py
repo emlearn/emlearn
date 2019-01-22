@@ -4,8 +4,9 @@ import numpy
 import numpy.testing
 
 from sklearn import datasets
-from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier
+from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier, GradientBoostingClassifier
 from sklearn.tree import DecisionTreeClassifier
+
 
 import emlearn
 import pytest
@@ -17,6 +18,7 @@ MODELS = {
     'RFC': RandomForestClassifier(n_estimators=10, random_state=random),
     'ETC': ExtraTreesClassifier(n_estimators=10, random_state=random),
     'DTC': DecisionTreeClassifier(random_state=random),
+    'GBC': GradientBoostingClassifier(n_estimators=10, random_state=random),
 }
 DATASETS = {
     'binary': datasets.make_classification(n_classes=2, n_samples=100, random_state=random),
