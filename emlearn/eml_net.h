@@ -236,8 +236,8 @@ eml_net_infer(EmlNet *model, const float *features, int32_t features_length)
                         features_length, buffer1, buffer_length));
 
     // Hidden layers
-    for (int i=1; i<model->n_layers-1; i++) {
-        const EmlNetLayer *layer = &model->layers[i];
+    for (int l=1; l<model->n_layers-1; l++) {
+        const EmlNetLayer *layer = &model->layers[l];
         // PERF: avoid copying, swap buffers instead
         EML_CHECK_ERROR(eml_net_layer_forward(layer, buffer1, buffer_length, buffer2, buffer_length));
         for (int i=0; i<buffer_length; i++) {
