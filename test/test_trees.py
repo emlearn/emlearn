@@ -4,10 +4,8 @@ import numpy
 import numpy.testing
 
 from sklearn import datasets
-from sklearn import model_selection
 from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier
-from sklearn import metrics
-from sklearn.utils.estimator_checks import check_estimator 
+from sklearn.tree import DecisionTreeClassifier
 
 import emlearn
 import pytest
@@ -18,6 +16,7 @@ print('random_state={}'.format(random))
 MODELS = {
     'RFC': RandomForestClassifier(n_estimators=10, random_state=random),
     'ETC': ExtraTreesClassifier(n_estimators=10, random_state=random),
+    'DTC': DecisionTreeClassifier(random_state=random),
 }
 DATASETS = {
     'binary': datasets.make_classification(n_classes=2, n_samples=100, random_state=random),

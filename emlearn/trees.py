@@ -338,7 +338,12 @@ def generate_c_forest(forest, name='myclassifier'):
 class Wrapper:
     def __init__(self, estimator, classifier):
 
-        self.forest_ = flatten_forest([ e.tree_ for e in estimator.estimators_])
+        if hasattr(estimator, 'estimators_'):
+            trees = [ e.tree_ for e in estimator.estimators_]
+        else:
+            trees = [ estimator.tree_ ]
+
+        self.forest_ = flatten_forest(trees)
         self.forest_ = remove_duplicate_leaves(self.forest_)
 
         if classifier == 'pymodule':
