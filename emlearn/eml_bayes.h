@@ -92,6 +92,7 @@ eml_bayes_predict(EmlBayesModel *model, const float values[], int32_t values_len
 
    EML_PRECONDITION(model, -EmlUninitialized);
    EML_PRECONDITION(values, -EmlUninitialized);
+   EML_PRECONDITION(model->n_classes >= 2, -EmlUninitialized);
 
    const int MAX_CLASSES = 10;
    eml_q16_t class_probabilities[MAX_CLASSES];
