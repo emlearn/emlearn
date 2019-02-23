@@ -32,7 +32,7 @@ Decision Trees using MATLAB Coder for C/C++ code generation.
 
 Classifiers:
 
-* `eml_trees`: sklearn.RandomForestClassifier, sklearn.ExtraTreesClassifier
+* `eml_trees`: sklearn.RandomForestClassifier, sklearn.ExtraTreesClassifier, sklearn.DecisionTreeClassifier
 * `eml_net`: sklearn.MultiLayerPerceptron, Keras.Sequential with fully-connected layers
 * `eml_bayes`: sklearn.GaussianNaiveBayes
 
