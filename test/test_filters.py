@@ -26,7 +26,7 @@ def plot_freq_response(noise, a, b, fs=44100):
 
 
 def noisy_chirp(fs=44100, seconds=1.0):
-    t = numpy.linspace(0, 1, seconds*fs, False)
+    t = numpy.linspace(0, 1, int(seconds*fs), False)
     chirp = signal.chirp(t, f0=6, f1=fs/2.0, t1=seconds, method='linear')
     noise = numpy.random.normal(0, 1.0, size=len(t))
     sig = chirp + 0.05*noise
