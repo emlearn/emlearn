@@ -11,6 +11,8 @@
 #include <eml_fft.h>
 #include <eml_audio.h>
 
+#include "emlpy_common.hpp"
+
 namespace py = pybind11;
 
 
@@ -53,6 +55,7 @@ rfft_py(py::array_t<float, py::array::c_style | py::array::forcecast> in) {
 
     return ret;
 }
+
 
 py::array_t<float>
 melfilter_py(py::array_t<float, py::array::c_style | py::array::forcecast> in,
@@ -130,6 +133,28 @@ melspectrogram_py(py::array_t<float, py::array::c_style | py::array::forcecast> 
 }
 
 
+py::array_t<float>
+sparse_filterbank_py(py::array_t<float, py::array::c_style | py::array::forcecast> in,
+    py::array_t<int, py::array::c_style | py::array::forcecast> starts,
+    py::array_t<int, py::array::c_style | py::array::forcecast> stops,
+    py::array_t<float, py::array::c_style | py::array::forcecast> coeffs
+)
+{
+    EMLPY_PRECONDITION(in.ndim() == 1, "Input must have dim 1");
+    EMLPY_PRECONDITION(starts.ndim() == 1, "Starts must have dim 1");
+    EMLPY_PRECONDITION(stops.ndim() == 1, "Stops must have dim 1");
+    EMLPY_PRECONDITION(coeffs.ndim() == 1, "Coefficients must have dim 1");
+    EMLPY_PRECONDITION(starts.shape(0) == stops.shape(0), "Number of starts must equals stops");
+
+    const int output_length = starts.shape(0);
+    auto ret = py::array_t<float>(output_length);
+
+    EMLPY_CHECK_ERROR(eml_sparse_filterbank(in.data(),
+                        (float *)ret.data(), output_length,
+                        starts.data(), stops.data(), coeffs.data()));
+    return ret;
+}
+
 
 PYBIND11_MODULE(eml_audio, m) {
     m.doc() = "Audio machine learning for microcontrollers and embedded devices";
@@ -138,6 +163,6 @@ PYBIND11_MODULE(eml_audio, m) {
     m.def("melfilter", melfilter_py);
 
     m.def("melspectrogram", melspectrogram_py);
+    m.def("sparse_filterbank", sparse_filterbank_py);
 
 }
-

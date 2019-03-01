@@ -244,3 +244,49 @@ def test_melspectrogram():
     #print(out-ref)
     numpy.testing.assert_allclose(out, ref, rtol=1e-6);
 
+
+def test_sparse_filterbank_ref():
+    # testcase based on working example in STM32AI Function pack, mel_filters_lut_30.c
+    mel = librosa.filters.mel(sr=16000, n_fft=1024, n_mels=30, htk=False)
+    sparse = emlearn.signal.sparse_filterbank(mel)
+
+    expected_starts = [1, 7, 13, 19, 25, 32, 38, 44, 50, 57, 63, 69, 77, 85, 93,
+                       103, 114, 126, 139, 154, 170, 188, 208, 230, 254, 281, 311, 343, 379, 419]
+    expected_ends = [12, 18, 24, 31, 37, 43, 49, 56, 62, 68, 76, 84, 92, 102, 113,
+                     125, 138, 153, 169, 187, 207, 229, 253, 280, 310, 342, 378, 418, 463, 511]
+
+    starts, ends, coeffs = sparse
+    assert starts == expected_starts
+    assert ends == expected_ends
+    assert len(coeffs) == 968
+    assert coeffs[0] == pytest.approx(1.6503363149e-03)
+    assert coeffs[-1] == pytest.approx(2.8125530662e-05)
+
+
+def test_sparse_filterbank_apply():
+    n_fft = 1024
+    n_mels = 30
+    mel_basis = librosa.filters.mel(sr=16000, n_fft=n_fft, n_mels=n_mels, htk=False)
+
+    sparse = emlearn.signal.sparse_filterbank(mel_basis)
+    starts, ends, coeffs = sparse
+    assert len(starts) == n_mels
+    assert len(ends) == n_mels
+
+    name = 'fofofo'
+    c = emlearn.signal.sparse_filterbank_serialize(sparse, name=name)
+
+    assert name+'_lut' in c
+    assert name+'_ends' in c
+    assert name+'_starts' in c
+    assert 'static const float' in c
+    assert 'static const int' in c
+    assert str(n_mels) in c
+
+    data = numpy.ones(shape=mel_basis.shape[1]) * 100
+    ref = numpy.dot(mel_basis, data)
+    py_out = emlearn.signal.sparse_filterbank_reduce(sparse, data)
+    numpy.testing.assert_allclose(py_out, ref, rtol=1e-5)
+
+    c_out = eml_audio.sparse_filterbank(data, starts, ends, coeffs)
+    numpy.testing.assert_allclose(c_out, ref, rtol=1e-5)

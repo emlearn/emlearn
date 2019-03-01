@@ -192,6 +192,42 @@ eml_audio_melspectrogram(EmlAudioMel mel_params, EmlFFT fft, EmlVector inout, Em
     return EmlOk;
 }
 
+/*
+Apply a sparse filterbank which reduces @input to a smaller @output
+
+Each filter is on form 0000nonzero0000
+The nonzero filter coefficients are stored consecutively in @lut,
+with @start and @end indicating which index (in the input) each filter start/end at
+
+Typically the filters are triangular and applied to an FFT power spectrum
+Can be used for mel-filtering a spectrogram
+*/
+EmlError
+eml_sparse_filterbank(const float *input,
+             float *output, int output_length,
+             const int *starts, const int *stops, const float *lut)
+{
+    memset(output, 0, output_length * sizeof(float));
+
+    int offset = 0;
+    for (int i = 0; i < output_length; i++) {
+        const int start = starts[i];
+        const int stop = stops[i];
+
+        //EML_PRECONDITION(start > 0, EmlUninitialized);
+        //EML_PRECONDITION(stop > 0, EmlUninitialized);
+
+        for (int j = start; j <= stop; j++) {
+            const float f = lut[offset];
+            //EML_PRECONDITION(f > 0, EmlUninitialized);
+            output[i] += input[j] * f;
+            offset++;
+        }
+    }
+
+    return EmlOk;
+}
+
 #ifdef __cplusplus
 } // extern "C"
 #endif
