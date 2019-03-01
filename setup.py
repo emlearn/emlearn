@@ -159,6 +159,9 @@ setup(
     long_description=read_readme(),
     long_description_content_type="text/markdown",
     packages=['emlearn'],
+    scripts={
+        'examples/window-function.py': 'eml-window-function',
+    },
     ext_modules=ext_modules,
     include_package_data=True,
     package_data = {

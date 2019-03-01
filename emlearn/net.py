@@ -1,5 +1,5 @@
 
-from . import common
+from . import common, cgen
 import eml_net
 
 import numpy
@@ -56,31 +56,14 @@ class Wrapper:
 
         return code
 
-def c_struct_init(*args):
-    return '{ ' + ', '.join(str(a) for a in args) + ' }'
-
-def c_constant(val, dtype='float'):
-    if dtype == 'float':
-        return str(val)+'f'
-    else:
-        return str(val)
-
-def c_array_declare(name, size, dtype='float', modifiers='static const',
-                    values=None, end='', indent=''):
-    init = ''
-    if values is not None:
-        init_values = ', '.join(c_constant(v, dtype) for v in values)
-        init = ' = {{ {init_values} }}'.format(**locals())
-
-    return '{indent}{modifiers} {dtype} {name}[{size}]{init};{end}'.format(**locals())
 
 def c_generate_net(activations, weights, biases, prefix):
     def init_net(name, n_layers, layers_name, buf1_name, buf2_name, buf_length):
-        init = c_struct_init(n_layers, layers_name, buf1_name, buf2_name, buf_length)
+        init = cgen.struct_init(n_layers, layers_name, buf1_name, buf2_name, buf_length)
         o = 'static EmlNet {name} = {init};'.format(**locals())
         return o
     def init_layer(name, n_outputs, n_inputs, weigths_name, biases_name, activation_func):
-        init = c_struct_init(n_outputs, n_inputs, weights_name, biases_name, activation_func)
+        init = cgen.struct_init(n_outputs, n_inputs, weights_name, biases_name, activation_func)
         return init
 
     buffer_sizes = [ w.shape[0] for w in weights ] + [ w.shape[1] for w in weights ]
@@ -109,19 +92,19 @@ def c_generate_net(activations, weights, biases, prefix):
         layer_name = '{prefix}_layer{layer_no}'.format(**locals())
     
         weight_values = numpy.array(l_weights).flatten(order='C')
-        weights_arr = c_array_declare(weights_name, n_in*n_out, values=weight_values)
+        weights_arr = cgen.array_declare(weights_name, n_in * n_out, values=weight_values)
         layer_lines.append(weights_arr)
         bias_values = l_bias
-        biases_arr = c_array_declare(biases_name, len(l_bias), values=bias_values)
+        biases_arr = cgen.array_declare(biases_name, len(l_bias), values=bias_values)
         layer_lines.append(biases_arr)
 
         l = init_layer(layer_name, n_out, n_in, weights_name, biases_name, activation_func)
         layers.append('\n'+l)
 
     net_lines = [
-        c_array_declare(buf1_name, buffer_size, modifiers='static'),
-        c_array_declare(buf2_name, buffer_size, modifiers='static'),
-        c_array_declare(layers_name, n_layers, dtype='EmlNetLayer', values=layers),
+        cgen.array_declare(buf1_name, buffer_size, modifiers='static'),
+        cgen.array_declare(buf2_name, buffer_size, modifiers='static'),
+        cgen.array_declare(layers_name, n_layers, dtype='EmlNetLayer', values=layers),
         init_net(prefix, n_layers, layers_name, buf1_name, buf2_name, buffer_size),
     ]
 
