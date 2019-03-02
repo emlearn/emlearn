@@ -207,7 +207,9 @@ eml_sparse_filterbank(const float *input,
              float *output, int output_length,
              const int *starts, const int *stops, const float *lut)
 {
-    memset(output, 0, output_length * sizeof(float));
+    for (int i=0; i<output_length; i++) {
+        output[i] = 0.0f;
+    }
 
     int offset = 0;
     for (int i = 0; i < output_length; i++) {
