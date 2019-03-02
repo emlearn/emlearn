@@ -4,7 +4,7 @@ import sys
 import os.path
 import setuptools
 
-__version__ = '0.7.0'
+__version__ = '0.8.0'
 
 project_dir = os.path.abspath(os.path.dirname(__file__))
 
