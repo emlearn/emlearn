@@ -161,6 +161,7 @@ setup(
     packages=['emlearn'],
     scripts={
         'examples/window-function.py': 'eml-window-function',
+        'examples/mel-filterbank.py': 'eml-mel-filterbank',
     },
     ext_modules=ext_modules,
     include_package_data=True,

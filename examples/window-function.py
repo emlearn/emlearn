@@ -18,24 +18,24 @@ known_window_types = tuple(_known.split(', '))
 
 
 def parse(args=None):
-        parser = argparse.ArgumentParser(description='Generate lookup table for window functions')
-        a = parser.add_argument
+    parser = argparse.ArgumentParser(description='Generate lookup table for window functions')
+    a = parser.add_argument
 
-        a('--window', type=str, default='hann',
-          help='Window function to use. Supported: \n' + '|'.join(known_window_types))
-        a('--length', type=int, default=1024,
-          help='Number of coefficients in window')
-        a('--symmetric', default=False, action='store_true',
-          help='Whether to use a symmetric window. Defaults to False, normal for FFT')
-        a('--name', type=str, default='',
-          help='Name of the generate C array')
-        a('--out', type=str, default='',
-          help='Output file. Default: $name.h')
-        a('--linewrap', type=int, default=70,
-          help='Maximum width of lines')
+    a('--window', type=str, default='hann',
+      help='Window function to use. Supported: \n' + '|'.join(known_window_types))
+    a('--length', type=int, default=1024,
+      help='Number of coefficients in window')
+    a('--symmetric', default=False, action='store_true',
+      help='Whether to use a symmetric window. Defaults to False, normal for FFT')
+    a('--name', type=str, default='',
+      help='Name of the generate C array')
+    a('--out', type=str, default='',
+      help='Output file. Default: $name.h')
+    a('--linewrap', type=int, default=70,
+      help='Maximum width of lines')
 
-        parsed = parser.parse_args(args)
-        return parsed
+    parsed = parser.parse_args(args)
+    return parsed
 
 
 def window_function(name, window_type, length, fft_mode, linewrap):
