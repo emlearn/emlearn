@@ -52,7 +52,7 @@ def run_extract(include, name, length, workdir):
         f.write(prog)
 
     # compile
-    args = ['gcc', code_path, '-o', prog_path]
+    args = ['gcc', '-std=c99', code_path, '-o', prog_path]
     subprocess.check_call(' '.join(args), shell=True)
 
     stdout = subprocess.check_output([prog_path])
