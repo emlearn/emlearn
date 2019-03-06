@@ -10,7 +10,7 @@ examples_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../examp
 
 def run_window_function(options):
     path = os.path.join(examples_dir, 'window-function.py')
-    args = ['python3', path]
+    args = ['python', path]
 
     for key, value in options.items():
         args.append('--{}={}'.format(key, value))
