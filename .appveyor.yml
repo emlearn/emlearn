@@ -18,7 +18,7 @@ install:
   - conda config --set always_yes yes --set changeps1 no
   - conda update -q conda
   - conda info -a
-  - "conda create -c conda-forge -n test-environment python=%PYTHON_VERSION% numpy scipy pytest pandas scikit-learn librosa keras tensorflow mingw"
+  - "conda create -c conda-forge -n test-environment python=%PYTHON_VERSION% numpy scipy pytest pandas scikit-learn librosa keras tensorflow mingw ffmpeg"
   - activate test-environment
   - echo %PATH%
   - where gcc
