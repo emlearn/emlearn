@@ -52,7 +52,8 @@ def run_extract(include, name, length, workdir):
         f.write(prog)
 
     # compile
-    subprocess.check_call(['gcc', code_path, '-o', prog_path])
+    args = ['gcc', code_path, '-o', prog_path]
+    subprocess.check_call(' '.join(args), shell=True)
 
     stdout = subprocess.check_output([prog_path])
     arr = json.loads(stdout)
