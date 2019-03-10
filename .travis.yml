@@ -12,6 +12,7 @@ install:
 - pip install -r requirements.dev.txt
 - CFLAGS='-Werror' pip install ./ -v
 script:
+- cd docs && make SPHINXOPTS=-nW html && cd -
 - PYTHONPATH=./:build/lib.linux-x86_64-3.6/:$PYTHONPATH pytest -v --cov=emlearn --cov-report
   html --cov-report term-missing --cov-branch
 deploy:
