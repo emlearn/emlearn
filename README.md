@@ -22,7 +22,7 @@ Convenient Training
 * Using Python with [scikit-learn](http://scikit-learn.org) or [Keras](https://keras.io/)
 * The generated C classifier is also accessible in Python
 
-[MIT licensed](./LICENSE.md)
+[MIT licensed](https://github.com/emlearn/emlearn/blob/master/LICENSE.md)
 
 Can be used as an open source alternative to MATLAB Classification Trees,
 Decision Trees using MATLAB Coder for C/C++ code generation.
@@ -78,8 +78,7 @@ const int32_t predicted_class = sonar_predict(values, length):
 ```
 
 
-For full example code, see [examples/digits.py](./examples/digits.py)
-and [emlearn.ino](./emlearn.ino)
+For full example code, see [examples/digits.py](https://github.com/emlearn/emlearn/blob/master/examples/digits.py)
 
 ## Citations
 

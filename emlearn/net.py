@@ -114,6 +114,7 @@ def c_generate_net(activations, weights, biases, prefix):
     return out
 
 def convert_sklearn_mlp(model, method):
+    """Convert sklearn.neural_network.MLPClassifier models"""
 
     if (model.n_layers_ < 3):
         raise ValueError("Model must have at least one hidden layer")
@@ -137,7 +138,7 @@ def from_tf_variable(var):
     return array
 
 def convert_keras(model, method):
-    
+    """Convert keras.Sequential models"""
 
     activations = []
     layer_weights = []

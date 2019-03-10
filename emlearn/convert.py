@@ -4,6 +4,8 @@ from . import net
 from . import bayes
 
 def convert(estimator, kind=None, method='pymodule'):
+    """Main entrypoint for converting a model"""
+
     if kind is None:
         kind = type(estimator).__name__
 
