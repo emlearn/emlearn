@@ -1,5 +1,6 @@
 [![Travis CI Build Status](https://travis-ci.org/jonnor/emlearn.svg?branch=master)](https://travis-ci.org/jonnor/emlearn)
 [![Appveyor Build status](https://ci.appveyor.com/api/projects/status/myb325oc06w89flc?svg=true)](https://ci.appveyor.com/project/jonnor/emlearn)
+[![DOI](https://zenodo.org/badge/125562741.svg)](https://zenodo.org/badge/latestdoi/125562741)
 
 # emlearn
 
@@ -80,4 +81,19 @@ const int32_t predicted_class = sonar_predict(values, length):
 For full example code, see [examples/digits.py](./examples/digits.py)
 and [emlearn.ino](./emlearn.ino)
 
+## Citations
+
+If you use `emlearn` in an academic work, please reference it using:
+
+```tex
+@misc{emlearn,
+  author       = {Jon Nordby},
+  title        = {{emlearn: Machine Learning inference engine for 
+                   Microcontrollers and Embedded Devices}},
+  month        = mar,
+  year         = 2019,
+  doi          = {10.5281/zenodo.2589394},
+  url          = {https://doi.org/10.5281/zenodo.2589394}
+}
+```
 
