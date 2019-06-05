@@ -1,6 +1,8 @@
 
 """Utilities to generate C code"""
 
+FLOATING_DTYPE = 'float'
+FLOATING_PRECISION = 6
 
 def struct_init(*args):
     """Struct initializer
@@ -21,7 +23,10 @@ def constant(val, dtype='float'):
     "3.14f"
     """
     if dtype == 'float':
-        return "{:f}f".format(val)
+        precision_formater = "{{:.{}f}}".format(FLOATING_PRECISION)
+        formatted_value = precision_formater.format(val)
+        formatted_value += 'f' if FLOATING_DTYPE=='float' else ''
+        return formatted_value
     else:
         return str(val)
 
@@ -43,10 +48,9 @@ def array_declare(name, size, dtype='float', modifiers='static const',
     >>> cgen.array_declare("initialized", 3, dtype='int', modifiers='const')
     "const float initialized[3] = { 1, 2, 3 };"
     """
-    
     init = ''
     if values is not None:
         init_values = ', '.join(constant(v, dtype) for v in values)
         init = ' = {{ {init_values} }}'.format(**locals())
-
+    if dtype=='float': dtype=FLOATING_DTYPE
     return '{indent}{modifiers} {dtype} {name}[{size}]{init};{end}'.format(**locals())
