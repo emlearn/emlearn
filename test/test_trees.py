@@ -31,8 +31,6 @@ def test_trees_sklearn_predict(data, model, method):
     X, y = DATASETS[data]
     estimator = MODELS[model]
 
-    X = (X * 2**16).astype(int) # currently only integers supported
-
     estimator.fit(X, y)
     cmodel = emlearn.convert(estimator, method=method)
 
@@ -64,7 +62,6 @@ def test_deduplicate_single_tree():
 def test_trees_to_dot():
     X, Y = datasets.make_classification(n_classes=2, n_samples=10, random_state=1)
     model = RandomForestClassifier(n_estimators=3, max_depth=5, random_state=1)
-    X = (X * 2**16).astype(int) # convert to integer
     model.fit(X, Y)
 
     trees = emlearn.convert(model)

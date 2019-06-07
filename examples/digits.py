@@ -9,8 +9,6 @@ from sklearn import metrics, datasets
 rnd = 11
 digits = datasets.load_digits()
 Xtrain, Xtest, ytrain, ytest = train_test_split(digits.data, digits.target, random_state=rnd)
-Xtrain = (Xtrain * 2**16).astype(numpy.int32)
-Xtest = (Xtest * 2**16).astype(numpy.int32)
 
 print('Loading digits dataset. 8x8=64 features')
 

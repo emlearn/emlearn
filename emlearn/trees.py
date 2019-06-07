@@ -24,7 +24,7 @@ def flatten_tree(tree):
             cls = numpy.argmax(value[0])
             n = [ -1, cls, -1, -1 ] # leaf
         else:
-            n = [ feature, int(th), left, right ]
+            n = [ feature, th, left, right ]
 
         flat.append(n) 
 
@@ -195,23 +195,11 @@ def generate_c_nodes(flat, name):
     nodes_length = len(flat)
     nodes = "EmlTreesNode {nodes_name}[{nodes_length}] = {{\n  {nodes_structs} \n}};".format(**locals());
 
-    # FIXME: remove when having native support for floats
-    wrapper_func = """
-    int32_t eml_trees_predict_float(const EmlTrees *model, const float *features, int32_t features_length) {{
-        // Exposes a float based interface to outside.
-        int32_t features_int[features_length];
-        for (int32_t i=0; i < features_length; i++) {{
-            features_int[i] = features[i];
-        }}
-        return eml_trees_predict(model, features_int, features_length);
-    }}
-    """.format(**{})
-
-    out = nodes + wrapper_func
+    out = nodes
 
     return out
 
-def generate_c_inlined(forest, name):
+def generate_c_inlined(forest, name, dtype='float'):
     nodes, roots = forest
 
     def is_leaf(n):
@@ -224,6 +212,8 @@ def generate_c_inlined(forest, name):
     assert min(class_values) == 0
     n_classes = max(class_values)+1
     tree_names = [ name + '_tree_{}'.format(i) for i,_ in enumerate(roots) ]
+
+    ctype = dtype
 
     indent = 2
     def c_leaf(n, depth):
@@ -248,12 +238,13 @@ def generate_c_inlined(forest, name):
         return c_internal(n, depth+1)
 
     def tree_func(name, root):
-        return """static inline int32_t {function_name}(const EmlTreesValue *features, int32_t features_length) {{
+        return """static inline int32_t {function_name}(const {ctype} *features, int32_t features_length) {{
         {code}
         }}
         """.format(**{
             'function_name': name,
             'code': c_node(root, 0),
+            'ctype': ctype,
         })
 
     def tree_vote(name):
@@ -261,7 +252,7 @@ def generate_c_inlined(forest, name):
 
     tree_votes = [ tree_vote(n) for n in tree_names ]
 
-    forest_func = """int32_t {function_name}(const EmlTreesValue *features, int32_t features_length) {{
+    forest_func = """int32_t {function_name}(const {ctype} *features, int32_t features_length) {{
 
         int32_t votes[{n_classes}] = {{0,}};
         int32_t _class = -1;
@@ -282,26 +273,15 @@ def generate_c_inlined(forest, name):
     """.format(**{
       'function_name': name,
       'n_classes': n_classes,
-      'tree_predictions': '\n    '.join(tree_votes)
+      'tree_predictions': '\n    '.join(tree_votes),
+      'ctype': ctype,
     })
-
-    # FIXME: remove in favor of 'native' float support    
-    wrapper_func = """
-    int32_t {function_name}_float(const float *features, int32_t features_length) {{
-        // Exposes a float based interface to outside.
-        int32_t features_int[features_length];
-        for (int32_t i=0; i < features_length; i++) {{
-            features_int[i] = features[i];
-        }}
-        return {function_name}(features_int, features_length);
-    }}
-    """.format(**{'function_name': name})
     
     tree_funcs = [tree_func(n, r) for n,r in zip(tree_names, roots)]
 
-    return '\n\n'.join(tree_funcs + [forest_func] + [wrapper_func])
+    return '\n\n'.join(tree_funcs + [forest_func])
 
-def generate_c_forest(forest, name='myclassifier'):
+def generate_c_forest(forest, name='myclassifier', dtype='float'):
     nodes, roots = forest
 
     nodes_name = name+'_nodes'
@@ -312,8 +292,6 @@ def generate_c_forest(forest, name='myclassifier'):
     tree_roots_name = name+'_tree_roots';
     tree_roots_values = ', '.join(str(t) for t in roots)
     tree_roots = 'int32_t {tree_roots_name}[{tree_roots_length}] = {{ {tree_roots_values} }};'.format(**locals())
-
-    # TODO: generate a float wrapper
 
     forest_struct = """EmlTrees {name} = {{
         {nodes_length},
@@ -328,7 +306,7 @@ def generate_c_forest(forest, name='myclassifier'):
     #include <eml_trees.h>
     """
 
-    inline = generate_c_inlined(forest, name+'_predict')
+    inline = generate_c_inlined(forest, name+'_predict', dtype=dtype)
 
     return '\n\n'.join([head, nodes_c, tree_roots, forest_struct, inline]) 
 
@@ -336,7 +314,9 @@ def generate_c_forest(forest, name='myclassifier'):
 
 
 class Wrapper:
-    def __init__(self, estimator, classifier):
+    def __init__(self, estimator, classifier, dtype='float'):
+
+        self.dtype = dtype
 
         if hasattr(estimator, 'estimators_'):
             trees = [ e.tree_ for e in estimator.estimators_]
@@ -353,19 +333,19 @@ class Wrapper:
             node_data = []
             for node in nodes:
                 assert len(node) == 4
-                node_data += node # [int(v) for v in node]
+                node_data += node
             assert len(node_data) % 4 == 0
 
             self.classifier_ = eml_trees.Classifier(node_data, roots)
 
         elif classifier == 'loadable':
             name = 'mytree'
-            func = 'eml_trees_predict_float(&{}, values, length)'.format(name)
+            func = 'eml_trees_predict(&{}, values, length)'.format(name)
             code = self.save(name=name)
             self.classifier_ = common.CompiledClassifier(code, name=name, call=func)
         elif classifier == 'inline':
             name = 'myinlinetree'
-            func = '{}_predict_float(values, length)'.format(name)
+            func = '{}_predict(values, length)'.format(name)
             code = self.save(name=name)
             self.classifier_ = common.CompiledClassifier(code, name=name, call=func)
         else:
@@ -382,7 +362,7 @@ class Wrapper:
             else:
                 name = os.path.splitext(os.path.basename(file))[0]
 
-        code = generate_c_forest(self.forest_, name)
+        code = generate_c_forest(self.forest_, name, dtype=self.dtype)
         if file:
             with open(file, 'w') as f:
                 f.write(code)

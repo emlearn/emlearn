@@ -4,11 +4,9 @@
 
 #include <stdint.h>
 
-typedef int32_t EmlTreesValue;
-
 typedef struct _EmlTreesNode {
     int8_t feature;
-    EmlTreesValue value;
+    float value;
     int16_t left;
     int16_t right;
 } EmlTreesNode;
@@ -44,14 +42,14 @@ const char *eml_trees_errors[EmlTreesErrorLength+1] = {
 #endif
 
 static int32_t
-eml_trees_predict_tree(const EmlTrees *forest, int32_t tree_root, const EmlTreesValue *features, int8_t features_length) {
+eml_trees_predict_tree(const EmlTrees *forest, int32_t tree_root, const float *features, int8_t features_length) {
     int32_t node_idx = tree_root;
 
     // TODO: see if using a pointer node instead of indirect adressing using node_idx improves perf
     while (forest->nodes[node_idx].feature >= 0) {
         const int8_t feature = forest->nodes[node_idx].feature;
-        const EmlTreesValue value = features[feature];
-        const EmlTreesValue point = forest->nodes[node_idx].value;
+        const float value = features[feature];
+        const float point = forest->nodes[node_idx].value;
         //printf("node %d feature %d. %d < %d\n", node_idx, feature, value, point);
         node_idx = (value < point) ? forest->nodes[node_idx].left : forest->nodes[node_idx].right;
     }
@@ -59,7 +57,7 @@ eml_trees_predict_tree(const EmlTrees *forest, int32_t tree_root, const EmlTrees
 }
 
 int32_t
-eml_trees_predict(const EmlTrees *forest, const EmlTreesValue *features, int8_t features_length) {
+eml_trees_predict(const EmlTrees *forest, const float *features, int8_t features_length) {
 
     //printf("features %d\n", features_length);
     //printf("trees %d\n", forest->n_trees);
