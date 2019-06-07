@@ -21,7 +21,7 @@ def constant(val, dtype='float'):
     "3.14f"
     """
     if dtype == 'float':
-        return "{:f}f".format(val)
+        return "{:.6f}f".format(val)
     else:
         return str(val)
 
@@ -41,7 +41,7 @@ def array_declare(name, size, dtype='float', modifiers='static const',
 
     >>> from emlearn import cgen
     >>> cgen.array_declare("initialized", 3, dtype='int', modifiers='const')
-    "const float initialized[3] = { 1, 2, 3 };"
+    "const int initialized[3] = { 1, 2, 3 };"
     """
     
     init = ''

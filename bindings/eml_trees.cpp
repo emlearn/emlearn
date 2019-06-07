@@ -16,7 +16,7 @@ private:
     EmlTrees forest;
 
 public:
-    TreesClassifier(std::vector<EmlTreesValue> node_data, std::vector<int32_t> _roots)
+    TreesClassifier(std::vector<float> node_data, std::vector<int32_t> _roots)
         : roots(_roots)
     {
         // TODO: take model coefficients as a Numpy array (perf) 
@@ -45,7 +45,7 @@ public:
 
 
     py::array_t<int32_t>
-    predict(py::array_t<int32_t, py::array::c_style | py::array::forcecast> in) {
+    predict(py::array_t<float, py::array::c_style | py::array::forcecast> in) {
         if (in.ndim() != 2) {
             throw std::runtime_error("predict input must have dimensions 2");
         }
@@ -57,8 +57,7 @@ public:
         //auto s = in.unchecked();
         auto r = classes.mutable_unchecked<1>(); 
         for (int i=0; i<n_samples; i++) {
-            //const int32_t *v = s.data(i);
-            const int32_t *v = in.data(i);
+            const float *v = in.data(i);
             const int32_t p = eml_trees_predict(&forest, v, n_features);
             if (p < 0) {
                 const std::string msg = eml_trees_errors[-p];
@@ -76,7 +75,7 @@ PYBIND11_MODULE(eml_trees, m) {
     m.doc() = "Tree-based machine learning classifiers for embedded devices";
 
     py::class_<TreesClassifier>(m, "Classifier")
-        .def(py::init<std::vector<EmlTreesValue>, std::vector<int32_t>>())
+        .def(py::init<std::vector<float>, std::vector<int32_t>>())
         .def("predict", &TreesClassifier::predict);
 }
 
