@@ -68,3 +68,5 @@ def test_trees_to_dot():
     dot = trees.to_dot(name='ffoo')
     with open('tmp/trees.dot', 'w') as f:
         f.write(dot)
+
+

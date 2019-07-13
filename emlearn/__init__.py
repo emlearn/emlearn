@@ -2,6 +2,7 @@
 from . import trees
 from . import common
 from . import signal
+from . import data
 
 from .convert import convert
 
