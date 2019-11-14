@@ -8,7 +8,7 @@ def get_include_dir():
     return os.path.join(os.path.dirname(__file__))
 
 
-def build_classifier(cmodel, name, temp_dir, include_dir, func=None, compiler=None, test_function=None):
+def build_classifier(cmodel, name, temp_dir, include_dir, func=None, test_function=None, compiler=None):
     if not os.path.exists(temp_dir):
         os.makedirs(temp_dir)
 
@@ -78,11 +78,11 @@ def run_classifier(bin_path, data):
 
 
 class CompiledClassifier():
-    def __init__(self, cmodel, name, call=None, include_dir=None, temp_dir='tmp/', test_function=None):
+    def __init__(self, cmodel, name, call=None, include_dir=None, temp_dir='tmp/', test_function=None, compiler=None):
         if include_dir == None:
             include_dir = get_include_dir()
         self.bin_path = build_classifier(cmodel, name,
-                include_dir=include_dir, temp_dir=temp_dir, func=call, test_function=test_function) 
+                include_dir=include_dir, temp_dir=temp_dir, func=call, compiler=compiler, test_function=test_function) 
 
     def predict(self, X):
         return run_classifier(self.bin_path, X)

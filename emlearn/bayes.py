@@ -65,7 +65,7 @@ def generate_c(model, name='myclassifier'):
 # TODO: support class_priors_
 # TODO: support predict_log_proba / predict_proba
 class Wrapper(object):
-    def __init__(self, estimator, method):
+    def __init__(self, estimator, method, compiler=None):
 
         # FIXME: use var,mean numpy arrays directly
         n_classes, n_features = estimator.theta_.shape
@@ -85,7 +85,7 @@ class Wrapper(object):
             name = 'mybayes'
             func = 'eml_bayes_predict(&{}_model, values, length)'.format(name)
             code = self.save(name=name)
-            self.classifier = common.CompiledClassifier(code, name=name, call=func)
+            self.classifier = common.CompiledClassifier(code, name=name, call=func, compiler=compiler)
         elif method == 'inline':
             raise NotImplementedError('NaiveBayes does not support inline C code generation')
         else:

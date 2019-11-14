@@ -19,7 +19,7 @@ def run_window_function(options):
     return stdout.decode('utf-8')
 
 
-def run_extract(include, name, length, workdir):
+def run_extract(include, name, length, workdir, compiler='gcc'):
     template_prog = """
 
     #include <stdio.h>
@@ -52,7 +52,7 @@ def run_extract(include, name, length, workdir):
         f.write(prog)
 
     # compile
-    args = ['gcc', '-std=c99', code_path, '-o', prog_path]
+    args = [compiler, '-std=c99', code_path, '-o', prog_path]
     subprocess.check_call(' '.join(args), shell=True)
 
     stdout = subprocess.check_output([prog_path])
@@ -60,7 +60,7 @@ def run_extract(include, name, length, workdir):
     return arr
 
 
-def window_function_test(file_path, args):
+def window_function_test(file_path, args, compiler='gcc'):
     out_dir = os.path.dirname(file_path)
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)
@@ -78,11 +78,11 @@ def window_function_test(file_path, args):
         assert str(args['length']) in contents
 
     # check it compiles
-    arr = run_extract(os.path.abspath(file_path), args['name'], args['length'], out_dir)
+    arr = run_extract(os.path.abspath(file_path), args['name'], args['length'], out_dir, compiler=args['compiler'])
     return arr
 
 
-def test_window_function_hann():
+def test_window_function_hann(compiler='gcc'):
 
     file_path = 'tests/out/window_func.h'
     args = dict(
@@ -92,6 +92,6 @@ def test_window_function_hann():
         out=file_path,
     )
 
-    arr = window_function_test(file_path, args)
+    arr = window_function_test(file_path, args, compiler=compiler)
     # Hann has sum of coefficients == half of N
     numpy.testing.assert_allclose(numpy.sum(arr), args['length']/2)

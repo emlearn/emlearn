@@ -5,9 +5,9 @@ import subprocess
 
 import pandas
 
-def compile_program(input, out):
+def compile_program(input, out, compiler='gcc'):
     args = [
-        'gcc',
+        compiler,
         input,
         '-o', out,
         '-std=c99',
@@ -21,11 +21,11 @@ def compile_program(input, out):
     ]
     subprocess.check_call(' '.join(args), shell=True)
 
-def test_bench_melspec():
+def test_bench_melspec(compiler='gcc'):
     testdir = os.path.dirname(__file__)
     code = os.path.join(testdir, 'bench.c')
     prog = os.path.join(testdir, 'bench')
-    compile_program(code, prog)
+    compile_program(code, prog, compiler=compiler)
     out = subprocess.check_output([prog]).decode('utf-8')
 
     df = pandas.read_csv(io.StringIO(out), sep=';')

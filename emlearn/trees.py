@@ -314,7 +314,7 @@ def generate_c_forest(forest, name='myclassifier', dtype='float'):
 
 
 class Wrapper:
-    def __init__(self, estimator, classifier, dtype='float'):
+    def __init__(self, estimator, classifier, dtype='float', compiler=None):
 
         self.dtype = dtype
 
@@ -342,12 +342,12 @@ class Wrapper:
             name = 'mytree'
             func = 'eml_trees_predict(&{}, values, length)'.format(name)
             code = self.save(name=name)
-            self.classifier_ = common.CompiledClassifier(code, name=name, call=func)
+            self.classifier_ = common.CompiledClassifier(code, name=name, call=func, compiler=compiler)
         elif classifier == 'inline':
             name = 'myinlinetree'
             func = '{}_predict(values, length)'.format(name)
             code = self.save(name=name)
-            self.classifier_ = common.CompiledClassifier(code, name=name, call=func)
+            self.classifier_ = common.CompiledClassifier(code, name=name, call=func, compiler=compiler)
         else:
             raise ValueError("Unsupported classifier method '{}'".format(classifier))
 
