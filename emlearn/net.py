@@ -17,7 +17,7 @@ def argmax(sequence):
 
 
 class Wrapper:
-    def __init__(self, activations, weights, biases, classifier, compiler=None):
+    def __init__(self, activations, weights, biases, classifier):
 
         self.activations = activations
         self.weights = weights
@@ -30,7 +30,7 @@ class Wrapper:
             name = 'mynet'
             func = 'eml_net_predict(&{}, values, length)'.format(name)
             code = self.save(name=name)
-            self.classifier = common.CompiledClassifier(code, name=name, call=func, compiler=compiler)
+            self.classifier = common.CompiledClassifier(code, name=name, call=func)
         #elif classifier == 'inline':
         else:
             raise ValueError("Unsupported classifier method '{}'".format(classifier))
@@ -113,7 +113,7 @@ def c_generate_net(activations, weights, biases, prefix):
 
     return out
 
-def convert_sklearn_mlp(model, method, compiler=None):
+def convert_sklearn_mlp(model, method):
     """Convert sklearn.neural_network.MLPClassifier models"""
 
     if (model.n_layers_ < 3):
@@ -123,7 +123,7 @@ def convert_sklearn_mlp(model, method, compiler=None):
     biases = model.intercepts_
     activations = [model.activation]*(len(weights)-1) + [ model.out_activation_ ]
 
-    return Wrapper(activations, weights, biases, classifier=method, compiler=compiler)
+    return Wrapper(activations, weights, biases, classifier=method)
 
 def from_keras_activation(act):
     name = act.__name__
@@ -137,7 +137,7 @@ def from_tf_variable(var):
     array = var.eval()
     return array
 
-def convert_keras(model, method, compiler=None):
+def convert_keras(model, method):
     """Convert keras.Sequential models"""
 
     activations = []
@@ -189,5 +189,5 @@ def convert_keras(model, method, compiler=None):
 
     assert len(activations) == len(biases) == len(layer_weights)
     
-    return Wrapper(activations, layer_weights, biases, classifier=method, compiler=compiler)
+    return Wrapper(activations, layer_weights, biases, classifier=method)
 

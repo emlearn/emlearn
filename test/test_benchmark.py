@@ -5,27 +5,28 @@ import subprocess
 
 import pandas
 
-def compile_program(input, out, compiler='gcc'):
-    args = [
-        compiler,
-        input,
-        '-o', out,
-        '-std=c99',
-        '-O3',
-        '-g',
-        '-fno-omit-frame-pointer',
-        '-lm',
-        '-Wall',
-        '-Werror',
-        '-I./emlearn',
-    ]
-    subprocess.check_call(' '.join(args), shell=True)
+import sys
+from distutils.ccompiler import new_compiler
 
-def test_bench_melspec(compiler='gcc'):
+def test_bench_melspec():
     testdir = os.path.dirname(__file__)
     code = os.path.join(testdir, 'bench.c')
     prog = os.path.join(testdir, 'bench')
-    compile_program(code, prog, compiler=compiler)
+
+    # create a new compiler object
+    cc = new_compiler()
+    prog = cc.executable_filename('bench')
+    include_dirs=["emlearn"]
+
+    if sys.platform.startswith('win'): # Windows
+        cc_args = ["/Ox","/Zi","/Oy-","/Wall","/WX"]
+    else : # MacOS and Linux should be the same
+        cc_args = ["-O3","-g","-fno-omit-frame-pointer","-Wall","-Werror"]
+
+    objects = cc.compile([code], output_dir=testdir, include_dirs=include_dirs,
+        debug=1, )
+    cc.link("executable", objects, output_filename=output_filename, 
+        debug=1, output_dir=testdir)
     out = subprocess.check_output([prog]).decode('utf-8')
 
     df = pandas.read_csv(io.StringIO(out), sep=';')

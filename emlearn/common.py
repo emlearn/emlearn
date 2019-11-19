@@ -3,26 +3,31 @@ import os
 import os.path
 import subprocess
 import platform
+from distutils.ccompiler import new_compiler
 
 def get_include_dir():
     return os.path.join(os.path.dirname(__file__))
 
 
-def build_classifier(cmodel, name, temp_dir, include_dir, func=None, test_function=None, compiler=None):
+def build_classifier(cmodel, name, temp_dir, include_dir, func=None, test_function=None):
     if not os.path.exists(temp_dir):
         os.makedirs(temp_dir)
 
-    if compiler is None:
-        compiler = 'gcc'
-
     if test_function is None:
         test_function = 'eml_test_read_csv'
+
+    # create a new compiler object
+    cc = new_compiler()
 
     tree_name = name
     def_file_name = name+'.h'
     def_file = os.path.join(temp_dir, def_file_name)
     code_file = os.path.join(temp_dir, name+'.c')
-    bin_path = os.path.join(temp_dir, name)
+    output_filename = cc.executable_filename(name)
+    bin_path = os.path.join(temp_dir, output_filename)
+    include_dirs = [temp_dir, include_dir]
+    libraries = None#["m"] # math library
+    sources = [code_file]
 
     # Trivial program that reads values on stdin, and returns classifications on stdout
     code = """
@@ -44,15 +49,10 @@ def build_classifier(cmodel, name, temp_dir, include_dir, func=None, test_functi
     with open(code_file, 'w') as f:
         f.write(code)
 
-    args = [
-        compiler,
-        '-std=c99',
-        code_file, '-o', bin_path,
-        '-I{}'.format(include_dir),
-        '-I{}'.format(temp_dir),
-        '-lm',
-    ]
-    subprocess.check_call(' '.join(args), shell=True)
+    objects = cc.compile(sources, output_dir=temp_dir, include_dirs=include_dirs)
+
+    cc.link("executable", objects, output_filename=output_filename, 
+        output_dir=temp_dir, libraries=libraries)  
 
     return bin_path
 
@@ -76,13 +76,12 @@ def run_classifier(bin_path, data):
 
     return classes
 
-
 class CompiledClassifier():
-    def __init__(self, cmodel, name, call=None, include_dir=None, temp_dir='tmp/', test_function=None, compiler=None):
+    def __init__(self, cmodel, name, call=None, include_dir=None, temp_dir='tmp/', test_function=None):
         if include_dir == None:
             include_dir = get_include_dir()
         self.bin_path = build_classifier(cmodel, name,
-                include_dir=include_dir, temp_dir=temp_dir, func=call, compiler=compiler, test_function=test_function) 
+                include_dir=include_dir, temp_dir=temp_dir, func=call, test_function=test_function) 
 
     def predict(self, X):
         return run_classifier(self.bin_path, X)
