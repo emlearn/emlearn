@@ -8,10 +8,17 @@
 
 #include "eml_common.h"
 
+#ifndef EML_CSV_BUFFER_LENGTH
+#define EML_CSV_BUFFER_LENGTH 1024
+#endif
+#ifndef EML_CSV_VALUES_LENGTH
+#define EML_CSV_VALUES_LENGTH 256
+#endif
+
 typedef void (*EmlCsvCallback)(const float *values, int length, int row);
 
 // Return number of values parsed, or -EmlError
-int32_t
+EmlError
 eml_test_parse_csv_line(char *buffer, float *values, int32_t values_length,
                         int32_t *values_read_out)
 {        
@@ -45,16 +52,14 @@ eml_test_parse_csv_line(char *buffer, float *values, int32_t values_length,
 
 EmlError
 eml_test_read_csv(FILE *fp, EmlCsvCallback row_callback) {
-    const int32_t buffer_length = 1024;
-    char buffer[buffer_length];
-    const int32_t values_length = 256;
-    float values[values_length];
+    char buffer[EML_CSV_BUFFER_LENGTH];
+    float values[EML_CSV_VALUES_LENGTH];
     int row_no = 0;
 
-    while(fgets(buffer, buffer_length, fp))
+    while(fgets(buffer, EML_CSV_BUFFER_LENGTH, fp))
     {
         int value_no = 0;
-        const EmlError e = eml_test_parse_csv_line(buffer, values, values_length, &value_no);
+        const EmlError e = eml_test_parse_csv_line(buffer, values, EML_CSV_VALUES_LENGTH, &value_no);
         EML_CHECK_ERROR(e);
         row_callback(values, value_no, row_no);
         row_no++;
@@ -62,7 +67,4 @@ eml_test_read_csv(FILE *fp, EmlCsvCallback row_callback) {
     return EmlOk;
 }
 
-
 #endif // EML_TEST_H
-
-
