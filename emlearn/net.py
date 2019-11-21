@@ -1,6 +1,5 @@
 
 from . import common, cgen
-import eml_net
 
 import numpy
 
@@ -25,6 +24,7 @@ class Wrapper:
         self.classifier = None
 
         if classifier == 'pymodule':
+            import eml_net # import when required
             self.classifier = eml_net.Classifier(activations, weights, biases)
         elif classifier == 'loadable':
             name = 'mynet'

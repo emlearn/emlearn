@@ -6,7 +6,6 @@ import os
 import numpy
 
 from . import common
-import eml_trees
 
 
 # Tree representation as 2d array
@@ -328,7 +327,7 @@ class Wrapper:
 
         if classifier == 'pymodule':
             # FIXME: use Nodes,Roots directly, as Numpy Array
-
+            import eml_trees # import when required
             nodes, roots = self.forest_
             node_data = []
             for node in nodes:
