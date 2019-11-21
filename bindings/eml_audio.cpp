@@ -22,7 +22,7 @@ rfft_py(py::array_t<float, py::array::c_style | py::array::forcecast> in) {
         throw std::runtime_error("SFT input must have dimensions 1");
     }
 
-    const int n_fft = in.shape(0);
+    const int n_fft = (int)in.shape(0);
 
     // Precompute FFT table
     const int n_fft_table = n_fft/2;
@@ -72,7 +72,7 @@ melfilter_py(py::array_t<float, py::array::c_style | py::array::forcecast> in,
     const EmlAudioMel params = { n_mels, fmin, fmax, n_fft, samplerate };
 
     // Copy input to avoid modifying
-    const int length = in.shape(0);
+    const int length = (int)in.shape(0);
     EmlVector inv = {(float *)in.data(), length};
     // Prepare output
     auto ret = py::array_t<float>(params.n_mels);
@@ -110,7 +110,7 @@ melspectrogram_py(py::array_t<float, py::array::c_style | py::array::forcecast> 
     const EmlAudioMel params = { n_mels, fmin, fmax, n_fft, samplerate };
 
     // Copy input to avoid modifying
-    const int length = in.shape(0);
+    const int length = (int)in.shape(0);
     std::vector<float> inout(length);
     std::vector<float> temp(length);
     EmlVector inoutv = { (float *)inout.data(), length };
@@ -146,7 +146,7 @@ sparse_filterbank_py(py::array_t<float, py::array::c_style | py::array::forcecas
     EMLPY_PRECONDITION(coeffs.ndim() == 1, "Coefficients must have dim 1");
     EMLPY_PRECONDITION(starts.shape(0) == stops.shape(0), "Number of starts must equals stops");
 
-    const int output_length = starts.shape(0);
+    const int output_length = (int)starts.shape(0);
     auto ret = py::array_t<float>(output_length);
 
     EMLPY_CHECK_ERROR(eml_sparse_filterbank(in.data(),

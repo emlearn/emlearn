@@ -33,7 +33,7 @@ int64_t eml_benchmark_micros(void)
     QueryPerformanceCounter(&t);
     QueryPerformanceFrequency(&f);
     double sec = (double)t.QuadPart/(double)f.QuadPart;
-    return sec * 1000000LL;
+    return (int64_t)(sec * 1000000LL);
 }
 #endif
 

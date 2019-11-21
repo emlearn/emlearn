@@ -23,7 +23,7 @@ iirfilter_py(py::array_t<float, py::array::c_style | py::array::forcecast> sos,
     EMLPY_PRECONDITION(sos.ndim() == 2, "SOS coefficients must have dimensions 2");
     EMLPY_PRECONDITION(data.ndim() == 1, "data must have dimensions 1");
 
-    const int n_stages = sos.shape(0);
+    const int n_stages = (int)sos.shape(0);
 
     // Setup cascade
     std::vector<float> coefficients(sos.data(), sos.data() + 6*n_stages);

@@ -116,7 +116,7 @@ eml_vector_hann_apply(EmlVector out) {
 
     const long len = out.length;
     for (int i=0; i<len; i++) {
-        float m = 0.5 * (1 - cos(2*M_PI*i/(len-1)));
+        float m = (float)(0.5 * (1 - cos(2*M_PI*i/(len-1))));
         out.data[i] = m * out.data[i];
     }
     return EmlOk;
