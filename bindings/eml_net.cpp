@@ -52,7 +52,7 @@ public:
             throw std::runtime_error("Must have at least 3 layers total (1 hidden)");
         }
 
-        model.n_layers = weights.size();
+        model.n_layers = (int32_t)weights.size();
         layers = std::vector<EmlNetLayer>(model.n_layers);
         model.layers = layers.data();
 
@@ -62,8 +62,8 @@ public:
                 throw std::runtime_error("Unsupported activation function: " + activations[i]);
             }
 
-            layers[i].n_inputs = weights[i].shape(0); 
-            layers[i].n_outputs = weights[i].shape(1);
+            layers[i].n_inputs = (int32_t)weights[i].shape(0); 
+            layers[i].n_outputs = (int32_t)weights[i].shape(1);
             layers[i].activation = (EmlNetActivationFunction)a;
             layers[i].weights = (float *)weights[i].data();
             layers[i].biases = (float *)biases[i].data();
@@ -89,7 +89,7 @@ public:
         }
 
         const int64_t n_samples = in.shape()[0];
-        const int32_t n_features = in.shape()[1];
+        const int32_t n_features = (int32_t)in.shape()[1];
 
         auto classes = py::array_t<int32_t>(n_samples);
         //auto s = in.unchecked();
@@ -114,7 +114,7 @@ public:
         }
 
         const int64_t n_samples = in.shape()[0];
-        const int32_t n_features = in.shape()[1];
+        const int32_t n_features = (int32_t)in.shape()[1];
         const int32_t n_outputs = eml_net_outputs_proba(&model);
 
         const auto out_shape = std::vector<int64_t>{n_samples, n_outputs};

@@ -55,9 +55,9 @@ eml_fft_fill(EmlFFT table, size_t n) {
     EML_PRECONDITION((size_t)table.length == n/2, EmlSizeMismatch);
 
 	// Trignometric tables
-	for (size_t i = 0; i < n / 2; i++) {
-		table.cos[i] = cos(2 * M_PI * i / n);
-		table.sin[i] = sin(2 * M_PI * i / n);
+	for (size_t i = 0; i < (size_t)(n / 2); i++) {
+		table.cos[i] = (float)cos(2 * M_PI * i / n);
+		table.sin[i] = (float)sin(2 * M_PI * i / n);
 	}
     return EmlOk;
 }

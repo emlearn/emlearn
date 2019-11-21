@@ -6,9 +6,7 @@
 
 #if defined (__unix__) || (defined (__APPLE__) && defined (__MACH__))
 // Unix-like system
-#ifndef _POSIX_C_SOURCE
 #define _POSIX_C_SOURCE 199309L
-#endif
 #define EML_HAVE_SYS_TIME 1
 #endif
 
@@ -33,7 +31,7 @@ int64_t eml_benchmark_micros(void)
     QueryPerformanceCounter(&t);
     QueryPerformanceFrequency(&f);
     double sec = (double)t.QuadPart/(double)f.QuadPart;
-    return sec * 1000000LL;
+    return (int64_t)(sec * 1000000LL);
 }
 #endif
 

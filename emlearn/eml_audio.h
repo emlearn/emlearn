@@ -63,7 +63,7 @@ eml_audio_power_spectrogram(EmlVector rfft, EmlVector out, int n_fft) {
 
     const float scale = 1.0f/n_fft;
     for (int i=0; i<spec_length; i++) {
-        const float a = fabs(rfft.data[i]);
+        const float a = (float)fabs(rfft.data[i]);
         out.data[i] = scale * powf(a, 2);
     }
     return EmlOk;
@@ -73,11 +73,11 @@ eml_audio_power_spectrogram(EmlVector rfft, EmlVector out, int n_fft) {
 // in librosa have to use htk=True to match
 float
 eml_audio_mels_from_hz(float hz) {
-    return 2595.0 * log10(1.0 + (hz / 700.0));
+    return (float)(2595.0 * log10(1.0 + (hz / 700.0)));
 }
 float
 eml_audio_mels_to_hz(float mels) {
-    return 700.0 * (powf(10.0, mels/2595.0) - 1.0);
+    return (float)(700.0 * (powf(10.0, (float)(mels/2595.0)) - 1.0));
 }
 
 
@@ -103,7 +103,7 @@ eml_audio_mel_center(EmlAudioMel params, int n) {
 }
 int
 eml_audio_mel_bin(EmlAudioMel params, float hz) {
-    const int bin = floor((params.n_fft+1)*(hz/params.samplerate));
+    const int bin = (int)floor((params.n_fft+1)*(hz/params.samplerate));
     return bin;
 }
 static int

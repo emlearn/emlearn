@@ -50,7 +50,7 @@ public:
         }
 
         const int64_t n_samples = in.shape()[0];
-        const int32_t n_features = in.shape()[1];
+        const int32_t n_features = (int32_t)in.shape()[1];
 
         auto classes = py::array_t<int32_t>(n_samples);
         auto r = classes.mutable_unchecked<1>(); 
