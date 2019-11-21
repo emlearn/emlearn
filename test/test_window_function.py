@@ -44,7 +44,8 @@ def run_extract(include, name, length, workdir):
     }}
     """
     # create a new compiler object
-    cc = new_compiler()
+    # force re-compilation even if object files exist (required)
+    cc = new_compiler(force=1)
     output_filename = cc.executable_filename('test_' + name)
     prog_path = os.path.join(workdir, output_filename)
     code_path = prog_path + '.c'
@@ -55,7 +56,7 @@ def run_extract(include, name, length, workdir):
         f.write(prog)
 
     # compile
-    objects = cc.compile([code_path], output_dir=workdir)
+    objects = cc.compile([code_path])
     cc.link("executable", objects, output_filename=output_filename, 
         output_dir=workdir)  
 
@@ -89,7 +90,7 @@ def window_function_test(file_path, args):
 
 def test_window_function_hann():
 
-    file_path = 'tests/out/window_func.h'
+    file_path = os.path.join('tests','out','window_func.h')
     args = dict(
         window='hann',
         length=512,
