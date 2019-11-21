@@ -5,9 +5,6 @@
 #include "eml_common.h"
 #include "eml_fixedpoint.h"
 
-#ifndef EML_MAX_CLASSES
-#define EML_MAX_CLASSES 10
-#endif
 
 typedef struct _EmlBayesSummary {
     eml_q16_t mean;
@@ -97,7 +94,8 @@ eml_bayes_predict(EmlBayesModel *model, const float values[], int32_t values_len
    EML_PRECONDITION(values, -EmlUninitialized);
    EML_PRECONDITION(model->n_classes >= 2, -EmlUninitialized);
 
-   eml_q16_t class_probabilities[EML_MAX_CLASSES];
+   const int MAX_CLASSES = 10;
+   eml_q16_t class_probabilities[MAX_CLASSES];
 
    for (int class_idx = 0; class_idx<model->n_classes; class_idx++) {
 
