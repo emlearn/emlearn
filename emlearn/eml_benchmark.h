@@ -6,7 +6,9 @@
 
 #if defined (__unix__) || (defined (__APPLE__) && defined (__MACH__))
 // Unix-like system
+#ifndef _POSIX_C_SOURCE
 #define _POSIX_C_SOURCE 199309L
+#endif
 #define EML_HAVE_SYS_TIME 1
 #endif
 
@@ -61,7 +63,7 @@ eml_benchmark_fill(float *values, int features) {
     uint32_t rng_state = 1;    
 
     for (int i=0; i<features; i++) {
-        values[i] = (int32_t)eml_lcg_parkmiller(&rng_state);
+        values[i] = (float)eml_lcg_parkmiller(&rng_state);
     }
     return EmlOk;
 }
@@ -86,7 +88,7 @@ eml_benchmark_melspectrogram(EmlAudioMel mel_params,
         sum += input.data[0];
 
         const int64_t end = eml_benchmark_micros();
-        times[i] = end - start;
+        times[i] = (float)(end - start);
     }
 
     return EmlOk;
