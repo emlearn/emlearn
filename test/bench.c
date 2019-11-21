@@ -4,33 +4,31 @@
 
 #include <stdio.h>
 
-#ifndef EML_N_FFT
-#define EML_N_FFT 1024
-#define EML_N_REPS 1000
-#define EML_FRAME_LENGTH 1024
-#define EML_N_FFT_TABLE (EML_N_FFT/2)
-#endif
-
 EmlError
 bench_melspec()
 {
-    const EmlAudioMel mel = { 64, 0, 20000, EML_N_FFT, 44100 };
-    float times[EML_N_REPS];
+    const int n_fft = 1024;
+    const int n_reps = 1000;
+    const EmlAudioMel mel = { 64, 0, 20000, n_fft, 44100 };
+    float times[n_reps];
 
-    float input_data[EML_FRAME_LENGTH];
-    float temp_data[EML_FRAME_LENGTH];
-    eml_benchmark_fill(input_data, EML_FRAME_LENGTH);
+    const int frame_length = 1024;
 
-    float fft_sin[EML_N_FFT_TABLE];
-    float fft_cos[EML_N_FFT_TABLE];
-    EmlFFT fft = { EML_N_FFT_TABLE, fft_sin, fft_cos };
-    EML_CHECK_ERROR(eml_fft_fill(fft, EML_N_FFT));
+    float input_data[frame_length];
+    float temp_data[frame_length];
+    eml_benchmark_fill(input_data, frame_length);
 
-    eml_benchmark_melspectrogram(mel, fft, input_data, temp_data, EML_N_REPS, times);
-    EmlVector t = { times, EML_N_REPS };
+    const int n_fft_table = n_fft/2;
+    float fft_sin[n_fft_table];
+    float fft_cos[n_fft_table];
+    EmlFFT fft = { n_fft_table, fft_sin, fft_cos };
+    EML_CHECK_ERROR(eml_fft_fill(fft, n_fft));
+
+    eml_benchmark_melspectrogram(mel, fft, input_data, temp_data, n_reps, times);
+    EmlVector t = { times, n_reps };
 
     const float mean = eml_vector_mean(t);
-    printf("melspec;%d;%f\n", EML_N_REPS, mean);
+    printf("melspec;%d;%f\n", n_reps, mean);
     return EmlOk;
 }
 
