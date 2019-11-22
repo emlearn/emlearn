@@ -5,6 +5,7 @@ import numpy
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
 from sklearn import metrics, datasets
+import serial.tools.list_ports as port_list
 
 rnd = 11
 digits = datasets.load_digits()
@@ -32,7 +33,9 @@ code = cmodel.save(file=filename)
 
 print('Wrote C code to', filename)
 
-port = '/dev/ttyUSB0'
+assert len(port_list.comports()) > 0, "No serial ports available"
+
+port = port_list.comports()[0].device # grab the first serial port
 print('Classify on microcontroller via', port)
 import serial
 device = serial.Serial(port=port, baudrate=115200, timeout=0.1) 
