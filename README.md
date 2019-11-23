@@ -41,7 +41,8 @@ Feature extraction:
 
 * `eml_audio`: Melspectrogram
 
-Tested running on AVR Atmega, ESP8266 and Linux.
+Tested running on AVR Atmega, ESP8266, Linux and Windows.
+Mac OS should also work fine, please file a bug report if it does not.
 
 ## Installing
 
@@ -79,6 +80,13 @@ const int32_t predicted_class = sonar_predict(values, length):
 
 
 For full example code, see [examples/digits.py](https://github.com/emlearn/emlearn/blob/master/examples/digits.py)
+
+## Contributors
+
+```
+Jon Nordby
+Mark Cooke
+```
 
 ## Citations
 
