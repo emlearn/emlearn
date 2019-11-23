@@ -1,20 +1,33 @@
 language: python
-dist: xenial
-sudo: false
-addons:
-  apt:
-    packages:
-    - ffmpeg
-python:
-- '3.6'
+
+jobs:
+  include:
+    - os: linux
+      dist: xenial
+      sudo: false
+      python: 3.6
+      addons:
+        apt:
+          packages:
+          - ffmpeg
+      env: FOO=lin
+      after_script:
+      - cd docs && make SPHINXOPTS=-nW html && cd -
+    - os: windows
+      language: shell
+      env: PATH=/c/Python36:/c/Python36/Scripts:$PATH
+      before_install:
+        - choco install python --version 3.6.0
+        - python -m pip install --upgrade pip
+      before_script:
+        - pip install protobuf==3.6.0
+
 install:
 - pip install -r requirements.txt
 - pip install -r requirements.dev.txt
 - CFLAGS='-Werror' pip install ./ -v
 script:
-- cd docs && make SPHINXOPTS=-nW html && cd -
-- PYTHONPATH=./:build/lib.linux-x86_64-3.6/:$PYTHONPATH pytest -v --cov=emlearn --cov-report
-  html --cov-report term-missing --cov-branch
+- pytest -v --cov=emlearn --cov-report html --cov-report term-missing --cov-branch
 deploy:
   provider: pypi
   user: jonnor
