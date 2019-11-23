@@ -5,7 +5,7 @@ from . import signal
 
 from .convert import convert
 
-__version__ = '0.9.0'
+__version__ = '0.10.0'
 
 includedir = common.get_include_dir()
 
