@@ -1,5 +1,5 @@
-[![Travis CI Build Status](https://travis-ci.org/jonnor/emlearn.svg?branch=master)](https://travis-ci.org/jonnor/emlearn)
-[![Appveyor Build status](https://ci.appveyor.com/api/projects/status/myb325oc06w89flc?svg=true)](https://ci.appveyor.com/project/jonnor/emlearn)
+[![Travis CI Build Status](https://travis-ci.org/emlearn/emlearn.svg?branch=master)](https://travis-ci.org/emlearn/emlearn)
+[![Appveyor Build status](https://ci.appveyor.com/api/projects/status/myb325oc06w89flc?svg=true)](https://ci.appveyor.com/project/emlearn/emlearn)
 [![DOI](https://zenodo.org/badge/125562741.svg)](https://zenodo.org/badge/latestdoi/125562741)
 
 # emlearn
