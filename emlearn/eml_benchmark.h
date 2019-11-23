@@ -6,7 +6,9 @@
 
 #if defined (__unix__) || (defined (__APPLE__) && defined (__MACH__))
 // Unix-like system
+#ifndef _POSIX_C_SOURCE
 #define _POSIX_C_SOURCE 199309L
+#endif
 #define EML_HAVE_SYS_TIME 1
 #endif
 

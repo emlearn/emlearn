@@ -4,9 +4,9 @@ import subprocess
 import json
 
 import numpy
+from distutils.ccompiler import new_compiler
 
-examples_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../examples'))
-
+examples_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..','examples'))
 
 def run_window_function(options):
     path = os.path.join(examples_dir, 'window-function.py')
@@ -42,8 +42,11 @@ def run_extract(include, name, length, workdir):
         print_json(arr, length);
     }}
     """
-
-    prog_path = os.path.join(workdir, 'test_' + name)
+    # create a new compiler object
+    # force re-compilation even if object files exist (required)
+    cc = new_compiler(force=1)
+    output_filename = cc.executable_filename('test_' + name)
+    prog_path = os.path.join(workdir, output_filename)
     code_path = prog_path + '.c'
 
     params = dict(include=include, name=name, length=length)
@@ -52,10 +55,12 @@ def run_extract(include, name, length, workdir):
         f.write(prog)
 
     # compile
-    args = ['gcc', '-std=c99', code_path, '-o', prog_path]
-    subprocess.check_call(' '.join(args), shell=True)
+    objects = cc.compile([code_path])
+    cc.link("executable", objects, output_filename=output_filename, 
+        output_dir=workdir)  
 
     stdout = subprocess.check_output([prog_path])
+
     arr = json.loads(stdout)
     return arr
 
@@ -84,7 +89,7 @@ def window_function_test(file_path, args):
 
 def test_window_function_hann():
 
-    file_path = 'tests/out/window_func.h'
+    file_path = os.path.join('tests','out','window_func.h')
     args = dict(
         window='hann',
         length=512,
