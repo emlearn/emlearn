@@ -1,12 +1,20 @@
 language: python
-dist: xenial
-sudo: false
-addons:
-  apt:
-    packages:
-    - ffmpeg
-python:
-- '3.6'
+
+jobs:
+  include:
+    - os: linux
+      dist: xenial
+      sudo: false
+      python: 3.6
+      addons:
+        apt:
+          packages:
+          - ffmpeg
+      env: FOO=lin
+    - os: win
+      language: generic
+      env: FOO=win
+
 install:
 - pip install -r requirements.txt
 - pip install -r requirements.dev.txt
