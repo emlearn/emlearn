@@ -11,7 +11,7 @@ jobs:
           packages:
           - ffmpeg
       env: FOO=lin
-    - os: win
+    - os: windows
       language: shell
       env: FOO=win
       before_install:
