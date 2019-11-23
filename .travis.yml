@@ -11,6 +11,8 @@ jobs:
           packages:
           - ffmpeg
       env: FOO=lin
+      after_script:
+      - cd docs && make SPHINXOPTS=-nW html && cd -
     - os: windows
       language: shell
       env: PATH=/c/Python36:/c/Python36/Scripts:$PATH
@@ -23,7 +25,6 @@ install:
 - pip install -r requirements.dev.txt
 - CFLAGS='-Werror' pip install ./ -v
 script:
-- cd docs && make SPHINXOPTS=-nW html && cd -
 - pytest -v --cov=emlearn --cov-report html --cov-report term-missing --cov-branch
 deploy:
   provider: pypi
