@@ -19,7 +19,7 @@ jobs:
       before_install:
         - choco install python --version 3.6.0
         - python -m pip install --upgrade pip
-      after_install:
+      before_script:
         - pip install protobuf==3.6.0
 
 install:
