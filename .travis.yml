@@ -13,9 +13,9 @@ jobs:
       env: FOO=lin
     - os: windows
       language: shell
-      env: FOO=win
+      env: PATH=/c/Python38:/c/Python38/Scripts:$PATH
       before_install:
-        - choco install python --version 3.6.0
+        - choco install python --version 3.8.0
         - python -m pip install --upgrade pip
 
 install:
