@@ -6,7 +6,7 @@ from . import tools
 
 from .convert import convert
 
-__version__ = '0.10.1'
+__version__ = '0.11.0'
 
 includedir = common.get_include_dir()
 
