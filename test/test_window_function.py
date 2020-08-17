@@ -6,11 +6,10 @@ import json
 import numpy
 from distutils.ccompiler import new_compiler
 
-examples_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..','examples'))
 
 def run_window_function(options):
-    path = os.path.join(examples_dir, 'window-function.py')
-    args = ['python', path]
+    module = 'emlearn.tools.window_function'
+    args = ['python', '-m', module]
 
     for key, value in options.items():
         args.append('--{}={}'.format(key, value))
