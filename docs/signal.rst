@@ -2,14 +2,16 @@
 Signal processing
 ===========================
 
+..  automodule:: emlearn.signal
+    :members:
+
 Mel filterbank
 -----------------------
-.. literalinclude:: ../examples/mel-filterbank.py
+.. literalinclude:: ../emlearn/tools/mel_filterbank.py
 
 FFT window functions
 -------------------------
-.. literalinclude:: ../examples/window-function.py
+.. literalinclude:: ../emlearn/tools/window_function.py
 
-..  automodule:: emlearn.signal
-    :members:
+
 
