@@ -67,7 +67,7 @@ def melfilter(frames, sr, n_fft, n_mels=128, fmin=0.0, fmax=None, htk=True, norm
     numpy.testing.assert_almost_equal(fftfreqs, fftfreqs2)
 
     # 'Center freqs' of mel bands - uniformly spaced between limits
-    mel_f = librosa.core.time_frequency.mel_frequencies(n_mels + 2, fmin=fmin, fmax=fmax, htk=htk)
+    mel_f = librosa.mel_frequencies(n_mels + 2, fmin=fmin, fmax=fmax, htk=htk)
 
     fdiff = np.diff(mel_f)
     #ramps = np.subtract.outer(mel_f, fftfreqs)
