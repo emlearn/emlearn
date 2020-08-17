@@ -8,9 +8,7 @@ Redistributable under the MIT license
 import argparse
 import textwrap
 
-import scipy.signal
-
-import emlearn.cgen
+from .. import cgen
 
 # Supports everything without parameters in scipy.signal.get_window
 _known = 'boxcar, triang, blackman, hamming, hann, bartlett, flattop, parzen, bohman, blackmanharris, nuttall, barthann'
@@ -39,8 +37,10 @@ def parse(args=None):
 
 
 def window_function(name, window_type, length, fft_mode, linewrap):
+    import scipy.signal
+
     window = scipy.signal.get_window(window_type, length, fftbins=fft_mode)
-    gen = emlearn.cgen.array_declare(name, length, values=window)
+    gen = cgen.array_declare(name, length, values=window)
     w = textwrap.wrap(gen, linewrap)
     wrapped = '\n'.join(w)
     return wrapped

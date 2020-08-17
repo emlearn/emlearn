@@ -8,12 +8,12 @@ Can be used with eml_sparse_filterbank()
 import argparse
 import textwrap
 
-import librosa
-
 import emlearn.signal
 
 
 def mel_filterbank(args, name):
+    import librosa
+
     mel_basis = librosa.filters.mel(sr=args.samplerate, n_fft=args.fft, n_mels=args.bands,
                                     fmin=args.fmin, fmax=args.fmax, htk=args.htk)
     sparse = emlearn.signal.sparse_filterbank(mel_basis)

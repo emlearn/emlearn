@@ -158,10 +158,12 @@ setup(
     description='Machine learning for microcontrollers and embedded systems',
     long_description=read_readme(),
     long_description_content_type="text/markdown",
-    packages=['emlearn'],
-    scripts={
-        'examples/window-function.py': 'eml-window-function',
-        'examples/mel-filterbank.py': 'eml-mel-filterbank',
+    packages=['emlearn', 'emlearn.tools'],
+    entry_points={
+        "console_scripts": [
+            'eml-window-function = emlearn.tools.window_function:main',
+            'eml-mel-filerbank = emlearn.tools.mel_filterbank:main',
+        ],
     },
     ext_modules=ext_modules,
     include_package_data=True,
