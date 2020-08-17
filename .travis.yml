@@ -12,7 +12,7 @@ jobs:
           - ffmpeg
       env: FOO=lin
       after_script:
-      - cd docs && make SPHINXOPTS=-nW html && cd -
+      - cd docs && make html && cd -
     - os: windows
       language: shell
       env: PATH=/c/Python36:/c/Python36/Scripts:$PATH
