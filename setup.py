@@ -4,7 +4,9 @@ import sys
 import os.path
 import setuptools
 
-from emlearn import __version__
+here = os.path.dirname(__file__)
+with open(os.path.join(here, 'emlearn/VERSION')) as version_file:
+    version = version_file.read().strip()
 
 project_dir = os.path.abspath(os.path.dirname(__file__))
 
@@ -20,7 +22,6 @@ class get_pybind_include(object):
     def __str__(self):
         import pybind11
         return pybind11.get_include(self.user)
-
 
 
 # As of Python 3.6, CCompiler has a `has_flag` method.
@@ -151,7 +152,7 @@ def read_readme():
 
 setup(
     name='emlearn',
-    version=__version__,
+    version=version,
     author='Jon Nordby',
     author_email='jononor@gmail.com',
     url='https://github.com/emlearn/emlearn',
