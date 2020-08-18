@@ -172,6 +172,7 @@ setup(
         '': ['*.h', '*.ino'],
     },
     install_requires=read_requirements(),
+    setup_requires=['pybind11>=2.2'], # pybind11 needed at pip install time
     cmdclass={'build_ext': BuildExt},
     zip_safe=False,
 )
