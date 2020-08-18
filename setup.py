@@ -162,7 +162,7 @@ setup(
     entry_points={
         "console_scripts": [
             'eml-window-function = emlearn.tools.window_function:main',
-            'eml-mel-filerbank = emlearn.tools.mel_filterbank:main',
+            'eml-mel-filterbank = emlearn.tools.mel_filterbank:main',
         ],
     },
     ext_modules=ext_modules,
