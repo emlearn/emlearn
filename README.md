@@ -104,3 +104,25 @@ If you use `emlearn` in an academic work, please reference it using:
 }
 ```
 
+## Made with emlearn
+
+`emlearn` has been used in the following works.
+
+- [TinyML-Enabled Frugal Smart Objects: Challenges and Opportunities](https://ieeexplore.ieee.org/abstract/document/9166461) by Ramon Sanchez-Iborra and Antonio F. Skarmeta.
+Created a model for automatically selecting which radio transmission method to use in an IoT device.
+Running on Arduino Uno (AVR8) device.
+Tested Multi-layer Perceptron, Decision Tree and Random Forest from emlearn.
+Compared performance with sklearn-porter, and found that Random Forest to be faster in emlearn,
+while Decision Tree faster in sklearn-porter.
+Compared emlearn MLP to MicroMLGen’s SVM, and found the emlearn MLP to be more accurate and lower inference time.
+- [A Machine Learning Approach for Real Time Android Malware Detection](https://ieeexplore.ieee.org/abstract/document/9140771) by Ngoc C. Lê et al.
+Created a C++ model for detecting malware.
+Used a set of hand-engineered features and a Random Forest from emlearn as the classifier.
+Running on Android devices.
+
+
+If you are using emlearn, let us know!
+You can for example submit a pull request for inclusion in this README,
+or create an issue on Github.
+
+
