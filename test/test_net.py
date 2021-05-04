@@ -16,9 +16,9 @@ from sklearn.datasets import make_classification
 from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.preprocessing import StandardScaler, MultiLabelBinarizer
 
-import keras
-from keras.models import Sequential
-from keras.layers import Dense, Activation
+from tensorflow import keras
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense, Activation
 
 def test_unsupported_activation():
     with warnings.catch_warnings():
