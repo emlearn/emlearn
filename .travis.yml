@@ -15,11 +15,10 @@ jobs:
       - cd docs && make html && cd -
     - os: windows
       language: shell
-      env: PATH=/c/Python36:/c/Python36/Scripts:$PATH
+      env: PATH=/c/Python38:/c/Python38/Scripts:$PATH
       before_install:
         - choco install python --version 3.8.0
-        - refreshenv
-        - choco install pip
+        - python -m pip install --upgrade pip
 
 install:
 - pip install -r requirements.txt
