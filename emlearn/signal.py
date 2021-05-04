@@ -19,7 +19,7 @@ def sparse_filterbank(mels):
     return starts, ends, coeffs
 
 
-def sparse_filterbank_serialize(sparse, name):
+def sparse_filterbank_serialize(sparse, name, frequencies=None):
     starts, ends, coeffs = sparse
 
     arrays = [
@@ -27,6 +27,11 @@ def sparse_filterbank_serialize(sparse, name):
         cgen.array_declare(name+'_ends', len(ends), dtype='int', values=ends),
         cgen.array_declare(name+'_lut', len(coeffs), values=coeffs),
     ]
+    if frequencies is not None:
+        arrays += [
+            cgen.array_declare(name+'_frequencies', len(frequencies), dtype='float', values=frequencies),
+        ]
+
     out = '\n\n'.join(arrays)
     return out
 

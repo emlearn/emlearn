@@ -16,8 +16,12 @@ def mel_filterbank(args, name):
 
     mel_basis = librosa.filters.mel(sr=args.samplerate, n_fft=args.fft, n_mels=args.bands,
                                     fmin=args.fmin, fmax=args.fmax, htk=args.htk)
+    fmax = args.fmax if args.fmax is not None else args.samplerate/2
+    frequencies = librosa.filters.mel_frequencies(n_mels=args.bands,
+                                    fmin=args.fmin, fmax=fmax, htk=args.htk)
+
     sparse = emlearn.signal.sparse_filterbank(mel_basis)
-    gen = emlearn.signal.sparse_filterbank_serialize(sparse, name=name)
+    gen = emlearn.signal.sparse_filterbank_serialize(sparse, name=name, frequencies=frequencies)
 
     w = textwrap.wrap(gen, args.linewrap, replace_whitespace=False)
     wrapped = '\n'.join(w)
