@@ -32,7 +32,7 @@ def parse(args=None):
     parser = argparse.ArgumentParser(description='Generate lookup table for window functions')
     a = parser.add_argument
 
-    a('--bands', type=str, default=32,
+    a('--bands', type=int, default=32,
       help='Number of mel bands')
     a('--fft', type=int, default=1024,
       help='Number of coefficients in FFT')
