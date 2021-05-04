@@ -46,7 +46,7 @@ def parse(args=None):
     a('--htk', type=bool, default=False,
       help='Use HTK style filter spacing')
     a('--normalize', type=bool, default=True,
-      help='Use HTK style filter spacing')
+      help='Normalize to have constant energy per band')
 
     a('--name', type=str, default='',
       help='Output file. Default: ')
@@ -68,7 +68,7 @@ def main():
     if not out:
         out = name+'.h'
 
-    preamble = '// This file was generated with emlearn using eml-window-function\n\n'
+    preamble = '// This file was generated with emlearn using eml-mel-filterbank\n\n'
     gen = mel_filterbank(args, name)
     wrapped = preamble + gen + '\n\n'
 
