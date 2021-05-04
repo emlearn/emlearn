@@ -14,7 +14,7 @@ warnings.filterwarnings(action='ignore', category=sklearn.exceptions.Convergence
 from sklearn.neural_network import MLPClassifier
 from sklearn.datasets import make_classification
 from sklearn.model_selection import train_test_split, cross_val_score
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import StandardScaler, MultiLabelBinarizer
 
 import keras
 from keras.models import Sequential
@@ -145,7 +145,8 @@ def test_net_keras_predict(modelname):
 
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=.2)
         if params['classes'] != 2:
-            y_train = keras.utils.to_categorical(y_train, num_classes=params['classes'])
+            class_names = None
+            y_train = MultiLabelBinarizer(classes=class_names).fit_transform(y_train.reshape(-1, 1))
 
         model.fit(X_train, y_train, epochs=1, batch_size=10)
         X_test = X_test[:3]
