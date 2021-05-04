@@ -119,7 +119,9 @@ Compared emlearn MLP to MicroMLGen’s SVM, and found the emlearn MLP to be more
 Created a C++ model for detecting malware.
 Used a set of hand-engineered features and a Random Forest from emlearn as the classifier.
 Running on Android devices.
-
+- [RIOT OS](https://www.riot-os.org/) has a package for emlearn.
+[RIOT OS emlearn package example](https://github.com/RIOT-OS/RIOT/tree/master/tests/pkg_emlearn).
+Their build system automatically runs this test on tens of different hardware boards.
 
 If you are using emlearn, let us know!
 You can for example submit a pull request for inclusion in this README,
