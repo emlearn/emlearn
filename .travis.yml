@@ -18,6 +18,7 @@ jobs:
       env: PATH=/c/Python36:/c/Python36/Scripts:$PATH
       before_install:
         - choco install python --version 3.8.0
+        - refreshenv
         - choco install pip
 
 install:
