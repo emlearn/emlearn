@@ -14,8 +14,9 @@ import emlearn.signal
 def mel_filterbank(args, name):
     import librosa
 
+    norm = 'slaney' if args.normalize else None
     mel_basis = librosa.filters.mel(sr=args.samplerate, n_fft=args.fft, n_mels=args.bands,
-                                    fmin=args.fmin, fmax=args.fmax, htk=args.htk)
+                                    fmin=args.fmin, fmax=args.fmax, htk=args.htk, norm=norm)
     fmax = args.fmax if args.fmax is not None else args.samplerate/2
     frequencies = librosa.filters.mel_frequencies(n_mels=args.bands,
                                     fmin=args.fmin, fmax=fmax, htk=args.htk)
