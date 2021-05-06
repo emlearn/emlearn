@@ -25,6 +25,7 @@ def sparse_filterbank_serialize(sparse, name, frequencies=None):
     arrays = [
         cgen.array_declare(name+'_starts', len(starts), dtype='int', values=starts),
         cgen.array_declare(name+'_ends', len(ends), dtype='int', values=ends),
+        cgen.constant_declare(name+'_length', val=len(coeffs)),
         cgen.array_declare(name+'_lut', len(coeffs), values=coeffs),
     ]
     if frequencies is not None:

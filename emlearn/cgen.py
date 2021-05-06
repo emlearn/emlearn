@@ -25,6 +25,9 @@ def constant(val, dtype='float'):
     else:
         return str(val)
 
+def constant_declare(name, val, dtype='int'):
+    v = constant(val, dtype=dtype)
+    return f'static const {dtype} {name} = {v}; '
 
 def array_declare(name, size, dtype='float', modifiers='static const',
                     values=None, end='', indent=''):
