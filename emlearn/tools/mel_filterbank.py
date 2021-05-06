@@ -22,7 +22,7 @@ def mel_filterbank(args, name):
                                     fmin=args.fmin, fmax=fmax, htk=args.htk)
 
     sparse = emlearn.signal.sparse_filterbank(mel_basis)
-    gen = emlearn.signal.sparse_filterbank_serialize(sparse, name=name, frequencies=frequencies)
+    gen = emlearn.signal.sparse_filterbank_serialize(sparse, name=name, frequencies=frequencies, n_fft=args.fft)
 
     w = textwrap.wrap(gen, args.linewrap, replace_whitespace=False)
     wrapped = '\n'.join(w)
