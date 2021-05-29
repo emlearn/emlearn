@@ -2,6 +2,7 @@
 from . import trees
 from . import net
 from . import bayes
+from . import distance
 
 def convert(estimator, kind=None, method='pymodule', dtype='float'):
     """Main entrypoint for converting a model"""
@@ -12,6 +13,8 @@ def convert(estimator, kind=None, method='pymodule', dtype='float'):
     # Use name instead of instance to avoid hard dependency on the libraries
     if kind in ['RandomForestClassifier', 'ExtraTreesClassifier', 'DecisionTreeClassifier']:
         return trees.Wrapper(estimator, method, dtype=dtype)
+    elif kind in ['EllipticEnvelope']:
+        return distance.Wrapper(estimator, method, dtype=dtype)
     elif kind == 'MLPClassifier':
         return net.convert_sklearn_mlp(estimator, method)
     elif kind == 'Sequential':
