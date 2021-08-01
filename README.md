@@ -14,8 +14,8 @@ Embedded-friendly Inference
 * Portable C99 code
 * No libc required
 * No dynamic allocations
-* Support integer/fixed-point math
 * Single header file include
+* Support integer/fixed-point math (some methods)
 
 Convenient Training
 
@@ -36,6 +36,10 @@ Classifiers:
 * `eml_trees`: sklearn.RandomForestClassifier, sklearn.ExtraTreesClassifier, sklearn.DecisionTreeClassifier
 * `eml_net`: sklearn.MultiLayerPerceptron, Keras.Sequential with fully-connected layers
 * `eml_bayes`: sklearn.GaussianNaiveBayes
+
+Unsupervised / Outlier Detection / Anomaly Detection
+
+* `eml_distance`: sklearn.EllipticEnvelope (Mahalanobis distance)
 
 Feature extraction:
 
