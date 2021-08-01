@@ -40,8 +40,7 @@ def build_classifier(cmodel, name, temp_dir, include_dir, func=None, test_functi
     #include <eml_test.h>
 
     static void classify(const float *values, int length, int row) {{
-        const int32_t class = {func};
-        printf("%d,%d\\n", row, class);
+        printf("%d,%f\\n", row, (float){func});
     }}
     int main() {{
         {test_function}(stdin, classify);
@@ -61,7 +60,7 @@ def build_classifier(cmodel, name, temp_dir, include_dir, func=None, test_functi
 
     return bin_path
 
-def run_classifier(bin_path, data):
+def run_classifier(bin_path, data, out_dtype='int'):
     lines = []
     for row in data:
         lines.append(",".join(str(v) for v in row))
@@ -70,23 +69,29 @@ def run_classifier(bin_path, data):
     args = [ bin_path ]
     out = subprocess.check_output(args, input=stdin, encoding='utf8', universal_newlines=True)
 
-    classes = []
+    outputs = []
     for line in out.split('\n'):
         if line:
-            row,class_ = line.split(',')
-            class_ = int(class_)
-            classes.append(class_)
+            row,out_ = line.split(',')
+            if out_dtype == 'int':
+                out_ = int(float(out_))
+            elif out_dtype == 'float':
+                out_ = float(out_)
+            else:
+                out_ = out_dtype(out_)
+            outputs.append(out_)
 
-    assert len(classes) == len(data)
+    assert len(outputs) == len(data)
 
-    return classes
+    return outputs
 
 class CompiledClassifier():
-    def __init__(self, cmodel, name, call=None, include_dir=None, temp_dir='tmp', test_function=None):
+    def __init__(self, cmodel, name, call=None, include_dir=None, temp_dir='tmp', test_function=None, out_dtype='int'):
         if include_dir == None:
             include_dir = get_include_dir()
         self.bin_path = build_classifier(cmodel, name,
                 include_dir=include_dir, temp_dir=temp_dir, func=call, test_function=test_function) 
+        self._out_dtype = out_dtype
 
     def predict(self, X):
-        return run_classifier(self.bin_path, X)
+        return run_classifier(self.bin_path, X, out_dtype=self._out_dtype)
