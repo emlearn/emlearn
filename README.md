@@ -108,6 +108,10 @@ If you use `emlearn` in an academic work, please reference it using:
 
 `emlearn` has been used in the following works.
 
+- [An End-to-End Framework for Machine Learning-Based Network Intrusion Detection System](https://www.researchgate.net/publication/353590312_An_End-to-End_Framework_for_Machine_Learning-Based_Network_Intrusion_Detection_System) by Gustavo de Carvalho Bertoli et.al.
+Implemented a TCP Scan detection system.
+It used a Decision Tree and used emlearn to generate code for a Linux Kernel Module / Netfilter to do the detection.
+It was tested on a Rasperry PI 4 single-board-computer, and the performance overhead was found to be negligble.
 - [Towards an Electromyographic Armband: an Embedded Machine Learning Algorithms Comparison](https://webthesis.biblio.polito.it/17000/)
 by Danilo Demarchi, Paolo Motto Ros, Fabio Rossi and Andrea Mongardi.
 Detected different hand gestures based on ElectroMyoGraphic (sEMG) data.
