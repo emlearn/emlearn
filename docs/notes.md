@@ -25,7 +25,8 @@ Classification
 Anomaly detection
 
 - Static anomaly detection
-- Anomaly detection conditional on time or context 
+- Anomaly detection conditional on time or context
+- Combined with classifier, unknown class
 
 TinyML benefits
 
@@ -123,8 +124,8 @@ Exercise for the reader. Extend to
 - bipolar transistor
 - MOSFET transistor
 
-Measure voltages. Average in software
-multiple datapoints. f,voltage
+features
+frequency,dutycycle,v1,v2
 
 
 PWM freq change on Arduino Uno etc. Change TCCR2B register
@@ -149,6 +150,26 @@ Thing to try. What happens
 
 
 # Ideas
+
+## Temperature sensor
+
+Without a specialized thermometer.
+
+Regression task.
+
+Diode voltage drop. Ie 1N4007. Depends almost linearly on temperature. 
+Similar might also be for a Base-Emitter pair in a bipolar transistor?
+
+Humidity. Capacitors capacitance are dependent on relative humidity.
+Probably also has some temperature dependence. May need to be corrected for!
+
+Probably has some component variation also. Would be nice to map out.
+
+Should collect data in environmental chamber.
+Using one or more standardized devices as a reference.
+
+Minituarization. Could put on board with an attiny, act as I2C.
+
 
 ## Anomaly Detection
 
