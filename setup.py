@@ -5,7 +5,7 @@ import os.path
 import setuptools
 
 here = os.path.dirname(__file__)
-with open(os.path.join(here, 'emlearn/VERSION')) as version_file:
+with open(os.path.join(here, 'emlearn/VERSION.txt')) as version_file:
     version = version_file.read().strip()
 
 project_dir = os.path.abspath(os.path.dirname(__file__))

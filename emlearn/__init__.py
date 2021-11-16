@@ -9,7 +9,7 @@ from .convert import convert
 def get_version():
     import os.path
     here = os.path.dirname(__file__)
-    with open(os.path.join(here, 'VERSION')) as version_file:
+    with open(os.path.join(here, 'VERSION.txt')) as version_file:
         version = version_file.read().strip()
         return version
 
