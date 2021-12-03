@@ -112,6 +112,10 @@ If you use `emlearn` in an academic work, please reference it using:
 
 `emlearn` has been used in the following works.
 
+- [C-AVDI: Compressive Measurement-Based Acoustic Vehicle Detection and Identification](https://www.researchgate.net/publication/356707239_C-AVDI_Compressive_Measurement-Based_Acoustic_Vehicle_Detection_and_Identification)
+by Billy Dawton et.al. Implemented detection and classification of passing motorcycles and cars from sound.
+Used compressed sensing system using an analog frontend and ADC running at a low samplerate.
+Used a emlearn RandomForest on a Teensy microcontroller to perform the classification.
 - [An End-to-End Framework for Machine Learning-Based Network Intrusion Detection System](https://www.researchgate.net/publication/353590312_An_End-to-End_Framework_for_Machine_Learning-Based_Network_Intrusion_Detection_System) by Gustavo de Carvalho Bertoli et.al.
 Implemented a TCP Scan detection system.
 It used a Decision Tree and used emlearn to generate code for a Linux Kernel Module / Netfilter to do the detection.
