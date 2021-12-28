@@ -1,5 +1,5 @@
-[![Travis CI Build Status](https://travis-ci.org/emlearn/emlearn.svg?branch=master)](https://travis-ci.org/emlearn/emlearn)
-[![Appveyor Build status](https://ci.appveyor.com/api/projects/status/myb325oc06w89flc?svg=true)](https://ci.appveyor.com/project/emlearn/emlearn)
+
+![Tests](https://github.com/emlearn/emlearn/actions/workflows/tests/badge.svg)
 [![DOI](https://zenodo.org/badge/125562741.svg)](https://zenodo.org/badge/latestdoi/125562741)
 
 # emlearn
@@ -45,8 +45,7 @@ Feature extraction:
 
 * `eml_audio`: Melspectrogram
 
-Tested running on AVR Atmega, ESP8266, Linux and Windows.
-Mac OS should also work fine, please file a bug report if it does not.
+Tested running on AVR Atmega, ESP8266, ESP32, ARM Cortex M (STM32), Linux, Mac OS and Windows.
 
 ## Installing
 
@@ -55,6 +54,7 @@ Install from PyPI
     pip install --user emlearn
 
 ## Usage
+The basic usage consist of 3 steps:
 
 1. Train your model in Python
 
@@ -83,7 +83,7 @@ const int32_t predicted_class = sonar_predict(values, length):
 ```
 
 
-For full example code, see [examples/digits.py](https://github.com/emlearn/emlearn/blob/master/examples/digits.py)
+For full code see [the examples](https://emlearn.readthedocs.io/en/latest/examples.html).
 
 ## Contributors
 
