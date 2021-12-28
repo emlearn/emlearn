@@ -7,19 +7,13 @@ Welcome to emlearn's documentation!
 ===================================
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
    :caption: Contents:
 
-   introduction
-   trees
-   nets
-   signal
-   bayes
-   internals
-
+   source/README.md
+   examples
+   api_reference
    source/LICENSE.md
-
-.. include:: auto_examples/index.rst
 
 
 Indices and tables
