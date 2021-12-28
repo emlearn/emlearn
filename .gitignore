@@ -8,3 +8,4 @@ build/
 dist/
 prof/
 tmp/
+examples/xor_model.h
