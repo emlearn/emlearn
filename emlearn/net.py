@@ -108,7 +108,17 @@ def c_generate_net(activations, weights, biases, prefix):
         init_net(prefix, n_layers, layers_name, buf1_name, buf2_name, buffer_size),
     ]
 
-    lines = head_lines + layer_lines + net_lines 
+    name = prefix
+    predict_function = f"""
+    int32_t
+    {name}_predict(const float *features, int32_t n_features)
+    {{
+        return eml_net_predict(&{name}, features, n_features);
+
+    }}
+    """
+
+    lines = head_lines + layer_lines + net_lines + [predict_function]
     out = '\n'.join(lines)
 
     return out
