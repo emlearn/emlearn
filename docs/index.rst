@@ -10,7 +10,7 @@ Welcome to emlearn's documentation!
    :maxdepth: 2
    :caption: Contents:
 
-   source/README.md
+   introduction
    trees
    nets
    signal
