@@ -95,3 +95,37 @@ class CompiledClassifier():
 
     def predict(self, X):
         return run_classifier(self.bin_path, X, out_dtype=self._out_dtype)
+
+
+def compile_executable(code_file,
+                    out_dir,
+                    name='main',
+                    include_dirs=[]):
+
+    cc = new_compiler(force=1)
+
+    output_filename = cc.executable_filename(name)
+    bin_path = os.path.join(out_dir, output_filename)
+    #include_dirs = [out_dir, include_dir]
+
+    if sys.platform.startswith('win'): # Windows
+        libraries = None
+        cc_args = None
+    else: # MacOS and Linux should be the same
+        libraries = ["m"] # math library / libm
+        cc_args = ["-std=c99"]
+
+
+    objects = cc.compile(
+        sources=[code_file],
+        extra_preargs=cc_args,
+        include_dirs=include_dirs
+    )
+
+    cc.link("executable", objects,
+        output_filename=output_filename, 
+        output_dir=out_dir,
+        libraries=libraries,
+    )  
+
+    return bin_path
