@@ -1,4 +1,12 @@
 
+"""
+Digits
+===========================
+
+Work in progress
+"""
+
+
 import emlearn
 
 import numpy
