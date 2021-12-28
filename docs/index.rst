@@ -19,7 +19,7 @@ Welcome to emlearn's documentation!
 
    source/LICENSE.md
 
-
+.. include:: auto_examples/index.rst
 
 
 Indices and tables
