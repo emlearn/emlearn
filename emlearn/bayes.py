@@ -58,7 +58,16 @@ def generate_c(model, name='myclassifier'):
     #include <eml_bayes.h>
     """
 
-    return '\n\n'.join([head, summaries, model]) 
+    predict_function = f"""
+    int32_t
+    {name}_predict(const float *features, int32_t n_features)
+    {{
+        return eml_bayes_predict(&{name}_model, features, n_features);
+
+    }}
+    """
+
+    return '\n\n'.join([head, summaries, model, predict_function]) 
 
 
 # TODO: support class_priors_
