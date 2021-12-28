@@ -1,7 +1,7 @@
 
-#include "xor_model.h"
+#include "xor_model.h" // emlearn generated model
 
-#include <stdio.h>
+#include <stdio.h> // printf
 #include <stdlib.h> // stdod
 
 int
