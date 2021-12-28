@@ -29,7 +29,7 @@ def constant_declare(name, val, dtype='int'):
     v = constant(val, dtype=dtype)
     return f'static const {dtype} {name} = {v}; '
 
-def array_declare(name, size, dtype='float', modifiers='static const',
+def array_declare(name, size=None, dtype='float', modifiers='static const',
                     values=None, end='', indent=''):
 
     """
@@ -46,7 +46,11 @@ def array_declare(name, size, dtype='float', modifiers='static const',
     >>> cgen.array_declare("initialized", 3, dtype='int', modifiers='const')
     "const int initialized[3] = { 1, 2, 3 };"
     """
-    
+    if values is not None:
+        if size is None:
+            size = len(values)
+        assert size == len(values), 'size does not match length'
+
     init = ''
     if values is not None:
         init_values = ', '.join(constant(v, dtype) for v in values)
