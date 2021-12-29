@@ -77,60 +77,21 @@ BTJ/MOSFET transistors?
 # Possible examples
 
 ## XOR problem
-On computer. Commandline that takes two numbers as input, one number as output
 
-Could use two analog, or two digital 
-Output to another digital or analog output
-
-Models.
-DecisionTree, MultilayerPerceptron
-Can do later. GMM, kNN, SVM (RBF)
-
-Plot the datapoints.
-Plot the decision boundaries (for different models)
-
-References
+See [XOR classifier example](https://emlearn.readthedocs.io/en/latest/auto_examples/xor.html).
 
 Minsky, M. Papert, S. (1969). Perceptron: an introduction to computational geometry. The MIT Press, Cambridge, expanded edition, 19(88), 2.
 
-Showed that Perceptron could not learn XOR problem
-
-because the problem is not linearly separable
+Showed that Perceptron could not learn XOR problem because the problem is not linearly separable.
 
 Rumelhart, D. Hinton, G. Williams, R. (1985). Learning internal representations by error propagation (No. ICS-8506). California University San Diego LA Jolla Inst. for Cognitive Science.
 
-Showed that can be solved with backpropagation
+Showed that can be solved with backpropagation.
 
 
 ## Component classifier
 
-Classify a component that is plugged in
-
-- resistor
-- capacitor
-- inductor
-- diode
-- wire/short
-- nothing/open-loop
-
-Measure voltage and current into device.
-At different PWM frequencies. At least two different ones
-Need a resistor in the front.
-Could a 1k work?
-
-Try to use software low-pass filter for ADC voltages
-
-Exercise for the reader. Extend to
-- bipolar transistor
-- MOSFET transistor
-
-features
-frequency,dutycycle,v1,v2
-
-
-PWM freq change on Arduino Uno etc. Change TCCR2B register
-https://www.electronicwings.com/users/sanketmallawat91/projects/215/frequency-changing-of-pwm-pins-of-arduino-uno
-
+See [emlearn-component-tester project](https://github.com/emlearn/emlearn-component-tester).
 
 ## Photovoltaic detector
 
