@@ -153,11 +153,17 @@ def init_model():
     pass
 
 
+def get_covariance_type(s):
+    if s == 'diag':
+        s = 'diagonal'
+    return 'EmlCovariance' + s.title()
+
+
 def generate_code(model, name='fss_mode'):
 
     means = model._means
     log_det = model._log_det
-    covar_type = 'EmlCovariance'+model._covariance_type.title()
+    covar_type = get_covariance_type(model._covariance_type)
     precisions = model._precisions_col
     log_weights = numpy.log(model._weights)
 
@@ -299,6 +305,51 @@ def build_executable(wrapper, name='gmm'):
 
     return bin_path
 
+def convert_to_full(means, precisions_chol, covariance_type):
+
+    n_components, n_features = means.shape
+
+    out = None
+    if covariance_type == 'full':
+        # already full covariance
+        assert len(precisions_chol.shape) == 3, precisions_chol.shape
+        out = precisions_chol
+
+    elif covariance_type == 'tied':
+        # all components share the same general covariance matrix
+        assert len(precisions_chol.shape) == 2, precisions_chol.shape
+        assert precisions_chol.shape[0] == n_features
+        assert precisions_chol.shape[1] == n_features
+
+        out = [ precisions_chol for _ in range(n_components) ]
+        out = numpy.stack(out)
+
+    elif covariance_type == 'diag':
+        # each component has its own diagonal covariance matrix
+        assert len(precisions_chol.shape) == 2, precisions_chol.shape
+        assert precisions_chol.shape[0] == n_components
+        assert precisions_chol.shape[1] == n_features
+
+        out = [ numpy.diag(a) for a in precisions_chol ]
+        out = numpy.stack(out)
+
+    elif covariance_type == 'spherical':
+        # each component has its own single variance
+        assert len(precisions_chol.shape) == 1, precisions_chol.shape
+        assert precisions_chol.shape[0] == n_components
+        # copy out across features, features
+
+        out = [ v * numpy.eye(n_features, n_features) for v in precisions_chol ]
+        out = numpy.stack(out)
+
+    else:
+        raise ValueError("Unknown covariance_type '{}'")
+
+
+    assert len(out.shape) == 3, out.shape
+    assert out.shape == (n_components, n_features, n_features), out.shape
+    return out
+
 class Wrapper:
     def __init__(self, estimator, classifier, dtype='float'):
         self.dtype = dtype
@@ -308,6 +359,11 @@ class Wrapper:
         print("est shape", n_components, n_features)
         covariance_type = estimator.covariance_type
         precisions_chol = estimator.precisions_cholesky_
+
+        # Convert all types to "full" covariance matrix
+        # TODO: native aupport for tied/diag/spherical
+        precisions_chol = convert_to_full(estimator.means_, precisions_chol, covariance_type)
+        covariance_type = 'full'
 
         from sklearn.mixture._gaussian_mixture import _compute_log_det_cholesky
 
