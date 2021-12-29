@@ -11,7 +11,7 @@ from sklearn import datasets
 from sklearn import model_selection
 from sklearn import preprocessing
 from sklearn import decomposition
-from sklearn.mixture import GaussianMixture
+from sklearn.mixture import GaussianMixture, BayesianGaussianMixture
 from sklearn.covariance import EllipticEnvelope
 from sklearn import metrics
 from sklearn.utils.estimator_checks import check_estimator 
@@ -21,18 +21,21 @@ import emlearn
 import pytest
 
 random = numpy.random.randint(0, 1000)
+random = 1
 print('random_state={}'.format(random))
 
 MODELS = {
-    'GMM-full': GaussianMixture(n_components=3, covariance_type='full'),
+    'GMM-full': GaussianMixture(n_components=3, covariance_type='full', random_state=random),
     #'GMM-tied': GaussianMixture(n_components=3, covariance_type='tied'),
     #'GMM-diag': GaussianMixture(n_components=3, covariance_type='diag'),
     #'GMM-spherical': GaussianMixture(n_components=3, covariance_type='spherical'),
+    #'B-GMM-full': BayesianGaussianMixture(n_components=5, covariance_type='full', random_state=random),
     'EllipticEnvelope': EllipticEnvelope(),
 }
 DATASETS = {
     #'binary': datasets.make_classification(n_classes=2, n_features=7, n_samples=100, random_state=random),
-    '5way': datasets.make_classification(n_classes=5, n_features=7, n_informative=5, n_samples=100//2, random_state=random),
+    #'5way': datasets.make_classification(n_classes=2, n_features=4, n_informative=2, n_samples=6, random_state=random),
+    '5way': datasets.make_classification(n_classes=5, n_features=7, n_informative=5, n_samples=50, random_state=random),
 }
 METHODS = [
     'inline',
@@ -57,6 +60,11 @@ def test_gaussian_mixture_equals_sklearn(data, model, method):
     if 'EllipticEnvelope' in model:
         dist = estimator.mahalanobis(X)    
         cdist = cmodel.mahalanobis(X)
+        numpy.testing.assert_allclose(cdist, dist, rtol=1e-5)
+
+    if 'GMM' in model:
+        dist = estimator.score_samples(X)    
+        cdist = cmodel.score_samples(X)
         numpy.testing.assert_allclose(cdist, dist, rtol=1e-5)
 
     pred_original = estimator.predict(X)

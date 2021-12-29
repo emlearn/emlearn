@@ -11,8 +11,8 @@
 #endif
 
 
-// numpy.log2(2*numpy.pi)
-#define EML_LOG2_2PI 2.651496129472319f
+// numpy.log(2*numpy.pi)
+#define EML_LOG_2PI 1.8378770664093453
 
 bool
 eml_dot_product(float *a, float *b, int n)
@@ -25,7 +25,7 @@ eml_dot_product(float *a, float *b, int n)
     return sum;
 }
 
-typedef enum EmlCovarianceType_ = {
+typedef enum EmlCovarianceType_ {
     EmlCovarianceFull,
     EmlCovarianceTied,
     EmlCovarianceDiagonal,
@@ -37,15 +37,15 @@ typedef struct _EmlMixtureModel {
    int32_t n_features;
    EmlCovarianceType covariance_type;
 
-   float *means; // n_components * n_features (in the full covariance case)
+   const float *means; // n_components * n_features (in the full covariance case)
 
    // Cholesky decompositions of the precision matrices.
    // Length depends on covariance_type, see eml_mixture_precisions_length
-   float *precisions;
+   const float *precisions;
 
     // FIXME: combine log_dets and log_weights?
-   float *log_dets; // n_components
-   float *log_weigths; // n_components
+   const float *log_dets; // n_components
+   const float *log_weights; // n_components
 } EmlMixtureModel;
 
 
@@ -55,7 +55,6 @@ eml_mixture_precisions_length(EmlMixtureModel *model)
     int length = -1;
     const int32_t features = model->n_features;
     const int32_t components = model->n_components;
-    const int32_t features = model->n_features;
 
     switch (model->covariance_type) {
         case EmlCovarianceFull:
@@ -76,72 +75,92 @@ eml_mixture_precisions_length(EmlMixtureModel *model)
 }
 
 
+void
+print_array(const float *array, int n) {
+    printf("[");
+    for (int i=0; i<n; i++) {
+        printf("%.4f ", array[i]);
+    }
+    printf("]");
+}
 
 int32_t
-eml_mixture_predict_proba(EmlMixtureModel *model,
+eml_mixture_log_proba(EmlMixtureModel *model,
                         const float values[], int32_t values_length,
                         float *probabilities)
 {
 
-   EML_PRECONDITION(model, -EmlUninitialized);
-   EML_PRECONDITION(values, -EmlUninitialized);
-   EML_PRECONDITION(model->n_components > 0, -EmlUninitialized);
+    EML_PRECONDITION(model, -EmlUninitialized);
+    EML_PRECONDITION(values, -EmlUninitialized);
+    EML_PRECONDITION(model->n_components > 0, -EmlUninitialized);
 
+    float *out = probabilities;
+    const int n_features = model->n_features;
 
-   float *out = probabilities;
-
-    for (int c=0; c<n_components; c++) {
-
+    for (int c=0; c<model->n_components; c++) {
         
-        const float *means = model->means[(c*n_features)]
+        const float *means = model->means + (c*n_features);
+        
+        printf("means: ");
+        print_array(means, n_features);
+        printf("\n");
 
-        switch (covariance_type) {
+        float log_prob = 0.0;
+
+        switch (model->covariance_type) {
 
             case EmlCovarianceFull:
 
-                const float *precisions = model->precisions[(c*n_features)]
-                const int n_precisions = model->n_features; // per feature, for this component 
-
-                float log_prob = 0.0;
                 for (int f=0; f<n_features; f++) {
 
+                    const float *precisions = model->precisions + (c*n_features*n_features);
+                    const int n_precisions = model->n_features; // per feature, for this component 
+#if 1
+                    printf("precisions: ");
+                    print_array(precisions, n_precisions);
+                    printf("\n");
+#endif
                     float dot_x = 0.0;
                     float dot_m = 0.0;
                     for (int p=0; p<n_precisions; p++) {
-                        dot_x += (values[f] * precisions[p]);
-                        dot_m += (means[f] * precisions[p]);
+                        dot_x += (values[p] * precisions[(p*n_features)+f]);
+                        dot_m += (means[p] * precisions[(p*n_features)+f]);
                     }
                     const float y = (dot_x - dot_m);
+                    printf("c_yy component=%d feature=%d y=%.4f dot_x=%.4f dot_m=%.4f  \n",
+                            c, f, y, dot_x, dot_m);
+
 
                     log_prob += (y*y);
                 }
+                printf("c_log_prob component=%d log_prob=%.4f  \n", c, log_prob);
 
                 break;
 
             case EmlCovarianceTied:
-                return -66;
+                return EmlUnsupported;
                 break;
 
             case EmlCovarianceDiagonal:
-                return -66;
+                return EmlUnsupported;
                 break;
 
             case EmlCovarianceSpherical:
-                return -66;
+                return EmlUnsupported;
                 break;
 
         }
 
-        out[c] = -0.5 * (n_features * EML_LOG2_2PI + log_prob ) + log_det[c];
-        out[c] += log_weights[c];
+        out[c] = -0.5 * (n_features * EML_LOG_2PI + log_prob ) + model->log_dets[c];
+        printf("c_s component=%d s=%.4f log_det=%.4f weight=%.4f \n",
+                c, out[c], model->log_dets[c], model->log_weights[c]);
+
+        out[c] += model->log_weights[c];
 
     }
 
 
-*/
-
-
-   return ;
+   return EmlOk;
 }
 
 

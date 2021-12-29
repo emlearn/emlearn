@@ -4,7 +4,7 @@ import os
 
 import numpy
 
-from . import common
+from . import common, cgen
 
 # Ref 
 """
@@ -80,34 +80,47 @@ def _estimate_log_gaussian_prob(X, means, precisions_chol, covariance_type):
     if covariance_type == 'full':
         log_prob = np.empty((n_samples, n_components))
 
-        print('mm', n_samples, n_features, n_components)
+        #print('mm', n_samples, n_features, n_components)
 
-        for k, (mu, prec_chol) in enumerate(zip(means, precisions_chol)):
+        for i, x in enumerate(X):
+            #print('x', i, x)
+            for k, (mu, prec_chol) in enumerate(zip(means, precisions_chol)):
 
-            print("ss", X.shape, mu.shape, prec_chol.shape)
+                pp = 0.0
+   
+                for f in range(x.shape[0]):
+                    dot_m = 0.0
+                    dot_x = 0.0
 
-            if False:
+                    for p in range(prec_chol.shape[0]):
+                        dot_m += (mu[p] * prec_chol[p,f])
+                        dot_x += (x[p] * prec_chol[p,f])
 
-                y = np.matmul(X, prec_chol) - np.matmul(mu, prec_chol)
-                print("yy", y.shape)
-                p = np.sum(np.square(y), axis=1) # sum over features
-                print("p", p.shape, p)
-                log_prob[:, k] = p          
+                #assert dot_x == np.dot(x, prec_chol), 
+                #assert dot_m == np.dot(mu, prec_chol), 
 
-            else:
-                # sample iteration can be moved to outside
-                for i, x in enumerate(X):
-                    print('x', i, x.shape)
+                    print('dot_x', dot_x)
+                    print('dot_m', dot_m)
+                    y = (dot_x - dot_m)
+                    pp += ( y * y ) 
 
-                    if True:
-                        y = np.dot(x, prec_chol) - np.dot(mu, prec_chol)
-                        print("yy", y.shape)
-                        p = np.sum(np.square(y), axis=0) # sum over features
-                        print("p", p.shape, p)
+                #print('k', k, '\n', mu, '\n', prec_chol)
+                dot_x = np.dot(x, prec_chol)
+                dot_m = np.dot(mu, prec_chol)
+                y = dot_x - dot_m
 
-                    #for f_idx in range(x.shape):
-                        
-                        log_prob[i, k] = p
+                print('dot_x', dot_x)
+                print('dot_m', dot_m)
+                #print('y', y)
+
+                p = np.sum(np.square(y), axis=0) # sum over features
+            
+                assert p == pp, (p, pp)
+
+                #print("log_prob", i, k, p)
+
+                
+                log_prob[i, k] = p
 
     elif covariance_type == 'tied':
         log_prob = np.empty((n_samples, n_components))
@@ -127,8 +140,164 @@ def _estimate_log_gaussian_prob(X, means, precisions_chol, covariance_type):
                     2 * np.dot(X, means.T * precisions) +
                     np.outer(row_norms(X, squared=True), precisions))
 
-    print('kk', log_prob.shape, log_det.shape)
-    return -.5 * (n_features * np.log(2 * np.pi) + log_prob) + log_det
+
+    s = -.5 * (n_features * np.log(2 * np.pi) + log_prob) + log_det
+    print('s', s, log_det)
+
+    return s
+
+
+def init_model():
+    
+
+    pass
+
+
+def generate_code(model, name='fss_mode'):
+
+    means = model._means
+    log_det = model._log_det
+    covar_type = 'EmlCovariance'+model._covariance_type.title()
+    precisions = model._precisions_col
+    log_weights = numpy.log(model._weights)
+
+    print(means.shape)
+    print(log_det.shape)
+
+    n_components = means.shape[0]
+    n_features = 3
+
+    means_name = f'{name}_means'
+    means_size = n_components * n_features
+    means_arr = cgen.array_declare(means_name, size=means_size, values=means.flatten())
+
+    log_dets_name = f'{name}_log_dets'
+    log_dets_arr = cgen.array_declare(log_dets_name, values=log_det.flatten())
+
+    precisions_name = f'{name}_precisions'
+    precisions_arr = cgen.array_declare(precisions_name, values=precisions.flatten())
+
+    log_weights_name = f'{name}_log_weights'
+    log_weights_arr = cgen.array_declare(log_weights_name, values=log_weights.flatten())
+
+
+    predict_func = f'''
+        int32_t
+        {name}_log_proba(const float values[], int32_t values_length, float *out)
+        {{
+
+            return eml_mixture_log_proba(&{name}_model,
+                                values, values_length,
+                                out);
+        }}
+    '''
+
+    model_init = f'EmlMixtureModel {name}_model = ' + cgen.struct_init(
+        n_components,
+        n_features,
+        covar_type,
+        means_name,
+        precisions_name,
+        log_dets_name,
+        log_weights_name,
+    ) + ';\n'
+
+    preamble = """
+    // !! This file was generated using emlearn
+
+    #include <eml_mixture.h>
+    """
+
+    out = '\n'.join([
+        preamble,
+        means_arr,
+        precisions_arr,
+        log_weights_arr,
+        log_dets_arr,
+        model_init,
+        predict_func,
+    ])
+
+    return out
+
+
+def predict(bin_path, X, verbose=1):
+    import subprocess
+
+    def predict_one(x):
+        args = [ bin_path ]
+        args += [ str(v) for v in x ]
+        out = subprocess.check_output(args)
+        if verbose > 0:
+            print(f"run args={args} out={out} ")
+
+        lines = out.decode('utf-8').split('\n')
+        for line in lines:
+            print('l', line)
+
+        outs = lines[-1].split(',')
+        values = [ float(s) for s in outs ]
+        return values
+
+    y = [ predict_one(x) for x in numpy.array(X) ]
+    return numpy.array(y)
+
+def build_executable(wrapper, name='gmm'):
+    n_components, n_features = wrapper._means.shape
+
+    model_code = generate_code(wrapper, name=name)
+
+    includes = """
+    #include <stdio.h> // printf
+    #include <stdlib.h> // stdod
+    """
+
+    code = includes + model_code + f"""
+
+    static float features[{n_features}] = {{0.0}};
+    static float output[{n_components}] = {{0.0}};
+
+    int
+    main(int argc, const char *argv[])
+    {{
+        const int n_features = {n_features};
+        const int n_components = {n_components};
+
+        if (argc != 1+n_features) {{
+            return -1;
+        }}
+
+        for (int i=1; i<argc; i++) {{
+            features[i-1] = strtod(argv[i], NULL);
+        }}
+
+        const EmlError out = {name}_log_proba(features, n_features, output);
+        if (out != EmlOk) {{
+            return -out; // error
+        }}
+
+        for (int i=0; i<n_components; i++) {{
+            printf("%.6f", output[i]);
+            if (i != (n_components-1)) {{
+                printf(",");
+            }}
+        }}
+        return 0;
+    }}
+    """
+    
+
+    # Compile the xor.c example program
+    out_dir = './examples'
+    src_path = os.path.join(out_dir, 'gmm.c')
+
+    with open(src_path, 'w') as f:
+        f.write(code)
+
+    include_dirs = [ common.get_include_dir() ]
+    bin_path = common.compile_executable(src_path, out_dir, include_dirs=include_dirs)
+
+    return bin_path
 
 class Wrapper:
     def __init__(self, estimator, classifier, dtype='float'):
@@ -155,19 +324,32 @@ class Wrapper:
         self._precisions_col = precisions_chol
         self._weights = estimator.weights_
 
+
     def predict_proba(self, X):
         #from sklearn.mixture._gaussian_mixture import _estimate_log_gaussian_prob
-        predictions = _estimate_log_gaussian_prob(X, self._means,
+
+        py_predictions = _estimate_log_gaussian_prob(X, self._means,
                                     self._precisions_col, self._covariance_type)
 
-        predictions += numpy.log(self._weights)
+        py_predictions += numpy.log(self._weights)
 
-        return predictions
+        bin_path = build_executable(self)
+        c_predictions = predict(bin_path, X)
+
+        # XXX: note, this is actually log probabilities
+        return c_predictions
 
     def predict(self, X):
         probabilities = self.predict_proba(X)
         predictions = numpy.argmax(probabilities, axis=1)
         return predictions
+
+    def score_samples(self, X):
+        from scipy.special import logsumexp
+
+        prob = self.predict_proba(X)
+        return logsumexp(prob, axis=1)
+
 
     def save(self, name=None, file=None):
         if name is None:
