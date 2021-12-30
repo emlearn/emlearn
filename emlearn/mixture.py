@@ -96,11 +96,6 @@ def _estimate_log_gaussian_prob(X, means, precisions_chol, covariance_type):
                         dot_m += (mu[p] * prec_chol[p,f])
                         dot_x += (x[p] * prec_chol[p,f])
 
-                #assert dot_x == np.dot(x, prec_chol), 
-                #assert dot_m == np.dot(mu, prec_chol), 
-
-                    #print('dot_x', dot_x)
-                    #print('dot_m', dot_m)
                     y = (dot_x - dot_m)
                     pp += ( y * y ) 
 
@@ -114,12 +109,9 @@ def _estimate_log_gaussian_prob(X, means, precisions_chol, covariance_type):
                 #print('y', y)
 
                 p = np.sum(np.square(y), axis=0) # sum over features
-            
                 assert p == pp, (p, pp)
+                #print("log_prob", i, k, p)
 
-                print("log_prob", i, k, p)
-
-                
                 log_prob[i, k] = p
 
     elif covariance_type == 'tied':
@@ -142,7 +134,7 @@ def _estimate_log_gaussian_prob(X, means, precisions_chol, covariance_type):
 
 
     s = -.5 * (n_features * np.log(2 * np.pi) + log_prob) + log_det
-    print('s', s, 'log_det\n', log_det)
+    #print('s', s, 'log_det\n', log_det)
 
     return s
 
@@ -235,8 +227,9 @@ def predict(bin_path, X, verbose=1):
             print(f"run args={args} out={out} ")
 
         lines = out.decode('utf-8').split('\n')
-        for line in lines:
-            print('l', line)
+        if verbose > 1:
+            for line in lines:
+                print('l', line)
 
         outs = lines[-1].split(',')
         values = [ float(s) for s in outs ]
@@ -375,12 +368,11 @@ def get_log_weights(estimator):
 
 
 class Wrapper:
-    def __init__(self, estimator, classifier, dtype='float'):
+    def __init__(self, estimator, classifier, dtype='float', verbose=0):
         self.dtype = dtype
-
+        self.verbose = verbose
 
         n_components, n_features = estimator.means_.shape
-        print("est shape", n_components, n_features)
         covariance_type = estimator.covariance_type
         precisions_chol = estimator.precisions_cholesky_
 
@@ -393,10 +385,6 @@ class Wrapper:
 
         log_det = _compute_log_det_cholesky(
             precisions_chol, covariance_type, n_features)
-
-        #print("log_det", log_det.shape)
-        #print("means", estimator.means_.shape)
-        #print("prec", precisions_chol.shape)
 
         self._log_det = log_det
         self._means = estimator.means_.copy()
@@ -413,10 +401,8 @@ class Wrapper:
 
         py_predictions += self._log_weights
 
-        print('log_weights\n', self._log_weights)
-
         bin_path = build_executable(self)
-        c_predictions = predict(bin_path, X)
+        c_predictions = predict(bin_path, X, verbose=self.verbose)
 
         # XXX: note, this is actually log probabilities
         return c_predictions

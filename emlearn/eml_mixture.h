@@ -74,7 +74,7 @@ eml_mixture_precisions_length(EmlMixtureModel *model)
     return length;
 }
 
-
+#if 0
 void
 print_array(const float *array, int n) {
     printf("[");
@@ -83,6 +83,7 @@ print_array(const float *array, int n) {
     }
     printf("]");
 }
+#endif
 
 int32_t
 eml_mixture_log_proba(EmlMixtureModel *model,
@@ -100,10 +101,12 @@ eml_mixture_log_proba(EmlMixtureModel *model,
     for (int c=0; c<model->n_components; c++) {
         
         const float *means = model->means + (c*n_features);
-        
+      
+#if 0  
         printf("means: ");
         print_array(means, n_features);
         printf("\n");
+#endif
 
         float log_prob = 0.0;
 
@@ -134,7 +137,9 @@ eml_mixture_log_proba(EmlMixtureModel *model,
 
                     log_prob += (y*y);
                 }
+#if 0
                 printf("c_log_prob component=%d log_prob=%.4f  \n", c, log_prob);
+#endif
 
                 break;
 
@@ -153,8 +158,11 @@ eml_mixture_log_proba(EmlMixtureModel *model,
         }
 
         out[c] = -0.5 * (n_features * EML_LOG_2PI + log_prob ) + model->log_dets[c];
+
+#if 0
         printf("c_s component=%d s=%.4f log_det=%.4f weight=%.4f \n",
                 c, out[c], model->log_dets[c], model->log_weights[c]);
+#endif
 
         out[c] += model->log_weights[c];
 
