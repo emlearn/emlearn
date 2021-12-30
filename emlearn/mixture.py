@@ -99,8 +99,8 @@ def _estimate_log_gaussian_prob(X, means, precisions_chol, covariance_type):
                 #assert dot_x == np.dot(x, prec_chol), 
                 #assert dot_m == np.dot(mu, prec_chol), 
 
-                    print('dot_x', dot_x)
-                    print('dot_m', dot_m)
+                    #print('dot_x', dot_x)
+                    #print('dot_m', dot_m)
                     y = (dot_x - dot_m)
                     pp += ( y * y ) 
 
@@ -109,15 +109,15 @@ def _estimate_log_gaussian_prob(X, means, precisions_chol, covariance_type):
                 dot_m = np.dot(mu, prec_chol)
                 y = dot_x - dot_m
 
-                print('dot_x', dot_x)
-                print('dot_m', dot_m)
+                #print('dot_x', dot_x)
+                #print('dot_m', dot_m)
                 #print('y', y)
 
                 p = np.sum(np.square(y), axis=0) # sum over features
             
                 assert p == pp, (p, pp)
 
-                #print("log_prob", i, k, p)
+                print("log_prob", i, k, p)
 
                 
                 log_prob[i, k] = p
@@ -142,7 +142,7 @@ def _estimate_log_gaussian_prob(X, means, precisions_chol, covariance_type):
 
 
     s = -.5 * (n_features * np.log(2 * np.pi) + log_prob) + log_det
-    print('s', s, log_det)
+    print('s', s, 'log_det\n', log_det)
 
     return s
 
@@ -165,10 +165,7 @@ def generate_code(model, name='fss_mode'):
     log_det = model._log_det
     covar_type = get_covariance_type(model._covariance_type)
     precisions = model._precisions_col
-    log_weights = numpy.log(model._weights)
-
-    print(means.shape)
-    print(log_det.shape)
+    log_weights = model._log_weights
 
     n_components = means.shape[0]
     n_features = 3
@@ -350,6 +347,33 @@ def convert_to_full(means, precisions_chol, covariance_type):
     assert out.shape == (n_components, n_features, n_features), out.shape
     return out
 
+def get_log_weights(estimator):
+    from scipy.special import digamma
+
+    log_weights = estimator._estimate_log_weights()
+    n_components, n_features = estimator.means_.shape
+
+    # For BayesianGaussianMixture   
+    # In scikit-learn this is done by adding to log_probs during prediction
+    # but we instead bake this into the "weights" 
+    # https://github.com/scikit-learn/scikit-learn/blob/7e1e6d09bcc2eaeba98f7e737aac2ac782f0e5f1/sklearn/mixture/_bayesian_mixture.py#L768
+    is_bayesian = hasattr(estimator, 'degrees_of_freedom_') 
+    if is_bayesian:
+        # Remove `n_features * np.log(self.degrees_of_freedom_)` because the precision matrix is normalized
+        log_weights = log_weights - (0.5 * n_features * np.log(estimator.degrees_of_freedom_))
+
+        log_lambda = n_features * np.log(2.0) + np.sum(
+            digamma(0.5* (estimator.degrees_of_freedom_ - np.arange(0, n_features)[:, np.newaxis])),
+            0,
+        )
+
+        log_weights = log_weights + (0.5 * (log_lambda - n_features / estimator.mean_precision_))
+        return log_weights
+
+    else:
+        return log_weights
+
+
 class Wrapper:
     def __init__(self, estimator, classifier, dtype='float'):
         self.dtype = dtype
@@ -378,7 +402,7 @@ class Wrapper:
         self._means = estimator.means_.copy()
         self._covariance_type = covariance_type
         self._precisions_col = precisions_chol
-        self._weights = estimator.weights_
+        self._log_weights = get_log_weights(estimator)
 
 
     def predict_proba(self, X):
@@ -387,7 +411,9 @@ class Wrapper:
         py_predictions = _estimate_log_gaussian_prob(X, self._means,
                                     self._precisions_col, self._covariance_type)
 
-        py_predictions += numpy.log(self._weights)
+        py_predictions += self._log_weights
+
+        print('log_weights\n', self._log_weights)
 
         bin_path = build_executable(self)
         c_predictions = predict(bin_path, X)

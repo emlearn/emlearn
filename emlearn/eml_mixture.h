@@ -115,7 +115,7 @@ eml_mixture_log_proba(EmlMixtureModel *model,
 
                     const float *precisions = model->precisions + (c*n_features*n_features);
                     const int n_precisions = model->n_features; // per feature, for this component 
-#if 1
+#if 0
                     printf("precisions: ");
                     print_array(precisions, n_precisions);
                     printf("\n");
@@ -127,9 +127,10 @@ eml_mixture_log_proba(EmlMixtureModel *model,
                         dot_m += (means[p] * precisions[(p*n_features)+f]);
                     }
                     const float y = (dot_x - dot_m);
+#if 0
                     printf("c_yy component=%d feature=%d y=%.4f dot_x=%.4f dot_m=%.4f  \n",
                             c, f, y, dot_x, dot_m);
-
+#endif
 
                     log_prob += (y*y);
                 }
