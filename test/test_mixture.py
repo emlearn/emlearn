@@ -55,7 +55,7 @@ def test_gaussian_mixture_equals_sklearn(data, model, method):
     estimator = MODELS[model]
 
     X = preprocessing.StandardScaler().fit_transform(X)
-    X = decomposition.PCA(3).fit_transform(X)
+    X = decomposition.PCA(3, random_state=random).fit_transform(X)
     estimator.fit(X, y)
 
     cmodel = emlearn.convert(estimator, method=method)
