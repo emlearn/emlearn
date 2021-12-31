@@ -109,7 +109,7 @@ def _estimate_log_gaussian_prob(X, means, precisions_chol, covariance_type):
                 #print('y', y)
 
                 p = np.sum(np.square(y), axis=0) # sum over features
-                assert p == pp, (p, pp)
+                #assert p == pp, (p, pp)
                 #print("log_prob", i, k, p)
 
                 log_prob[i, k] = p
