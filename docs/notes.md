@@ -150,6 +150,43 @@ Setpoint vs actual interesting variable to track
 Could track amount of current to the motor. Should be approximately constant
 Becomes more interesting with multiple motors/axes
 
+## Activity Recognition using wrist-mounted accelerometer
+Using tri-axial accelerometer.
+
+Several standard hardware devices available.
+
+- LilyGo TTGO T-Watch. ESP32
+- Pine64 [PineTime](https://www.pine64.org/pinetime/). nRF52832, BMA425
+
+[Energy-efficient activity recognition framework using wearable accelerometers](https://doi.org/10.1016/j.jnca.2020.102770).
+Uses 50/100 hz, int8. 256 samples long windows, with 50% overlap.
+Computes from this basic .
+Classified with RandomForest
+Gets F1 scores of 90%, 70% on participants not in training set.
+Code available here, including C feature extraction, Python feature extraction and datasets.
+https://github.com/atiselsts/feature-group-selection
+
+Can maybe be extended to gesture recognition later.
+
+Being able to store/annotate activities on the go would be great.
+To build up datasets.
+Chose between pre-defined classes.
+Have a couple of user-definable classes.
+1/2/3/4 or blue/red/green/yellow 
+Pre-annotate class, before starting acitvity. 
+Post-annotate after doing activity / event happened.
+
+Should be able to store raw data from accelerometer.
+Maybe use some simple compression. Like gzip/deflate
+Store files to be synced as time-stamped.
+Maybe one per 60 seconds or so.
+
+On-device few-shot learning of these would also be very cool.
+kNN the most simple algorithm for this.
+Just need to store feature vectors somewhere. FLASH/SDCARD
+And keep number managable, so not too slow things down too much.
+Need to have a good feature extraction system.
+DynamicTimeWarping one alternative.
 
 ## Condition monitoring moveable machine using accelerometer
 
