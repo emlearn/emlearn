@@ -26,9 +26,9 @@ print('random_state={}'.format(random))
 
 MODELS = {
     'GMM-full': GaussianMixture(n_components=3, covariance_type='full', random_state=random),
-    'GMM-tied': GaussianMixture(n_components=3, covariance_type='tied'),
-    'GMM-diag': GaussianMixture(n_components=3, covariance_type='diag'),
-    'GMM-spherical': GaussianMixture(n_components=3, covariance_type='spherical'),
+    'GMM-tied': GaussianMixture(n_components=3, covariance_type='tied', random_state=random),
+    'GMM-diag': GaussianMixture(n_components=3, covariance_type='diag', random_state=random),
+    'GMM-spherical': GaussianMixture(n_components=3, covariance_type='spherical', random_state=random),
     'B-GMM-full': BayesianGaussianMixture(n_components=2, covariance_type='full', random_state=random),
     'B-GMM-tied': BayesianGaussianMixture(n_components=5, covariance_type='tied', random_state=random),
     'B-GMM-diag': BayesianGaussianMixture(n_components=10, covariance_type='diag', random_state=random),
