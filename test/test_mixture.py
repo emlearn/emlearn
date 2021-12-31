@@ -11,7 +11,7 @@ from sklearn import datasets
 from sklearn import model_selection
 from sklearn import preprocessing
 from sklearn import decomposition
-from sklearn.mixture import GaussianMixture
+from sklearn.mixture import GaussianMixture, BayesianGaussianMixture
 from sklearn.covariance import EllipticEnvelope
 from sklearn import metrics
 from sklearn.utils.estimator_checks import check_estimator 
@@ -21,24 +21,31 @@ import emlearn
 import pytest
 
 random = numpy.random.randint(0, 1000)
+random = 1
 print('random_state={}'.format(random))
 
 MODELS = {
-    #'GMM-full': GaussianMixture(n_components=3, covariance_type='full'),
-    #'GMM-tied': GaussianMixture(n_components=3, covariance_type='tied'),
-    #'GMM-diag': GaussianMixture(n_components=3, covariance_type='diag'),
-    #'GMM-spherical': GaussianMixture(n_components=3, covariance_type='spherical'),
+    'GMM-full': GaussianMixture(n_components=3, covariance_type='full', random_state=random),
+    'GMM-tied': GaussianMixture(n_components=3, covariance_type='tied', random_state=random),
+    'GMM-diag': GaussianMixture(n_components=3, covariance_type='diag', random_state=random),
+    'GMM-spherical': GaussianMixture(n_components=3, covariance_type='spherical', random_state=random),
+    'B-GMM-full': BayesianGaussianMixture(n_components=2, covariance_type='full', random_state=random),
+    'B-GMM-tied': BayesianGaussianMixture(n_components=5, covariance_type='tied', random_state=random),
+    'B-GMM-diag': BayesianGaussianMixture(n_components=10, covariance_type='diag', random_state=random),
+    'B-GMM-spherical': BayesianGaussianMixture(n_components=10, covariance_type='spherical', random_state=random),
     'EllipticEnvelope': EllipticEnvelope(),
 }
 DATASETS = {
-    'binary': datasets.make_classification(n_classes=2, n_features=7, n_samples=5, random_state=random),
-    '5way': datasets.make_classification(n_classes=5, n_features=7, n_informative=5, n_samples=5, random_state=random),
+    #'binary': datasets.make_classification(n_classes=2, n_features=7, n_samples=100, random_state=random),
+    #'5way': datasets.make_classification(n_classes=2, n_features=4, n_informative=2, n_samples=6, random_state=random),
+    '5way': datasets.make_classification(n_classes=5, n_features=7, n_informative=5, n_samples=50, random_state=random),
 }
 METHODS = [
     'inline',
     #'pymodule',
     #'loadable',
 ]
+
 
 @pytest.mark.parametrize("data", DATASETS.keys())
 @pytest.mark.parametrize("model", MODELS.keys())
@@ -48,17 +55,18 @@ def test_gaussian_mixture_equals_sklearn(data, model, method):
     estimator = MODELS[model]
 
     X = preprocessing.StandardScaler().fit_transform(X)
-    X = decomposition.PCA(3).fit_transform(X)
+    X = decomposition.PCA(3, random_state=random).fit_transform(X)
     estimator.fit(X, y)
 
     cmodel = emlearn.convert(estimator, method=method)
 
-    if 'EllipticEnvelope' in model:
-        dist = estimator.mahalanobis(X)    
-        cdist = cmodel.mahalanobis(X)
-        numpy.testing.assert_allclose(cdist, dist, rtol=1e-5)
+    dist = estimator.score_samples(X)    
+    cdist = cmodel.score_samples(X)
+    numpy.testing.assert_allclose(cdist, dist, rtol=1e-5)
 
     pred_original = estimator.predict(X)
     pred_c = cmodel.predict(X)
+    estimator.fit(X, y)
+  
     numpy.testing.assert_equal(pred_c, pred_original)
 

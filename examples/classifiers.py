@@ -11,8 +11,8 @@ import os.path
 import emlearn
 import numpy
 import pandas
-import seaborn
 import matplotlib.pyplot as plt
+import seaborn
 
 try:
     # When executed as regular .py script
@@ -42,7 +42,8 @@ dataset = load_dataset()
 # Train, convert and run model
 # ------------------------------
 #
-# Using a simple dataset included with scikit-learn
+# Using the standard scikit-learn process,
+# and then using emlearn to convert the model to C
 def build_run_classifier(model, name):
     from sklearn.model_selection import train_test_split
 
@@ -138,7 +139,7 @@ def build_run_classifier(model, name):
 # Run all classifiers
 # --------------------------------
 #
-# Using a simple dataset included with scikit-learn
+# Some of the supported modela and configurations
 import sklearn.ensemble
 import sklearn.tree
 import sklearn.neural_network

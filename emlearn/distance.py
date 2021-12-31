@@ -120,8 +120,12 @@ class Wrapper:
             return squared_mahalanobis_distance(x, self._means, precision=self._precision)
         p = numpy.array([ dist(x) for x in X ])
 
-        predictions = self.classifier_.predict(X)
+        predictions = numpy.array(self.classifier_.predict(X))
         return predictions
+
+    def score_samples(self, X):
+        s = -self.mahalanobis(X)
+        return s
 
     def predict(self, X):
         def predict_one(d):
