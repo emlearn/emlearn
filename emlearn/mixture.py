@@ -159,8 +159,7 @@ def generate_code(model, name='fss_mode'):
     precisions = model._precisions_col
     log_weights = model._log_weights
 
-    n_components = means.shape[0]
-    n_features = 3
+    n_components, n_features = means.shape
 
     means_name = f'{name}_means'
     means_size = n_components * n_features
