@@ -3,6 +3,8 @@
 #ifndef EML_MIXTURE_H
 #define EML_MIXTURE_H
 
+#include <math.h>
+
 #include "eml_common.h"
 #include "eml_fixedpoint.h"
 
@@ -24,6 +26,61 @@ eml_dot_product(float *a, float *b, int n)
  
     return sum;
 }
+
+EmlError
+eml_minmax(const float *arr, int length, float *out_min, float *out_max)
+{
+    float min = +INFINITY;
+    float max = -INFINITY;
+
+    for (int i=0; i<length; i++) {
+        const float value = arr[i];
+
+        if (value > max) {
+            max = value;
+        }
+        if (value < min) {
+            min = value;
+        }
+    }
+
+    if (out_min) {
+        *out_min = min;
+    }
+    if (out_max) {
+        *out_max = max;
+    }
+
+    return EmlOk;
+}
+
+
+
+EmlError
+eml_logsumexp(const float *arr, int length, float *out_sum)
+{
+    float a_max = 0.0f;
+
+    // For numerical stability, scale down the numbers before exp
+    EmlError err = eml_minmax(arr, length, NULL, &a_max);
+    if (err != EmlOk) {
+        return err;
+    }
+
+    float sum = 0.0f;
+    for (int i=0; i<length; i++) {
+        const float tmp = expf(arr[i] - a_max);
+        sum += tmp;
+    }
+
+    const float out = logf(sum) + a_max;
+    *out_sum = out;
+
+    return EmlOk;
+}
+
+
+
 
 typedef enum EmlCovarianceType_ {
     EmlCovarianceFull,
@@ -172,6 +229,34 @@ eml_mixture_log_proba(EmlMixtureModel *model,
    return EmlOk;
 }
 
+int32_t
+eml_mixture_score(EmlMixtureModel *model,
+                    const float values[], int32_t values_length,
+                    float *probabilities,
+                    float *out_score)
+{
+
+    EML_PRECONDITION(model, -EmlUninitialized);
+    EML_PRECONDITION(values, -EmlUninitialized);
+    EML_PRECONDITION(model->n_components > 0, -EmlUninitialized);
+
+
+    EmlError status = \
+        eml_mixture_log_proba(model, values, values_length, probabilities);
+    if (status != EmlOk) {
+        return status;
+    }
+
+    float score;
+    status = eml_logsumexp(probabilities, model->n_components, &score);
+    if (status != EmlOk) {
+        return status;
+    }
+
+    *out_score = score;
+
+    return EmlOk;
+}
 
 
 #endif // EML_MIXTURE_H
