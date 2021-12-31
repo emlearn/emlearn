@@ -60,15 +60,9 @@ def test_gaussian_mixture_equals_sklearn(data, model, method):
 
     cmodel = emlearn.convert(estimator, method=method)
 
-    if 'EllipticEnvelope' in model:
-        dist = estimator.mahalanobis(X)    
-        cdist = cmodel.mahalanobis(X)
-        numpy.testing.assert_allclose(cdist, dist, rtol=1e-5)
-
-    if 'GMM' in model:
-        dist = estimator.score_samples(X)    
-        cdist = cmodel.score_samples(X)
-        numpy.testing.assert_allclose(cdist, dist, rtol=1e-5)
+    dist = estimator.score_samples(X)    
+    cdist = cmodel.score_samples(X)
+    numpy.testing.assert_allclose(cdist, dist, rtol=1e-5)
 
     pred_original = estimator.predict(X)
     pred_c = cmodel.predict(X)
