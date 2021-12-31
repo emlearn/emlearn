@@ -78,7 +78,6 @@ from sklearn.mixture import GaussianMixture, BayesianGaussianMixture
 
 anomaly_algorithms = [
     ("Elliptic Envelope", EllipticEnvelope(contamination=outliers_fraction)),
-    #("Elliptic Envelope", EllipticEnvelope(contamination=outliers_fraction)),
     ("GMM (2, full)", GaussianMixture(n_components=2, covariance_type='full')),
     ("GMM (4, full)", GaussianMixture(n_components=4, covariance_type='full')),
     #("Gaussian Mixture model (32, full)", GaussianMixture(n_components=4, covariance_type='diag', random_state=1)),
@@ -97,12 +96,12 @@ anomaly_algorithms = [
 # Plotting tools
 # ------------------------
 #
-# 
+# Plots the anomaly score landscape
 def plot_results(ax, model, X):
-    xx, yy = numpy.meshgrid(numpy.linspace(-7, 7, 150), numpy.linspace(-7, 7, 150))
+    res = 20
+    xx, yy = numpy.meshgrid(numpy.linspace(-7, 7, res), numpy.linspace(-7, 7, res))
 
     try:
-        model.fit(X)
         y_pred = model.score_samples(X)
         Z = model.score_samples(numpy.c_[xx.ravel(), yy.ravel()])
     except FloatingPointError as e:
@@ -124,10 +123,10 @@ def plot_results(ax, model, X):
     cmap = seaborn.color_palette("rocket", as_cmap=True)
 
     Z = Z.reshape(xx.shape)
-    
-    ax.contour(xx, yy, Z, levels=numpy.linspace(0.0, 1.0, 10), linewidths=0.6, colors="black")
+    ax.contour(xx, yy, Z, levels=numpy.linspace(0.0, 1.0, 5), linewidths=0.6, colors="black")
     ax.contourf(xx, yy, Z, cmap=cmap)
 
+    # Plot datapoints
     seaborn.scatterplot(ax=ax, x=X[:, 0], y=X[:, 1], s=10, hue=y_pred, palette=cmap, legend=False)
 
     ax.set_xlim(-7, 7)
@@ -149,16 +148,22 @@ fig, axs = plt.subplots(
 
 plt.subplots_adjust(left=0.02, right=0.98, bottom=0.001, top=0.96, wspace=0.05, hspace=0.01)
 for i_dataset, X in enumerate(datasets):
-    for i_algorithm, (name, algorithm) in enumerate(anomaly_algorithms):
+    for i_algorithm, (name, model) in enumerate(anomaly_algorithms):
 
+        # Train model
+        print(f"Trying {name}")
         try:
-            algorithm.fit(X)
+            model.fit(X)
         except FloatingPointError as e:
             print(e)
             continue
 
+        # Convert to C
+        cmodel = emlearn.convert(model, method='inline')
+
+        # Visualize output
         ax = axs[i_dataset, i_algorithm]
-        plot_results(ax, algorithm, X)
+        plot_results(ax, cmodel, X)
 
         if i_dataset == 0:
             ax.set_title(name, size=18)
