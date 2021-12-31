@@ -32,7 +32,7 @@ MODELS = {
     'B-GMM-full': BayesianGaussianMixture(n_components=2, covariance_type='full', random_state=random),
     'B-GMM-tied': BayesianGaussianMixture(n_components=5, covariance_type='tied', random_state=random),
     'B-GMM-diag': BayesianGaussianMixture(n_components=10, covariance_type='diag', random_state=random),
-    'B-GMM-spherical': BayesianGaussianMixture(n_components=20, covariance_type='spherical', random_state=random),
+    'B-GMM-spherical': BayesianGaussianMixture(n_components=10, covariance_type='spherical', random_state=random),
     'EllipticEnvelope': EllipticEnvelope(),
 }
 DATASETS = {
