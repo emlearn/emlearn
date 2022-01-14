@@ -1,5 +1,6 @@
 
 from . import trees
+from . import regressor_trees
 from . import net
 from . import bayes
 from . import distance
@@ -21,5 +22,7 @@ def convert(estimator, kind=None, method='pymodule', dtype='float'):
         return net.convert_keras(estimator, method)
     elif kind == 'GaussianNB':
         return bayes.Wrapper(estimator, method)
+    elif kind == 'RandomForestRegressor':
+    	return regressor_trees.RegWrapper(estimator, method, dtype='float')
     else:
         raise ValueError("Unknown model type: '{}'".format(kind))
