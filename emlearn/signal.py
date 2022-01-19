@@ -19,7 +19,7 @@ def sparse_filterbank(mels):
     return starts, ends, coeffs
 
 
-def sparse_filterbank_serialize(sparse, name, frequencies=None, n_fft=None):
+def sparse_filterbank_serialize(sparse, name, frequencies=None, n_fft=None, sr=None, fmin=None, fmax=None):
     starts, ends, coeffs = sparse
     assert len(starts) == len(ends)
     n_bands = len(starts)
@@ -38,6 +38,18 @@ def sparse_filterbank_serialize(sparse, name, frequencies=None, n_fft=None):
     if n_fft is not None:
         arrays += [
             cgen.constant_declare(name+'_nfft', val=n_fft),
+        ]
+    if sr is not None:
+        arrays += [
+            cgen.constant_declare(name+'_samplerate', val=sr),
+        ]
+    if fmax is not None:
+        arrays += [
+            cgen.constant_declare(name+'_fmax', val=fmax),
+        ]
+    if fmin is not None:
+        arrays += [
+            cgen.constant_declare(name+'_fmin', val=fmin),
         ]
 
     out = '\n\n'.join(arrays)

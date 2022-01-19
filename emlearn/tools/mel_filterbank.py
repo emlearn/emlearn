@@ -22,7 +22,8 @@ def mel_filterbank(args, name):
                                     fmin=args.fmin, fmax=fmax, htk=args.htk)
 
     sparse = emlearn.signal.sparse_filterbank(mel_basis)
-    gen = emlearn.signal.sparse_filterbank_serialize(sparse, name=name, frequencies=frequencies, n_fft=args.fft)
+    gen = emlearn.signal.sparse_filterbank_serialize(sparse, name=name, frequencies=frequencies,
+            n_fft=args.fft, sr=args.samplerate, fmin=args.fmin, fmax=fmax)
 
     w = textwrap.wrap(gen, args.linewrap, replace_whitespace=False)
     wrapped = '\n'.join(w)
@@ -30,7 +31,7 @@ def mel_filterbank(args, name):
 
 
 def parse(args=None):
-    parser = argparse.ArgumentParser(description='Generate lookup table for window functions')
+    parser = argparse.ArgumentParser(description='Generate filterbank for Mel spectrogram')
     a = parser.add_argument
 
     a('--bands', type=int, default=32,
