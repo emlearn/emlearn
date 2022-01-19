@@ -40,7 +40,12 @@ def window_function(name, window_type, length, fft_mode, linewrap):
     import scipy.signal
 
     window = scipy.signal.get_window(window_type, length, fftbins=fft_mode)
-    gen = cgen.array_declare(name, length, values=window)
+    arrays = [
+        cgen.array_declare(name, length, values=window),
+        cgen.constant_declare(name+'_length', val=length),
+    ]
+    gen = '\n'.join(arrays)
+
     w = textwrap.wrap(gen, linewrap)
     wrapped = '\n'.join(w)
     return wrapped
