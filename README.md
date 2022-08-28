@@ -125,6 +125,9 @@ by Danilo Demarchi, Paolo Motto Ros, Fabio Rossi and Andrea Mongardi.
 Detected different hand gestures based on ElectroMyoGraphic (sEMG) data.
 Compared the performance of different machine learning algorithms, from emlearn and Tensorflow Lite.
 Found emlearn RandomForest and Naive Bayes to give good accuracy with very good power consumption.
+- [Who is wearing me? TinyDL‐based user recognition in constrained personal devices](https://doi.org/10.1049/cdt2.12035) by Ramon Sanchez-Iborra and Antonio F. Skarmeta.
+Used emlearn to implement a model for detecting who is wearing a particular wearable device, by analyzing accelerometer data.
+A multi-layer perceptron was used, running on AVR ATmega328P.
 - [TinyML-Enabled Frugal Smart Objects: Challenges and Opportunities](https://ieeexplore.ieee.org/abstract/document/9166461) by Ramon Sanchez-Iborra and Antonio F. Skarmeta.
 Created a model for automatically selecting which radio transmission method to use in an IoT device.
 Running on Arduino Uno (AVR8) device.
