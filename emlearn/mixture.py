@@ -509,6 +509,9 @@ from sklearn.base import BaseEstimator, ClusterMixin
 from sklearn.utils.validation import check_X_y, check_array, check_is_fitted
 from sklearn.utils.multiclass import unique_labels
 
+from pomegranate.callbacks import LambdaCallback
+
+
 class UniformGaussianMixture(BaseEstimator, ClusterMixin):
     """
     Gaussian Mixture Model (GMM) with Uniform background component to handle noisy data
@@ -522,10 +525,7 @@ class UniformGaussianMixture(BaseEstimator, ClusterMixin):
 
     def fit(self, X, y=None):
 
-        # Check that X and y have correct shape
-        #X, y = check_X_y(X, y)
-        # Store the classes seen during fit
-        #self.classes_ = unique_labels(y)
+        X = check_array(X)
 
         from pomegranate import \
             GeneralMixtureModel, \
@@ -535,20 +535,116 @@ class UniformGaussianMixture(BaseEstimator, ClusterMixin):
 
         n_components = self.n_components
         dists = [
-            UniformDistribution
+            #UniformDistribution
         ]
         # FIXME: support MultiVariateGaussian. Currently crashes Python
         for c in range(n_components):
-            dists.append(NormalDistribution)
-        self.model_ = GeneralMixtureModel.from_samples(dists, n_components=len(dists), X=X)
+            dists.append(MultivariateGaussianDistribution)
+            #
+
+        def on_training_end(logs):
+             print("Total Improvement: {:4.4}".format(logs['total_improvement']))
+        def on_epoch_end(logs):
+             print("Total Improvement: {:4.4}".format(logs['total_improvement']))
+
+
+        callbacks = [
+            LambdaCallback(on_training_end=on_training_end, on_epoch_end=on_epoch_end),
+        ]
+
+        self.model_ = GeneralMixtureModel.from_samples(dists, n_components=len(dists), X=X, callbacks=callbacks)
         
         # Return the classifier
         return self
 
-    def predict(self, X):
+    def score_samples(self, X):
 
         # Check if fit has been called
         check_is_fitted(self)
 
         # Input validation
         X = check_array(X)
+
+        p = self.model_.predict_proba(X)[:, 0]
+        #print(X.shape, p.shape)
+        return p
+
+
+class UniformGaussianMixture(BaseEstimator, ClusterMixin):
+    """
+    Gaussian Mixture Model (GMM) with Uniform background component to handle noisy data
+    
+    References:
+    1. Unsupervised Learning of GMM with a Uniform Background Component. https://arxiv.org/abs/1804.02744
+    2. Filling the gaps: Gaussian mixture models from noisy, truncated or incomplete sample https://arxiv.org/abs/1611.05806
+    """
+    def __init__(self, n_components=1,
+            init='kmeans',
+            background_amplitude=0.1,
+            background_freeze=False,
+            background_amplitude_min=None,
+            background_amplitude_max=None,
+            maxiter=1000,
+            cutoff=None,
+            covariance_regularization=0.0,
+            ):
+        self.n_components = n_components
+        self.init_method = init
+        self.background_amplitude = background_amplitude
+        self.maxiter = maxiter
+        self.cutoff = cutoff
+        self.covariance_regularization = covariance_regularization
+
+        self.background_freeze = background_freeze,
+        self.background_amplitude_min = background_amplitude_min,
+        self.background_amplitude_max = background_amplitude_max
+
+    def fit(self, X, y=None):
+
+        X = check_array(X)
+
+        import pygmmis
+        n_features = X.shape[1]
+        self.gmm_ = pygmmis.GMM(K=self.n_components, D=n_features)
+
+        # background component
+        footprint = numpy.min(X, axis=0), numpy.max(X, axis=0)
+        bg = pygmmis.Background(footprint, amp=self.background_amplitude)
+
+        if self.background_amplitude_min is not None:
+            bg.amp_min = self.background_amplitude_min
+        if self.background_amplitude_max is not None:
+            bg.amp_max = self.background_amplitude_max
+        if self.background_freeze is not None:
+            bg.adjust_amp = not self.background_freeze
+
+        logL, U = pygmmis.fit(self.gmm_, X,
+                init_method=self.init_method,
+                background=bg,
+                #sel_callback=cb,
+                #covar_callback=covar_cb,
+                w=self.covariance_regularization,
+                cutoff=self.cutoff,
+                maxiter=self.maxiter,\
+                #tol=tol,
+                #frozen=frozen,
+                #rng=rng
+        )
+       
+        # Return the classifier
+        return self
+
+    def score_samples(self, X):
+
+        # Check if fit has been called
+        check_is_fitted(self)
+
+        # Input validation
+        X = check_array(X)
+
+        p = self.gmm_(X, as_log=True)
+        #print(X.shape, p.shape)
+        return p
+
+
+

@@ -79,10 +79,11 @@ from emlearn.mixture import UniformGaussianMixture
 
 anomaly_algorithms = [
     ("Elliptic Envelope", EllipticEnvelope(contamination=outliers_fraction)),
-    ("GMM (2, full)", GaussianMixture(n_components=2, covariance_type='full')),
-    ("GMM (4, full)", GaussianMixture(n_components=4, covariance_type='full')),
+    ("GMM (2,full)", GaussianMixture(n_components=2, covariance_type='full')),
+    ("GMM (4,full)", GaussianMixture(n_components=4, covariance_type='full')),
     #("Gaussian Mixture model (32, full)", GaussianMixture(n_components=4, covariance_type='diag', random_state=1)),
-    ("UGMM (2, full)", UniformGaussianMixture(n_components=2)),
+    ("UGMM (2,full)", UniformGaussianMixture(n_components=2, background_amplitude=0.1, background_freeze=True, covariance_regularization=0.05)),
+    #("UGMM (6,full)", UniformGaussianMixture(n_components=4, background_amplitude=0.01, covariance_regularization=0.5)),
     ("Baysian GMM ", BayesianGaussianMixture(n_components=12,
             covariance_type='diag', random_state=1, n_init=4,
             degrees_of_freedom_prior=1.1, max_iter=20)
@@ -152,6 +153,10 @@ plt.subplots_adjust(left=0.02, right=0.98, bottom=0.001, top=0.96, wspace=0.05, 
 for i_dataset, X in enumerate(datasets):
     for i_algorithm, (name, model) in enumerate(anomaly_algorithms):
 
+        ax = axs[i_dataset, i_algorithm]
+        if i_dataset == 0:
+            ax.set_title(name, size=14)
+
         # Train model
         print(f"Trying {name}")
         try:
@@ -161,14 +166,14 @@ for i_dataset, X in enumerate(datasets):
             continue
 
         # Convert to C
-        cmodel = emlearn.convert(model, method='inline')
+        #cmodel = emlearn.convert(model, method='inline')
+        cmodel = model
 
         # Visualize output
-        ax = axs[i_dataset, i_algorithm]
+
         plot_results(ax, cmodel, X)
 
-        if i_dataset == 0:
-            ax.set_title(name, size=18)
+
 
 plt.show()
 
