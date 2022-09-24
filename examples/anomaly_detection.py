@@ -75,12 +75,14 @@ datasets = make_datasets(outliers=outliers_fraction)
 from sklearn.covariance import EllipticEnvelope
 from sklearn.ensemble import IsolationForest
 from sklearn.mixture import GaussianMixture, BayesianGaussianMixture
+from emlearn.mixture import UniformGaussianMixture
 
 anomaly_algorithms = [
     ("Elliptic Envelope", EllipticEnvelope(contamination=outliers_fraction)),
     ("GMM (2, full)", GaussianMixture(n_components=2, covariance_type='full')),
     ("GMM (4, full)", GaussianMixture(n_components=4, covariance_type='full')),
     #("Gaussian Mixture model (32, full)", GaussianMixture(n_components=4, covariance_type='diag', random_state=1)),
+    ("UGMM (2, full)", UniformGaussianMixture(n_components=2)),
     ("Baysian GMM ", BayesianGaussianMixture(n_components=12,
             covariance_type='diag', random_state=1, n_init=4,
             degrees_of_freedom_prior=1.1, max_iter=20)

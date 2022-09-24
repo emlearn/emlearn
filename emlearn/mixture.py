@@ -504,3 +504,51 @@ class Wrapper:
         raise NotImplementedError("TODO implement save()")
         return code
 
+
+from sklearn.base import BaseEstimator, ClusterMixin
+from sklearn.utils.validation import check_X_y, check_array, check_is_fitted
+from sklearn.utils.multiclass import unique_labels
+
+class UniformGaussianMixture(BaseEstimator, ClusterMixin):
+    """
+    Gaussian Mixture Model (GMM) with Uniform background component to handle noisy data
+    
+    References:
+    1. Unsupervised Learning of GMM with a Uniform Background Component. https://arxiv.org/abs/1804.02744
+    2. Filling the gaps: Gaussian mixture models from noisy, truncated or incomplete sample https://arxiv.org/abs/1611.05806
+    """
+    def __init__(self, n_components=1):
+        self.n_components = n_components
+
+    def fit(self, X, y=None):
+
+        # Check that X and y have correct shape
+        #X, y = check_X_y(X, y)
+        # Store the classes seen during fit
+        #self.classes_ = unique_labels(y)
+
+        from pomegranate import \
+            GeneralMixtureModel, \
+            NormalDistribution, \
+            MultivariateGaussianDistribution, \
+            UniformDistribution
+
+        n_components = self.n_components
+        dists = [
+            UniformDistribution
+        ]
+        # FIXME: support MultiVariateGaussian. Currently crashes Python
+        for c in range(n_components):
+            dists.append(NormalDistribution)
+        self.model_ = GeneralMixtureModel.from_samples(dists, n_components=len(dists), X=X)
+        
+        # Return the classifier
+        return self
+
+    def predict(self, X):
+
+        # Check if fit has been called
+        check_is_fitted(self)
+
+        # Input validation
+        X = check_array(X)
