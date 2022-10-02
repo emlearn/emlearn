@@ -112,6 +112,12 @@ If you use `emlearn` in an academic work, please reference it using:
 
 `emlearn` has been used in the following works.
 
+- [A Comparison between Conventional and User-Intention-Based Adaptive Pushrim-Activated Power-Assisted Wheelchairs](https://www.researchgate.net/publication/356363774_A_Comparison_Between_Conventional_and_User-Intention-Based_Adaptive_Pushrim-Activated_Power-Assisted_Wheelchairs)
+by M. Khalili, G. Kryt, H.F.M. Van der Loos, and J.F. Borisoff.
+Implemented a user intention estimation for wheelchairs,
+in order to give the user a personalized power-assist controlled.
+Used emlearn to run the RandomForest classifier on a Teensy microcontroller.
+Found that the real-time microcontroller model performed similar to the offline models.
 - [C-AVDI: Compressive Measurement-Based Acoustic Vehicle Detection and Identification](https://www.researchgate.net/publication/356707239_C-AVDI_Compressive_Measurement-Based_Acoustic_Vehicle_Detection_and_Identification)
 by Billy Dawton et.al. Implemented detection and classification of passing motorcycles and cars from sound.
 Used compressed sensing system using an analog frontend and ADC running at a low samplerate.
