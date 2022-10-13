@@ -12,12 +12,7 @@ References
 https://github.com/scikit-learn/scikit-learn/blob/15a949460dbf19e5e196b8ef48f9712b72a3b3c3/sklearn/covariance/_empirical_covariance.py#L297
 
 https://github.com/scikit-learn/scikit-learn/blob/15a949460dbf19e5e196b8ef48f9712b72a3b3c3/sklearn/covariance/_elliptic_envelope.py#L149
-
 """
-
-from sklearn.mixture._gaussian_mixture import _compute_log_det_cholesky
-from sklearn.utils.extmath import row_norms
-np = numpy
 
 
 def squared_mahalanobis_distance(x1, x2, precision):
