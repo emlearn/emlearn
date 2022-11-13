@@ -112,6 +112,33 @@ If you use `emlearn` in an academic work, please reference it using:
 
 `emlearn` has been used in the following works.
 
+- [](
+
+
+We developed an initial decision tree using Gini impurity to measure the quality
+of decisions, and a set of ten standardized features stored as 16-bit fixed point values. We
+used cost complexity pruning [27] to limit the complexity of our decision trees and avoid
+overfitting training data. Through tenfold cross-validation, we determined pruning trees
+using a pruning parameter of 1.062 x 10-4, resulted in 353 nodes and the best
+classification performance. We trained the decision tree model using the scikit-learn
+library [28] in python and ported it to C using the emlearn library [29].
+
+classify cattle behaviors using raw accelerometer data as the input
+standing, lying, grazing, walking and ruminating
+
+Used emlearn to
+feature extraction and standardization to .
+
+- [Power Efficient Wireless Sensor Node through Edge Intelligence](https://ieeexplore.ieee.org/document/9937324)
+by Abhishek P. Damle et al.
+Used accelerometer data on a wirelesess sensor node to classify the behaviour of grazing cattle,
+into Standing, Grazing, Walking, Lying and Ruminating.
+Used emlearn to compile a decision tree for deploying to the Microchip WLR089U0 module
+(ATSAMR34x microcontroller with integrated LoRa transceiver).
+The best features were selected using recursive feature elimination (RFE),
+cost complexity pruning was used to tune the complexity of the decision trees.
+They show that the energy required to transmit goes went down by 50 times
+by doing feature extraction and classification on-edge compared to sending the raw sensor data.
 - [A Comparison between Conventional and User-Intention-Based Adaptive Pushrim-Activated Power-Assisted Wheelchairs](https://www.researchgate.net/publication/356363774_A_Comparison_Between_Conventional_and_User-Intention-Based_Adaptive_Pushrim-Activated_Power-Assisted_Wheelchairs)
 by M. Khalili, G. Kryt, H.F.M. Van der Loos, and J.F. Borisoff.
 Implemented a user intention estimation for wheelchairs,
