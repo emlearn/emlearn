@@ -12,6 +12,8 @@ When optimizing a model that will be ran on an embedded device,
 we usually want to optimize not just the predictive performance (given by our metric, say accuracy)
 but also the computational costs of the model (in terms of storage, memory and CPU requirements).
 
+emlearn provides tools for analyzing model costs in the `emlearn.evaluate` submodule.
+
 This is an example of how to do that, by optimizing hyperparamters using random search,
 and finding the models that represent good performance/cost trade-offs (Pareto optimimal).
 The search optimizes the two main things that influence performance and cost:
@@ -221,9 +223,10 @@ results.sort_values('mean_test_accuracy', ascending=False).head(10)[['mean_test_
 # Check effect of depth parameter
 # -------------------------------
 #
-# The different values of the different depth regulazers influence
-# One can see that for certain values there is low reguralization (train accuracy near 100%, far above test),
-# and for other values there is a strong degree of regularization (train accuracy near test, and test dropping).
+# The different values of the hyperparamterer affecting tree depth influence the regularization considerably. 
+# One can see that for certain values there is overfitting (train accuracy near 100%, far above test),
+# and for other values there is a underfitting (train accuracy near test, and test dropping).
+# This means that our search space is at wide enough to cover the relevant area.
 #
 # Note that `n_estimators` is also varied and affects the results, but is not visualized here.
 
@@ -255,7 +258,7 @@ g.map_dataframe(plot_scores, s=15);
 #
 # There will always be a trade-off between how well a model does, and the costs of the model.
 # But it is only worth considering the models that for a given performance level, have better (lower) cost.
-# The models that 
+# The models that fulfill this are said to lie on the *Pareto front*, or that they are *Pareto optimal*.
 # 
 # In the below plot:
 # The primary model cost axis has been chosen as the (estimated) compute time, shown along the X axis.
