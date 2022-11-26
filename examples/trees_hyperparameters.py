@@ -6,10 +6,20 @@
 Optimizing tree ensembles
 ===========================
 
-Example of hyperparameter-optimization on tree-based classifier model.
+Example of hyperparameter-optimization of a tree-based classifier model.
 
-We will
+When optimizing a model that will be ran on an embedded device,
+we usually want to optimize not just the predictive performance (given by our metric, say accuracy)
+but also the computational costs of the model (in terms of storage, memory and CPU requirements).
 
+This is an example of how to do that, by optimizing hyperparamters using random search,
+and finding the models that represent good performance/cost trade-offs (Pareto optimimal).
+The search optimizes the two main things that influence performance and cost:
+the number of decision nodes in the trees (the depth),
+and the number of trees in the ensemble (the "breath" of the model).
+
+This method is simple and a good starting point for a broad search of possible models.
+However if you have a large dataset, consider reducing subsampling the training-set to speed up search.
 """
 
 import os.path
@@ -180,7 +190,7 @@ def run_experiment(depth_param=None, n_iter=1):
     
     return df
 
-
+# Spaces to search for hyperparameters
 parameter_distributions = {
     # regulates width of the ensemble
     'n_estimators': scipy.stats.randint(5, 100),
@@ -192,6 +202,7 @@ parameter_distributions = {
     'ccp_alpha': scipy.stats.uniform(0.01, 0.20),
 }
 
+# Experiments to run, using different ways of constraining tree depth
 depth_limiting_parameters = [
     'max_depth',
     'min_samples_leaf',
@@ -203,7 +214,7 @@ depth_limiting_parameters = [
 n_iterations = int(os.environ.get('EMLEARN_HYPER_ITERATIONS', 1*100))
 
 results = pandas.concat([ run_experiment(p, n_iter=n_iterations) for p in depth_limiting_parameters ])
-results.sort_values('mean_test_accuracy').head(10)[['mean_test_accuracy', 'mean_test_size', 'mean_test_compute']]
+results.sort_values('mean_test_accuracy', ascending=False).head(10)[['mean_test_accuracy', 'mean_test_size', 'mean_test_compute']]
 
 
 # %%
@@ -235,7 +246,7 @@ def plot_scores(data, color=None, metric='accuracy', s=10):
     ax.set_xlabel('')
 
 g = seaborn.FacetGrid(results, col='depth_param_type', col_wrap=2, height=3, aspect=2.5, sharex=False)
-g.map_dataframe(plot_scores, s=15)
+g.map_dataframe(plot_scores, s=15);
 
 
 # %%
@@ -254,7 +265,7 @@ g.map_dataframe(plot_scores, s=15)
 from emlearn.evaluate.pareto import plot_pareto_front, find_pareto_front 
 
 def plot_pareto(results, x='mean_test_compute', **kwargs):
-    g = plot_pareto_front(results, cost_metric=x, pareto_cut=0.7, **kwargs)
+    g = plot_pareto_front(results, cost_metric=x, pareto_global=True, pareto_cut=0.7, **kwargs)
     ax = plt.gca()
     add_performance_references(ax)
     ax.legend()
