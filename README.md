@@ -112,23 +112,6 @@ If you use `emlearn` in an academic work, please reference it using:
 
 `emlearn` has been used in the following works.
 
-- [](
-
-
-We developed an initial decision tree using Gini impurity to measure the quality
-of decisions, and a set of ten standardized features stored as 16-bit fixed point values. We
-used cost complexity pruning [27] to limit the complexity of our decision trees and avoid
-overfitting training data. Through tenfold cross-validation, we determined pruning trees
-using a pruning parameter of 1.062 x 10-4, resulted in 353 nodes and the best
-classification performance. We trained the decision tree model using the scikit-learn
-library [28] in python and ported it to C using the emlearn library [29].
-
-classify cattle behaviors using raw accelerometer data as the input
-standing, lying, grazing, walking and ruminating
-
-Used emlearn to
-feature extraction and standardization to .
-
 - [Power Efficient Wireless Sensor Node through Edge Intelligence](https://ieeexplore.ieee.org/document/9937324)
 by Abhishek P. Damle et al.
 Used accelerometer data on a wirelesess sensor node to classify the behaviour of grazing cattle,
