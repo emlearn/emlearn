@@ -81,7 +81,7 @@ def run_classifier(bin_path, data, out_dtype='int'):
                 out_ = out_dtype(out_)
             outputs.append(out_)
 
-    assert len(outputs) == len(data)
+    assert len(outputs) == len(data), (len(outputs), len(data))
 
     return outputs
 
