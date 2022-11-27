@@ -152,7 +152,7 @@ def test_melfilter_basic():
     #input = numpy.ones(shape=length)
     input = numpy.random.rand(length)
     out = eml_audio.melfilter(input, sr, n_fft, n_mels, fmin, fmax)
-    ref = librosa.feature.melspectrogram(S=input, htk=True, norm=None, sr=sr, n_fft=n_fft, n_mels=n_mels, fmin=fmin, fmax=fmax)
+    ref = numpy.squeeze(librosa.feature.melspectrogram(S=numpy.expand_dims(input, -1), htk=True, norm=None, sr=sr, n_fft=n_fft, n_mels=n_mels, fmin=fmin, fmax=fmax))
     ref2 = melfilter(input, sr, n_mels=n_mels, n_fft=n_fft)
 
     numpy.testing.assert_allclose(ref2, ref, rtol=1e-5)
@@ -172,7 +172,7 @@ def test_melfilter_basic():
 
 
 def test_melfilter_librosa():
-    filename = librosa.util.example_audio_file()
+    filename = librosa.util.example("vibeace", hq=True)
     y, sr = librosa.load(filename, offset=1.0, duration=0.3)
     n_fft = 1024
     hop_length = 256
@@ -201,7 +201,7 @@ def test_melfilter_librosa():
 @pytest.mark.skip('broken')
 def test_melspectrogram():
 
-    filename = librosa.util.example_audio_file()
+    filename = librosa.util.example("vibeace", hq=True)
 
     y, sr = librosa.load(filename, offset=1.0, duration=0.3)
 
