@@ -183,7 +183,7 @@ def test_melfilter_librosa():
     spec = numpy.abs(librosa.core.stft(y, n_fft=n_fft, hop_length=hop_length))**2
     spec1 = spec[:,0]
 
-    ref = librosa.feature.melspectrogram(S=spec1, sr=sr, norm=None, htk=True, n_fft=n_fft, n_mels=n_mels, fmin=fmin, fmax=fmax)
+    ref = numpy.squeeze(librosa.feature.melspectrogram(S=numpy.expand_dims(spec1, -1), sr=sr, norm=None, htk=True, n_fft=n_fft, n_mels=n_mels, fmin=fmin, fmax=fmax))
     out = eml_audio.melfilter(spec1, sr, n_fft, n_mels, fmin, fmax)
 
     fig, (ref_ax, out_ax) = plt.subplots(2)
