@@ -360,9 +360,11 @@ class Wrapper:
         kind = type(estimator).__name__
         leaf = 'argmax'
         self.is_classifier = True
+        out_dtype = "int"
         if 'Regressor' in kind:
             leaf = 'value'
             self.is_classifier = False
+            out_dtype = "float"
 
         if hasattr(estimator, 'estimators_'):
             trees = [ e.tree_ for e in estimator.estimators_]
@@ -388,12 +390,12 @@ class Wrapper:
             name = 'mytree'
             func = 'eml_trees_predict(&{}, values, length)'.format(name)
             code = self.save(name=name)
-            self.classifier_ = common.CompiledClassifier(code, name=name, call=func)
+            self.classifier_ = common.CompiledClassifier(code, name=name, call=func, out_dtype=out_dtype)
         elif classifier == 'inline':
             name = 'myinlinetree'
             func = '{}_predict(values, length)'.format(name)
             code = self.save(name=name)
-            self.classifier_ = common.CompiledClassifier(code, name=name, call=func)
+            self.classifier_ = common.CompiledClassifier(code, name=name, call=func, out_dtype=out_dtype)
         else:
             raise ValueError("Unsupported classifier method '{}'".format(classifier))
 
