@@ -60,15 +60,24 @@ def build_classifier(cmodel, name, temp_dir, include_dir, func=None, test_functi
 
     return bin_path
 
-def run_classifier(bin_path, data, out_dtype='int'):
+def run_classifier(bin_path, data, out_dtype='int', float_precision=8):
+
+    # Serialize input data as CSV
+    def serialize_value(v):
+        return '{:.{prec}f}'.format(v, prec=float_precision)
+
     lines = []
     for row in data:
-        lines.append(",".join(str(v) for v in row))
+        lines.append(",".join(serialize_value(v) for v in row))
     stdin = '\n'.join(lines)
 
+    assert len(lines) == len(data), (len(lines), data.shape)
+
+    # Run as subprocess
     args = [ bin_path ]
     out = subprocess.check_output(args, input=stdin, encoding='utf8', universal_newlines=True)
 
+    # Parse output
     outputs = []
     for line in out.split('\n'):
         if line:
@@ -81,7 +90,7 @@ def run_classifier(bin_path, data, out_dtype='int'):
                 out_ = out_dtype(out_)
             outputs.append(out_)
 
-    assert len(outputs) == len(data), (len(outputs), len(data))
+    assert len(outputs) == len(data), (len(outputs), len(data), out)
 
     return outputs
 
