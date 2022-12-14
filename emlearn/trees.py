@@ -388,7 +388,11 @@ class Wrapper:
 
         elif classifier == 'loadable':
             name = 'mytree'
-            func = 'eml_trees_predict(&{}, values, length)'.format(name)
+
+            if self.is_classifier:
+                func = 'eml_trees_predict(&{}, values, length)'.format(name)
+            else:
+                func = 'eml_trees_regress1(&{}, values, length)'.format(name)
             code = self.save(name=name)
             self.classifier_ = common.CompiledClassifier(code, name=name, call=func, out_dtype=out_dtype)
         elif classifier == 'inline':
@@ -400,7 +404,11 @@ class Wrapper:
             raise ValueError("Unsupported classifier method '{}'".format(classifier))
 
     def predict(self, X):
-        predictions = self.classifier_.predict(X)
+        if self.is_classifier:
+            predictions = self.classifier_.predict(X)
+        else:
+            predictions = self.classifier_.regress(X)            
+
         return predictions
 
     def save(self, name=None, file=None):

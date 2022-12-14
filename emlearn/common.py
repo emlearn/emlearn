@@ -105,6 +105,10 @@ class CompiledClassifier():
     def predict(self, X):
         return run_classifier(self.bin_path, X, out_dtype=self._out_dtype)
 
+    def regress(self, X):
+        return self.predict(X)
+
+
 
 def compile_executable(code_file,
                     out_dir,

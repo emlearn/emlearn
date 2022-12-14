@@ -65,7 +65,7 @@ def test_trees_sklearn_regressor_predict(data, model, method):
     pred_original = estimator.predict(X[:5])
     pred_c = cmodel.predict(X[:5])
 
-    numpy.testing.assert_allclose(pred_c, pred_original, rtol=1e-3, atol=1)
+    numpy.testing.assert_allclose(pred_c, pred_original, rtol=1e-3, atol=2)
 
 
 def test_deduplicate_single_tree():
