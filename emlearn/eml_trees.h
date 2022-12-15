@@ -3,6 +3,8 @@
 #define EMTREES_H
 
 #include <stdint.h>
+#include <math.h>
+#include <eml_common.h>
 
 typedef struct _EmlTreesNode {
     int8_t feature;
@@ -88,6 +90,42 @@ eml_trees_predict(const EmlTrees *forest, const float *features, int8_t features
     }
 
     return most_voted_class;
+}
+
+
+EmlError
+eml_trees_regress(const EmlTrees *forest,
+        const float *features, int8_t features_length,
+        float *out, int8_t out_length)
+{
+    if (out_length < 1) {
+        return EmlSizeMismatch;
+    }
+
+    float sum = 0; 
+
+    for (int32_t i=0; i<forest->n_trees; i++) {
+        const float val = eml_trees_predict_tree(forest, forest->tree_roots[i], features, features_length);
+        sum += val;
+    }
+
+    out[0] = sum / forest->n_trees;
+
+    return EmlOk;
+}
+
+float
+eml_trees_regress1(const EmlTrees *forest,
+        const float *features, int8_t features_length)
+{
+    float out[1];
+    EmlError err = eml_trees_regress(forest,
+        features, features_length,
+        out, 1);
+    if (err != EmlOk) {    
+        return nanf("");
+    }
+    return out[0];
 }
 
 #endif // EMTREES_H

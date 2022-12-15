@@ -69,6 +69,32 @@ public:
         return classes;
     }
 
+    py::array_t<int32_t>
+    regress(py::array_t<float, py::array::c_style | py::array::forcecast> in) {
+        if (in.ndim() != 2) {
+            throw std::runtime_error("predict input must have dimensions 2");
+        }
+
+        const int64_t n_samples = in.shape()[0];
+        const int32_t n_features = in.shape()[1];
+
+        auto outputs = py::array_t<float>(n_samples);
+        //auto s = in.unchecked();
+        auto r = outputs.mutable_unchecked<1>();
+        float out[1];
+        for (int i=0; i<n_samples; i++) {
+            const float *v = in.data(i);
+            const EmlError err = eml_trees_regress(&forest, v, n_features, out, 1);
+            if (err != EmlOk) {
+                const std::string msg = eml_error_str(err);
+                throw std::runtime_error(msg);
+            }
+            r(i) = out[0];
+        }
+
+        return outputs;
+    }
+
 };
 
 PYBIND11_MODULE(eml_trees, m) {
@@ -76,6 +102,7 @@ PYBIND11_MODULE(eml_trees, m) {
 
     py::class_<TreesClassifier>(m, "Classifier")
         .def(py::init<std::vector<float>, std::vector<int32_t>>())
+        .def("regress", &TreesClassifier::regress)
         .def("predict", &TreesClassifier::predict);
 }
 

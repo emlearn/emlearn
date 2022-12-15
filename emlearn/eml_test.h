@@ -9,7 +9,7 @@
 #include "eml_common.h"
 
 #ifndef EML_CSV_BUFFER_LENGTH
-#define EML_CSV_BUFFER_LENGTH 1024
+#define EML_CSV_BUFFER_LENGTH 2*1024
 #endif
 #ifndef EML_CSV_VALUES_LENGTH
 #define EML_CSV_VALUES_LENGTH 256

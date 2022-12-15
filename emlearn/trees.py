@@ -7,12 +7,20 @@ import numpy
 
 from . import common
 
+SUPPORTED_ESTIMATORS=[
+    'RandomForestClassifier',
+    'ExtraTreesClassifier',
+    'DecisionTreeClassifier',
+    'RandomForestRegressor',
+    'ExtraTreesRegressor',
+    'DecisionTreeRegressor',
+]
 
 # Tree representation as 2d array
 # feature, value, left_child, right_child
 # Leaf node: -1, class, -1, -1
 # 	fields = { 'feature': 0, 'value': 1, 'left': 2, 'right': 3 }
-def flatten_tree(tree):
+def flatten_tree(tree, leaf='argmax'):
     flat = []
 
     assert tree.node_count == len(tree.value)
@@ -20,8 +28,12 @@ def flatten_tree(tree):
 
     for left, right, feature, th, value in zip(tree.children_left, tree.children_right, tree.feature, tree.threshold, tree.value):
         if left == -1 and right == -1:
-            cls = numpy.argmax(value[0])
-            n = [ -1, cls, -1, -1 ] # leaf
+            if leaf == 'argmax':
+                val = numpy.argmax(value[0])
+            elif leaf == 'value':
+                val = value[0][0]
+
+            n = [ -1, val, -1, -1 ] # leaf
         else:
             n = [ feature, th, left, right ]
 
@@ -30,13 +42,13 @@ def flatten_tree(tree):
     return flat
 
 
-def flatten_forest(trees):
+def flatten_forest(trees, leaf='argmax'):
     tree_roots = []
     tree_offset = 0
     forest_nodes = []
 
     for tree in trees: 
-        flat = flatten_tree(tree)
+        flat = flatten_tree(tree, leaf=leaf)
 
         # Offset the nodes in tree, so they can be stored in one array 
         root = 0 + tree_offset
@@ -198,7 +210,7 @@ def generate_c_nodes(flat, name):
 
     return out
 
-def generate_c_inlined(forest, name, dtype='float'):
+def generate_c_inlined(forest, name, dtype='float', classifier=True):
     nodes, roots = forest
 
     def is_leaf(n):
@@ -207,9 +219,13 @@ def generate_c_inlined(forest, name, dtype='float'):
       assert is_leaf(n)
       return n[1]
 
-    class_values = set(map(class_value, filter(is_leaf, nodes)))
-    assert min(class_values) == 0
-    n_classes = max(class_values)+1
+    if classifier:
+        class_values = set(map(class_value, filter(is_leaf, nodes)))
+        assert min(class_values) == 0
+        n_classes = max(class_values)+1
+    else:
+        n_classes = numpy.shape(forest[1])[0]
+
     tree_names = [ name + '_tree_{}'.format(i) for i,_ in enumerate(roots) ]
 
     ctype = dtype
@@ -236,7 +252,7 @@ def generate_c_inlined(forest, name, dtype='float'):
             return c_leaf(n, depth+1)
         return c_internal(n, depth+1)
 
-    def tree_func(name, root):
+    def tree_func(name, root, return_type='int32_t'):
         return """static inline int32_t {function_name}(const {ctype} *features, int32_t features_length) {{
         {code}
         }}
@@ -244,14 +260,31 @@ def generate_c_inlined(forest, name, dtype='float'):
             'function_name': name,
             'code': c_node(root, 0),
             'ctype': ctype,
+            'return_type': return_type 
         })
 
-    def tree_vote(name):
+    def tree_vote_classifier(name):
         return '_class = {}(features, features_length); votes[_class] += 1;'.format(name)
 
-    tree_votes = [ tree_vote(n) for n in tree_names ]
+    def tree_vote_regressor(name):
+        return 'avg += {}(features, features_length); '.format(name)
 
-    forest_func = """int32_t {function_name}(const {ctype} *features, int32_t features_length) {{
+    forest_regressor_func = """float {function_name}(const {ctype} *features, int32_t features_length) {{
+
+        float avg = 0;
+
+        {tree_predictions}
+        
+        return avg/{n_classes};
+    }}
+    """.format(**{
+      'function_name': name,
+      'n_classes': n_classes,
+      'tree_predictions': '\n    '.join([ tree_vote_regressor(n) for n in tree_names ]),
+      'ctype': ctype,
+    })
+
+    forest_classifier_func = """int32_t {function_name}(const {ctype} *features, int32_t features_length) {{
 
         int32_t votes[{n_classes}] = {{0,}};
         int32_t _class = -1;
@@ -272,15 +305,22 @@ def generate_c_inlined(forest, name, dtype='float'):
     """.format(**{
       'function_name': name,
       'n_classes': n_classes,
-      'tree_predictions': '\n    '.join(tree_votes),
+      'tree_predictions': '\n    '.join([ tree_vote_classifier(n) for n in tree_names ]),
       'ctype': ctype,
     })
+
+    return_type = 'int32_t'
+    forest_func = forest_classifier_func
     
-    tree_funcs = [tree_func(n, r) for n,r in zip(tree_names, roots)]
+    if not classifier:
+        return_type = 'float'
+        forest_func = forest_regressor_func
+
+    tree_funcs = [tree_func(n, r, return_type=return_type) for n,r in zip(tree_names, roots)]
 
     return '\n\n'.join(tree_funcs + [forest_func])
 
-def generate_c_forest(forest, name='myclassifier', dtype='float'):
+def generate_c_forest(forest, name='myclassifier', dtype='float', classifier=True):
     nodes, roots = forest
 
     nodes_name = name+'_nodes'
@@ -305,7 +345,7 @@ def generate_c_forest(forest, name='myclassifier', dtype='float'):
     #include <eml_trees.h>
     """
 
-    inline = generate_c_inlined(forest, name+'_predict', dtype=dtype)
+    inline = generate_c_inlined(forest, name+'_predict', dtype=dtype, classifier=classifier)
 
     return '\n\n'.join([head, nodes_c, tree_roots, forest_struct, inline]) 
 
@@ -317,12 +357,21 @@ class Wrapper:
 
         self.dtype = dtype
 
+        kind = type(estimator).__name__
+        leaf = 'argmax'
+        self.is_classifier = True
+        out_dtype = "int"
+        if 'Regressor' in kind:
+            leaf = 'value'
+            self.is_classifier = False
+            out_dtype = "float"
+
         if hasattr(estimator, 'estimators_'):
             trees = [ e.tree_ for e in estimator.estimators_]
         else:
             trees = [ estimator.tree_ ]
 
-        self.forest_ = flatten_forest(trees)
+        self.forest_ = flatten_forest(trees, leaf=leaf)
         self.forest_ = remove_duplicate_leaves(self.forest_)
 
         if classifier == 'pymodule':
@@ -339,19 +388,27 @@ class Wrapper:
 
         elif classifier == 'loadable':
             name = 'mytree'
-            func = 'eml_trees_predict(&{}, values, length)'.format(name)
+
+            if self.is_classifier:
+                func = 'eml_trees_predict(&{}, values, length)'.format(name)
+            else:
+                func = 'eml_trees_regress1(&{}, values, length)'.format(name)
             code = self.save(name=name)
-            self.classifier_ = common.CompiledClassifier(code, name=name, call=func)
+            self.classifier_ = common.CompiledClassifier(code, name=name, call=func, out_dtype=out_dtype)
         elif classifier == 'inline':
             name = 'myinlinetree'
             func = '{}_predict(values, length)'.format(name)
             code = self.save(name=name)
-            self.classifier_ = common.CompiledClassifier(code, name=name, call=func)
+            self.classifier_ = common.CompiledClassifier(code, name=name, call=func, out_dtype=out_dtype)
         else:
             raise ValueError("Unsupported classifier method '{}'".format(classifier))
 
     def predict(self, X):
-        predictions = self.classifier_.predict(X)
+        if self.is_classifier:
+            predictions = self.classifier_.predict(X)
+        else:
+            predictions = self.classifier_.regress(X)            
+
         return predictions
 
     def save(self, name=None, file=None):
@@ -361,7 +418,7 @@ class Wrapper:
             else:
                 name = os.path.splitext(os.path.basename(file))[0]
 
-        code = generate_c_forest(self.forest_, name, dtype=self.dtype)
+        code = generate_c_forest(self.forest_, name, dtype=self.dtype, classifier=self.is_classifier)
         if file:
             with open(file, 'w') as f:
                 f.write(code)
