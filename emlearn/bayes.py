@@ -78,10 +78,19 @@ class Wrapper(object):
         # FIXME: use var,mean numpy arrays directly
         n_classes, n_features = estimator.theta_.shape
         model = numpy.ndarray(shape=(n_classes, n_features, 3), dtype=float)
+
+        if hasattr(estimator, 'var_'):
+            # 1.0 and later
+            variance = estimator.var_
+        elif hasattr(estimator, 'sigma_'):
+            # pre 1.0
+            variance = estimator.sigma_
+
+
         for class_n in range(0, n_classes):
             for feature_n in range(0, n_features):
                 mean = estimator.theta_[class_n,feature_n]
-                std = numpy.sqrt(estimator.sigma_[class_n,feature_n])
+                std = numpy.sqrt(variance[class_n,feature_n])
                 std_log2 = numpy.log2(std)
                 model[class_n,feature_n] = (mean, std, std_log2)
         self.model = model
