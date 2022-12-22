@@ -122,6 +122,11 @@ The best features were selected using recursive feature elimination (RFE),
 cost complexity pruning was used to tune the complexity of the decision trees.
 They show that the energy required to transmit goes went down by 50 times
 by doing feature extraction and classification on-edge compared to sending the raw sensor data.
+- [LPWAN and Embedded Machine Learning as Enablers for the Next Generation of Wearable Devices](https://www.mdpi.com/1424-8220/21/15/5218) by Ramon Sanchez-Iborra.
+Evaluated feasibility of running TinyML models on a LoraWAN sensor node.
+Used an ATmega 328p, with MPU6050 IMU, GY-NEO6MV2 GPS and RN2483 LoRaWAN tranceiver.
+Found that code for communicating with the pheripherals took considerably more SRAM/FLASH than ML model.
+Was able to fit a Random Forest with 50 trees (FLASH bound), or a multi-layer perceptron with 5 layers and 10 neurons-per-layer (SRAM bound).
 - [A Comparison between Conventional and User-Intention-Based Adaptive Pushrim-Activated Power-Assisted Wheelchairs](https://www.researchgate.net/publication/356363774_A_Comparison_Between_Conventional_and_User-Intention-Based_Adaptive_Pushrim-Activated_Power-Assisted_Wheelchairs)
 by M. Khalili, G. Kryt, H.F.M. Van der Loos, and J.F. Borisoff.
 Implemented a user intention estimation for wheelchairs,
