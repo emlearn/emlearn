@@ -29,23 +29,36 @@ Decision Trees using MATLAB Coder for C/C++ code generation.
 `fitctree`, `fitcensemble`, `TreeBagger`, `ClassificationEnsemble`, `CompactTreeBagger`
 
 ## Status
-**Minimally useful**
+**Minimally useful**.
+Used in dozens of projects by dozens of developers.
 
-Classifiers:
+
+## Model support
+
+Classification:
 
 * `eml_trees`: sklearn.RandomForestClassifier, sklearn.ExtraTreesClassifier, sklearn.DecisionTreeClassifier
 * `eml_net`: sklearn.MultiLayerPerceptron, Keras.Sequential with fully-connected layers
 * `eml_bayes`: sklearn.GaussianNaiveBayes
 
+Regression:
+
+* `eml_trees`: sklearn.RandomForestRegressor, sklearn.ExtraTreesRegressor, sklearn.DecisionTreeRegressor
+
 Unsupervised / Outlier Detection / Anomaly Detection
 
 * `eml_distance`: sklearn.EllipticEnvelope (Mahalanobis distance)
+* `eml_mixture`: sklearn.GaussianMixture, sklearn.BayesianGaussianMixture
 
 Feature extraction:
 
 * `eml_audio`: Melspectrogram
 
+## Platform support
+
 Tested running on AVR Atmega, ESP8266, ESP32, ARM Cortex M (STM32), Linux, Mac OS and Windows.
+
+Should work *anywhere* that has working C99 compiler. 
 
 ## Installing
 
