@@ -39,14 +39,14 @@ def load_dataset():
 
 dataset = load_dataset()
 
-def plot_results(model, axs, X, features, label='', color='black'):
-    from sklearn.inspection import PartialDependenceDisplay
+def plot_results(ax, model, X, y):
+    from sklearn.metrics import PredictionErrorDisplay
 
-
-    disp = PartialDependenceDisplay.from_estimator(
-        model, X[features], features=features, ax=axs, line_kw={"label": label, "color": color},
+    disp = PredictionErrorDisplay.from_estimator(
+        model, X, y,
+        ax=ax,
+        kind="actual_vs_predicted",
     )
-    #disp.plot(ax=ax2
 
 
 # %%
@@ -55,7 +55,7 @@ def plot_results(model, axs, X, features, label='', color='black'):
 #
 # Using the standard scikit-learn process,
 # and then using emlearn to convert the model to C
-def build_run_regressor(model, name, axs=None, feature_columns=None, color=None):
+def build_run_regressor(model, name, ax=None, feature_columns=None, color=None):
     from sklearn.model_selection import train_test_split
 
     target_column = 'target'
@@ -81,8 +81,8 @@ def build_run_regressor(model, name, axs=None, feature_columns=None, color=None)
     test_res = numpy.array(test_pred).flatten()
     # TODO: use tools to generate C file to compare classifier against expected results i C
 
-    if axs is not None:
-        plot_results(model, axs, X=test, features=feature_columns, label=name, color=color)
+    if ax is not None:
+        plot_results(ax, model, X=test[feature_columns], y=test[target_column])
 
 
 # %%
@@ -111,13 +111,16 @@ models = {
 feature_columns = ['s5', 'bmi', 'bp']
 
 fig, axs = plt.subplots(
-        ncols=len(feature_columns),
-        #nrows=len(classifiers),
-        figsize=(4*len(feature_columns), 4),
-        sharex=True, sharey=True,
+        #ncols=len(models),
+        nrows=len(models),
+        figsize=(4, 4.2*len(models)),
+        sharex=False, sharey=False,
 )
 for model_no, (name, cls) in enumerate(models.items()): 
-    color = seaborn.color_palette()[model_no]
-    build_run_regressor(cls, name, axs, feature_columns=feature_columns, color=color)
+    ax = axs[model_no] 
+    build_run_regressor(cls, name, ax)
+
+    ax.set_title(name)
+    ax.set_xlabel('')
 
 plt.show()
