@@ -56,6 +56,6 @@ jobs:
         with:
           password: ${{ secrets.PYPI_TOKEN }}
           pip: install -r requirements.txt
-          build: clean sdist -d <dist_dir>
+          build: clean sdist -d dist/
           # only upload if a tag is pushed (otherwise just build & check)
           upload: ${{ github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags') }}
