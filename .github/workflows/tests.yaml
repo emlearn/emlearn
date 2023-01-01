@@ -56,5 +56,6 @@ jobs:
         with:
           password: ${{ secrets.PYPI_TOKEN }}
           pip: wheel -w dist/ --no-deps .
+          build: clean sdist -d <dist_dir>
           # only upload if a tag is pushed (otherwise just build & check)
           upload: ${{ github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags') }}
