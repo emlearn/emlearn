@@ -21,7 +21,7 @@ sys.path.insert(0, os.path.abspath('..'))
 # -- Project information -----------------------------------------------------
 
 project = 'emlearn'
-copyright = '2019, Jon Nordby'
+copyright = '2019-2023, Jon Nordby'
 author = 'Jon Nordby'
 
 # The short X.Y version
