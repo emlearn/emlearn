@@ -4,8 +4,9 @@ build:
   os: "ubuntu-20.04"
   tools:
     python: "3.8"
-  commands:
-    - pip install ./ -v
+  jobs:
+    pre_build:
+      - pip install ./ -v
 
 python:
    install:
