@@ -55,7 +55,7 @@ jobs:
       - uses: casperdcl/deploy-pypi@v2
         with:
           password: ${{ secrets.PYPI_TOKEN }}
-          pip: wheel -w dist/ --no-deps .
+          pip: install -r requirements.txt
           build: clean sdist -d <dist_dir>
           # only upload if a tag is pushed (otherwise just build & check)
           upload: ${{ github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags') }}
