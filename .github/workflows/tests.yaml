@@ -34,8 +34,9 @@ jobs:
           #flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
       - name: Test in-tree code with pytest
         env:
-          PYTHONPATH: ./
+          PYTHONPATH: ./:./build/lib.linux-x86_64-3.8
         run: |
+          python setup.py build
           pytest -v --cov=emlearn --cov-report html --cov-report term-missing --cov-branch test/
       - name: Install as pip package
         env:
