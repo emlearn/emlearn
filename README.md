@@ -125,6 +125,10 @@ If you use `emlearn` in an academic work, please reference it using:
 
 `emlearn` has been used in the following works.
 
+- [Smart Attack Detection for IoT Networks](https://kth.diva-portal.org/smash/record.jsf?aq2=%5B%5B%5D%5D&c=21&af=%5B%5D&searchType=LIST_LATEST&sortOrder2=title_sort_asc&query=&language=sv&pid=diva2%3A1726212&aq=%5B%5B%5D%5D&sf=all&aqe=%5B%5D&sortOrder=author_sort_asc&onlyFullText=false&noOfRows=50&dswid=-3227) by Yang Yang.
+Implemented a Intrusion Detection System for IoT networks.
+Used Random Forest classifier running on Nordic nRF52840 using Contiki-NG RTOS.
+In addition to the on-device inference, they also ran the classifiers in the Cooja IoT device network simulator.
 - [Power Efficient Wireless Sensor Node through Edge Intelligence](https://ieeexplore.ieee.org/document/9937324)
 by Abhishek P. Damle et al.
 Used accelerometer data on a wirelesess sensor node to classify the behaviour of grazing cattle,
