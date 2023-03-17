@@ -14,6 +14,11 @@ import pytest
 random = numpy.random.randint(0, 1000)
 print('random_state={}'.format(random))
 
+# FIXME: add tests case for soft voting with leaf quantization. leaf_bits=2,4,6
+# FIXME: add case with majority voting. leaf_bits=0?
+
+
+# FIXME: add case with max_depth
 CLASSIFICATION_MODELS = {
     'RFC': RandomForestClassifier(n_estimators=10, random_state=random),
     'ETC': ExtraTreesClassifier(n_estimators=10, random_state=random),
@@ -67,25 +72,6 @@ def test_trees_sklearn_regressor_predict(data, model, method):
 
     numpy.testing.assert_allclose(pred_c, pred_original, rtol=1e-3, atol=2)
 
-
-def test_deduplicate_single_tree():
-    nodes = [
-        [ -1, 1, -1, -1 ],
-        [ -1, 0, -1, -1 ],
-        [ 2, 666, 0, 1 ],
-        [ -1, 1, -1, -1 ], # dup leaf. idx=3
-        [ 4, 333, 1, 3 ], # dup ref
-        [ 5, 444, 2, 1],
-        [ 6, 555, 4, 5],
-    ]
-    roots = [ 6 ]
-
-    de_nodes, de_roots = emlearn.trees.remove_duplicate_leaves((nodes, roots))
-
-    duplicates = 1
-    assert len(de_roots) == len(roots)
-    assert len(de_nodes) == len(nodes) - duplicates
-    assert de_roots[0] == roots[0] - duplicates
 
 def test_trees_to_dot():
     X, Y = datasets.make_classification(n_classes=2, n_samples=10, random_state=1)

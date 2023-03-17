@@ -5,7 +5,7 @@ from . import bayes
 from . import distance
 from . import mixture
 
-def convert(estimator, kind=None, method='pymodule', dtype='float'):
+def convert(estimator, kind=None, method='pymodule', dtype='float', **kwargs):
     """Main entrypoint for converting a model"""
 
     if kind is None:
@@ -13,7 +13,7 @@ def convert(estimator, kind=None, method='pymodule', dtype='float'):
 
     # Use name instead of instance to avoid hard dependency on the libraries
     if kind in set(trees.SUPPORTED_ESTIMATORS):
-        return trees.Wrapper(estimator, method, dtype=dtype)
+        return trees.Wrapper(estimator, method, dtype=dtype, **kwargs)
     elif kind in ['EllipticEnvelope']:
         return distance.Wrapper(estimator, method, dtype=dtype)
     elif kind in ['GaussianMixture', 'BayesianGaussianMixture']:

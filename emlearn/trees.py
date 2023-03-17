@@ -5,7 +5,7 @@ import os
 
 import numpy
 
-from . import common
+from . import common, cgen
 
 SUPPORTED_ESTIMATORS=[
     'RandomForestClassifier',
@@ -16,120 +16,253 @@ SUPPORTED_ESTIMATORS=[
     'DecisionTreeRegressor',
 ]
 
-# Tree representation as 2d array
-# feature, value, left_child, right_child
-# Leaf node: -1, class, -1, -1
-# 	fields = { 'feature': 0, 'value': 1, 'left': 2, 'right': 3 }
-def flatten_tree(tree, leaf='argmax'):
-    flat = []
+def quantize_probabilities(p, bits=8):
+    assert bits <= 8
+    assert bits >= 1
+    steps = (2**bits)-1
+
+    bins = numpy.arange(0, steps)
+    digits = numpy.digitize(p, bins)
+    out = digits.astype(numpy.uint8)    
+    return out    
+
+
+# Tree representation as 2 arrays
+# array of decision nodes:
+# DNODE: feature, value, left_child, right_child
+# array of leaf nodes
+# LEAF: 
+def flatten_tree(tree, leaf='argmax', leaf_bits=8):
+    decision_nodes = []
+    leaf_nodes = []
 
     assert tree.node_count == len(tree.value)
     assert tree.value.shape[1] == 1 # number of outputs
 
-    for left, right, feature, th, value in zip(tree.children_left, tree.children_right, tree.feature, tree.threshold, tree.value):
-        if left == -1 and right == -1:
-            if leaf == 'argmax':
-                val = numpy.argmax(value[0])
-            elif leaf == 'value':
-                val = value[0][0]
+    def add_leaf(idx):
+        """
+        Returns an updated index value to identify the leaf
+        """
+        value = tree.value[idx]
 
-            n = [ -1, val, -1, -1 ] # leaf
+        if leaf == 'argmax':
+            # majority voting
+            val = numpy.argmax(value[0])
+        elif leaf == 'value':
+            # regression
+            val = value[0][0]
+        elif leaf == 'probabilities':
+            val = quantize_probabilities(value[0], bits=leaf_bits)
+
+        leaf_data = val
+        leaf_idx = len(leaf_nodes)
+        leaf_nodes.append(leaf_data)
+        encoded = -leaf_idx-1
+        assert encoded <= -1 # 0 means decision node. So first leaf is -1
+        return encoded
+
+    def reference_node(idx):
+        """
+        Returns updated index value to identify decision node
+        """
+        
+        n_leaves = len(leaf_nodes)
+        decision_node_idx = idx - n_leaves
+        print('REF NODE', idx, decision_node_idx)
+        assert decision_node_idx >= 0
+        return decision_node_idx
+
+
+    def process_child(idx): 
+        is_leaf = tree.children_left[idx] == -1 and tree.children_right[idx] == -1
+        if is_leaf:
+            return add_leaf(idx)
         else:
-            n = [ feature, th, left, right ]
+            return idx # will be corrected later
 
-        flat.append(n) 
 
-    return flat
+    decision_node_mapping = {}
+    leaves_seen = 0
+    zipped = zip(tree.children_left, tree.children_right, tree.feature, tree.threshold, tree.value)
+    for node_no, (left, right, feature, th, value) in enumerate(zipped):
+        if left == -1 and right == -1:
+            # is a leaf. Is handled via its parent
+            leaves_seen += 1
+            continue
+
+        else:
+            left = process_child(left)
+            right = process_child(right)
+
+            node = [ feature, th, left, right ]
+            out_idx = len(decision_nodes)
+            decision_nodes.append(node)
+            decision_node_mapping[node_no] = out_idx
+       
+    # Update child decision node references to reflect smaller output nodes array
+    for node in decision_nodes:
+        if node[2] >= 0:
+            node[2] = decision_node_mapping[node[2]]
+        if node[3] >= 0:
+            node[3] = decision_node_mapping[node[3]]
+
+
+    total_nodes = len(decision_nodes) + len(leaf_nodes)
+    assert total_nodes == tree.node_count, (total_nodes, tree.node_count)
+
+    # XXX: TEMP
+    #print_tree((decision_nodes, leaf_nodes))
+
+    assert_node_references_valid(decision_nodes, leaf_nodes, roots=[0])
+    t = decision_nodes, leaf_nodes
+    return t
+
+def print_tree(tree):
+    nodes, leaves = tree
+
+    for i, n in enumerate(nodes):
+        print('NODE', i, n)
+
+    for i, n in enumerate(leaves):
+        print('LEAF', i, n)
+
+def print_forest(forest):
+    nodes, roots, leaves = forest
+
+    for i, n in enumerate(nodes):
+        print('NODE', i, n)
+
+    for i, n in enumerate(leaves):
+        print('LEAF', i, n)
+
+    for i, r in enumerate(roots):
+        print('ROOT', i, r)
+
+def assert_node_references_valid(nodes, leaves, roots):
+
+    # INVARIANT. References to nodes in decision nodes are to valid nodes
+    # TODO: check
+    left_children = set([ n[2] for n in nodes if n[2] >= 0 ])
+    right_children = set([ n[3] for n in nodes if n[3] >= 0 ])
+    node_idxs = set(range(0, len(nodes)))
+
+    invalid_children_left = left_children - node_idxs
+    assert invalid_children_left == set(), invalid_children_left
+
+    invalid_children_right = right_children - node_idxs
+    assert invalid_children_right == set(), invalid_children_right
+
+    extranous_nodes = node_idxs - (left_children | right_children | set(roots))
+    assert extranous_nodes == set(), extranous_nodes
+
+    # INVARIANT. References to leaves are to valid leaves
+    left_leaves = set([ (-n[2])-1 for n in nodes if n[2] < 0 ])
+    right_leaves = set([ (-n[3])-1 for n in nodes if n[3] < 0 ])
+    leaf_idxs = set(range(0, len(leaves)))
+    invalid_leaves_left = (left_leaves - leaf_idxs)
+    assert invalid_leaves_left == set(), invalid_leaves_left
+
+    invalid_leaves_right = (right_leaves - leaf_idxs)
+    assert invalid_leaves_left == set(), invalid_leaves_left
+
+    #print(leaf_idxs)
+    #print(left_leaves)
+    #print(right_leaves)
+    #print(len(leaves), max(leaf_idxs))
+
+    extranous_leaves = (leaf_idxs - (left_leaves | right_leaves))
+    assert extranous_leaves == set(), extranous_leaves
+
+
+def assert_forest_valid(forest):
+    nodes, roots, leaves = forest
+
+    print('ASSERT FOREST VALID START')
+    assert_node_references_valid(nodes, leaves, roots)
+    print('ASSERT FOREST VALID END')
 
 
 def flatten_forest(trees, leaf='argmax'):
     tree_roots = []
-    tree_offset = 0
+    decision_nodes_offset = 0
+    leaf_nodes_offset = 0
     forest_nodes = []
+    forest_leaves = []
 
     for tree in trees: 
-        flat = flatten_tree(tree, leaf=leaf)
+        decision_nodes, leaf_nodes = flatten_tree(tree, leaf=leaf)
 
         # Offset the nodes in tree, so they can be stored in one array 
-        root = 0 + tree_offset
-        for node in flat:
-            if node[2] > 0:
-                node[2] += tree_offset
-            if node[3] > 0:
-                node[3] += tree_offset
-        tree_offset += len(flat)
+        root = 0 + decision_nodes_offset
+        for node in decision_nodes:
+            if node[2] >= 0:
+                node[2] += decision_nodes_offset
+            else:
+                node[2] -= leaf_nodes_offset
+            if node[3] >= 0:
+                node[3] += decision_nodes_offset
+            else:
+                node[3] -= leaf_nodes_offset
+        decision_nodes_offset += len(decision_nodes)
+        leaf_nodes_offset += len(leaf_nodes)
+
         tree_roots.append(root)
-        forest_nodes += flat
+        forest_nodes += decision_nodes
+        forest_leaves += leaf_nodes
 
-    return forest_nodes, tree_roots
+        print('offsets', decision_nodes_offset, leaf_nodes_offset)
 
-def remap_node_references(nodes, remap):
-    for n in nodes:
-        n[2] = remap.get(n[2], n[2])
-        n[3] = remap.get(n[3], n[3])
-
-def remove_orphans(nodes, roots):
-    referenced = []
-    for n in nodes:
-        if n[0] >= 0:
-            referenced.append(n[2])
-            referenced.append(n[3])
-    referenced = set(referenced).union(roots)
-    all_nodes = set(range(len(nodes))) 
-    orphaned = all_nodes.difference(referenced)
+        print_forest((forest_nodes, tree_roots, forest_leaves))    
+        assert_forest_valid((forest_nodes, tree_roots, forest_leaves))
 
 
-    offsets = []	
-    offset = 0
-    for idx, node in enumerate(nodes):
-        offsets.append(offset)
-        if idx in orphaned:
-            offset -= 1
-
-    compacted = []
-    for idx, node in enumerate(nodes):
-        if idx in orphaned:
-            continue
-
-        if node[0] >= 0:
-            node[2] += offsets[node[2]]
-            node[3] += offsets[node[3]] 
-        compacted.append(node)
-
-    compacted_roots = [ r + offsets[r] for r in roots ]
-
-    return compacted, compacted_roots
+    f = forest_nodes, tree_roots, forest_leaves
+    #print_forest(f)    
+    assert_forest_valid(f)
+    return f
 
 
 def remove_duplicate_leaves(forest):
-    nodes, roots = forest
+    nodes, roots, leaves = forest
 
+    # Determine de-duplicated leaves
     unique_leaves = []
-    unique_idx = []
+    #unique_idx = []
     remap_leaves = {}
-    for i, node in enumerate(nodes):
-        if node[0] >= 0:
-            # not a leaf
-            continue
+    for old_idx, node in enumerate(leaves):
+        old_encoded = -old_idx-1
         found = unique_leaves.index(node) if node in unique_leaves else None
         if found is None:
+            new_idx = len(unique_leaves)
             unique_leaves.append(node)
-            unique_idx.append(i)
+            #unique_idx.append(old_encoded)
         else:
-            remap_leaves[i] = unique_idx[found]	
+            new_idx = found # unique_idx[found]
+            #encoded = -new_idx-1
 
-    leaves = list(filter(lambda n: n[0] < 0, nodes))
-    wasted = (len(leaves) - len(unique_leaves)) / len(nodes)
+        new_encoded = -new_idx-1
+        remap_leaves[old_encoded] = new_encoded
+
+
+    print(remap_leaves)
+
+    wasted_ratio = (len(leaves) - len(unique_leaves)) / len(nodes)
     
-    remap_node_references(nodes, remap_leaves)
-    compacted, compacted_roots = remove_orphans(nodes, roots)
+    # Update decision nodes to point to new leaves
+    for n in nodes:
+        n[2] = remap_leaves.get(n[2], n[2])
+        n[3] = remap_leaves.get(n[3], n[3])
 
-    return compacted, compacted_roots
+    f = nodes, roots, unique_leaves
+    print_forest(f)
+    assert_forest_valid(f)
+    return f
 
 def traverse_dfs(nodes, idx, visitor):
-    visitor(idx)
-    if nodes[idx][0] < 0:
+    if idx < 0:
+        # this is a leaf
         return None
+    visitor(idx)
     traverse_dfs(nodes, nodes[idx][2], visitor)
     traverse_dfs(nodes, nodes[idx][3], visitor)
 
@@ -143,9 +276,8 @@ def dot_cluster(name, nodes, indent='  '):
     return 'subgraph {name} {{\n  {nodes}\n}}'.format(name=name, nodes=n)
 
 def forest_to_dot(forest, name='trees', indent="  "):
-    nodes, roots = forest
+    nodes, roots, leaf_nodes = forest
 
-    leaf_nodes = list(filter(lambda i: nodes[i][0] < 0, range(len(nodes))))
     trees = [ [] for r in roots ]
     for tree_idx, root in enumerate(roots):
         collect = []
@@ -170,9 +302,9 @@ def forest_to_dot(forest, name='trees', indent="  "):
         clusters.append(dot_cluster('_tree_{}'.format(tree_idx), decisions, indent=2*indent))
 
     # leaves shared between trees
-    for idx in leaf_nodes:
-        node = nodes[idx]
-        leaves += [ dot_node(idx, label='"{}"'.format(node[1])) ]
+    for idx, node in enumerate(leaf_nodes):
+        value = str(node)
+        leaves += [ dot_node(idx, label='"{}"'.format(value)) ]
 
     dot_items = clusters + edges + leaves
 
@@ -210,29 +342,37 @@ def generate_c_nodes(flat, name):
 
     return out
 
-def generate_c_inlined(forest, name, dtype='float', classifier=True):
-    nodes, roots = forest
+def leaves_to_bytelist(leaves, leaf_bits):
+    import math
 
-    def is_leaf(n):
-      return n[0] < 0
-    def class_value(n):
-      assert is_leaf(n)
-      return n[1]
+    if leaf_bits == 0:
+        return leaves
 
-    if classifier:
-        class_values = set(map(class_value, filter(is_leaf, nodes)))
-        assert min(class_values) == 0
-        n_classes = max(class_values)+1
+    elif leaf_bits == 32:
+        arr = numpy.array(leaves).astype(numpy.float32)
+        print('arr', arr.shape, arr.dtype)
+
+        out = list(arr.tobytes())
+        leaf_bytes = math.ceil(leaf_bits/8)
+        expect_bytes = leaf_bytes*len(leaves)
+        assert len(out) == expect_bytes, (len(out), expect_bytes) 
+        return out
     else:
-        n_classes = numpy.shape(forest[1])[0]
+        # FIxME: support class proportions, with up to 8 bits
+        raise ValueError('Only 0 or 32 supported for leaf_bits')
+
+def generate_c_inlined(forest, name, n_classes, leaf_bits=0, dtype='float', classifier=True):
+    nodes, roots, leaves = forest
+
+    #assert leaf_bits == 0, 'class proportions not supported for inline yet'
 
     tree_names = [ name + '_tree_{}'.format(i) for i,_ in enumerate(roots) ]
 
     ctype = dtype
-
     indent = 2
-    def c_leaf(n, depth):
-        return (depth*indent * ' ') + "return {};".format(n[1])
+
+    def c_leaf(data, depth):
+        return (depth*indent * ' ') + "return {};".format(data)
     def c_internal(n, depth):
         f = """{indent}if (features[{feature}] < {value}) {{
         {left}
@@ -246,11 +386,13 @@ def generate_c_inlined(forest, name, dtype='float', classifier=True):
             'indent': depth*indent*' ',
         })
         return f
-    def c_node(nid, depth):
-        n = nodes[nid]
-        if n[0] < 0:
-            return c_leaf(n, depth+1)
-        return c_internal(n, depth+1)
+    def c_node(idx, depth):
+        if idx < 0:
+            leaf_idx = -idx-1
+            return c_leaf(leaves[leaf_idx], depth+1)
+        else:
+            return c_internal(nodes[idx], depth+1)
+
 
     def tree_func(name, root, return_type='int32_t'):
         return """static inline int32_t {function_name}(const {ctype} *features, int32_t features_length) {{
@@ -275,11 +417,11 @@ def generate_c_inlined(forest, name, dtype='float', classifier=True):
 
         {tree_predictions}
         
-        return avg/{n_classes};
+        return avg/{n_trees};
     }}
     """.format(**{
       'function_name': name,
-      'n_classes': n_classes,
+      'n_trees': len(roots),
       'tree_predictions': '\n    '.join([ tree_vote_regressor(n) for n in tree_names ]),
       'ctype': ctype,
     })
@@ -320,8 +462,14 @@ def generate_c_inlined(forest, name, dtype='float', classifier=True):
 
     return '\n\n'.join(tree_funcs + [forest_func])
 
-def generate_c_forest(forest, name='myclassifier', dtype='float', classifier=True):
-    nodes, roots = forest
+def generate_c_forest(forest, n_features,
+        n_classes=0,
+        leaf_bits=0,
+        name='myclassifier',
+        dtype='float',
+        classifier=True):
+
+    nodes, roots, leaves = forest
 
     nodes_name = name+'_nodes'
     nodes_length = len(nodes)
@@ -332,11 +480,24 @@ def generate_c_forest(forest, name='myclassifier', dtype='float', classifier=Tru
     tree_roots_values = ', '.join(str(t) for t in roots)
     tree_roots = 'int32_t {tree_roots_name}[{tree_roots_length}] = {{ {tree_roots_values} }};'.format(**locals())
 
+    leaves_array = leaves_to_bytelist(leaves, leaf_bits=leaf_bits)
+    leaves_length = len(leaves_array)
+    leaves_name = name+'_leaves';
+    leaves = cgen.array_declare(leaves_name, leaves_length,
+            modifiers='static const', dtype='uint8_t', values=leaves_array)
+
+    tree_leaf_bits = leaf_bits
+
     forest_struct = """EmlTrees {name} = {{
         {nodes_length},
         {nodes_name},	  
         {tree_roots_length},
         {tree_roots_name},
+        {leaves_length},
+        {leaves_name},
+        {tree_leaf_bits},
+        {n_features},
+        {n_classes},
     }};""".format(**locals())
 
     head = """
@@ -345,15 +506,30 @@ def generate_c_forest(forest, name='myclassifier', dtype='float', classifier=Tru
     #include <eml_trees.h>
     """
 
-    inline = generate_c_inlined(forest, name+'_predict', dtype=dtype, classifier=classifier)
+    inline = generate_c_inlined(forest, name+'_predict',
+        n_classes=n_classes,
+        leaf_bits=leaf_bits,
+        dtype=dtype,
+        classifier=classifier,
+    )
 
-    return '\n\n'.join([head, nodes_c, tree_roots, forest_struct, inline]) 
+    parts = [
+        head,
+        nodes_c,
+        tree_roots,
+        leaves,
+        forest_struct,
+        inline,
+    ]
+    out = '\n\n'.join(parts)
+
+    return out
 
 
 
 
 class Wrapper:
-    def __init__(self, estimator, classifier, dtype='float'):
+    def __init__(self, estimator, classifier, dtype='float', leaf_bits=None):
 
         self.dtype = dtype
 
@@ -366,25 +542,43 @@ class Wrapper:
             self.is_classifier = False
             out_dtype = "float"
 
+        if leaf_bits is None:
+            if self.is_classifier:
+                leaf_bits = 0
+            else:
+                leaf_bits = 32
+        self.leaf_bits = leaf_bits
+
         if hasattr(estimator, 'estimators_'):
-            trees = [ e.tree_ for e in estimator.estimators_]
+            estimators = [ e for e in estimator.estimators_]
         else:
-            trees = [ estimator.tree_ ]
+            estimators = [ estimator ]
+
+        trees = [ e.tree_ for e in estimators ]
 
         self.forest_ = flatten_forest(trees, leaf=leaf)
         self.forest_ = remove_duplicate_leaves(self.forest_)
 
+        self.n_features = estimators[0].n_features_in_
+        self.n_classes = 0
+        if self.is_classifier:
+            self.n_classes = estimators[0].n_classes_
+
         if classifier == 'pymodule':
             # FIXME: use Nodes,Roots directly, as Numpy Array
             import eml_trees # import when required
-            nodes, roots = self.forest_
+            nodes, roots, leaves = self.forest_
             node_data = []
             for node in nodes:
                 assert len(node) == 4
                 node_data += node
             assert len(node_data) % 4 == 0
 
-            self.classifier_ = eml_trees.Classifier(node_data, roots)
+            assert type(roots) == list
+            leaf_bytes = leaves_to_bytelist(leaves, leaf_bits=self.leaf_bits)
+            print('classifier-construct', len(leaves), len(leaf_bytes))
+            self.classifier_ = eml_trees.Classifier(node_data, roots, leaf_bytes,
+                self.leaf_bits, self.n_classes, self.n_features)
 
         elif classifier == 'loadable':
             name = 'mytree'
@@ -411,6 +605,13 @@ class Wrapper:
 
         return predictions
 
+    def predict_proba(self, X):
+        if not self.is_classifier:
+            raise ValueError(f"Cannot call predict_proba on a Regressor")
+        
+        probabilities = self.classifier_.predict_proba(X)
+        return probabilities
+
     def save(self, name=None, file=None):
         if name is None:
             if file is None:
@@ -418,7 +619,14 @@ class Wrapper:
             else:
                 name = os.path.splitext(os.path.basename(file))[0]
 
-        code = generate_c_forest(self.forest_, name, dtype=self.dtype, classifier=self.is_classifier)
+        code = generate_c_forest(self.forest_,
+                n_features=self.n_features,
+                name=name,
+                dtype=self.dtype,
+                classifier=self.is_classifier,
+                leaf_bits=self.leaf_bits,
+                n_classes=self.n_classes,
+        )
         if file:
             with open(file, 'w') as f:
                 f.write(code)

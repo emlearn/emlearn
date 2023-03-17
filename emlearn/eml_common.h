@@ -12,6 +12,8 @@
 extern "C" {
 #endif
 
+#include <eml_log.h>
+
 // EmlError
 typedef enum _EmlError {
     EmlOk = 0,
