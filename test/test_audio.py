@@ -86,7 +86,7 @@ def melfilter(frames, sr, n_fft, n_mels=128, fmin=0.0, fmax=None, htk=True, norm
             print('wei', i, w[10:40])
         weights[i] = w
 
-    refweighs = librosa.filters.mel(sr, n_fft, n_mels, fmin, fmax, htk=htk, norm=norm)
+    refweighs = librosa.filters.mel(sr=sr, n_fft=n_fft, n_mels=n_mels, fmin=fmin, fmax=fmax, htk=htk, norm=norm)
     numpy.testing.assert_allclose(weights, refweighs)
 
     return numpy.dot(frames, weights.T)
