@@ -7,6 +7,10 @@
 Machine learning for microcontroller and embedded systems.
 Train in Python, then do inference on any device with a C99 compiler.
 
+## Status
+**Minimally useful**.
+Used in dozens of projects by dozens of developers.
+
 ## Key features
 
 Embedded-friendly Inference
@@ -27,10 +31,6 @@ Convenient Training
 Can be used as an open source alternative to MATLAB Classification Trees,
 Decision Trees using MATLAB Coder for C/C++ code generation.
 `fitctree`, `fitcensemble`, `TreeBagger`, `ClassificationEnsemble`, `CompactTreeBagger`
-
-## Status
-**Minimally useful**.
-Used in dozens of projects by dozens of developers.
 
 
 ## Model support
