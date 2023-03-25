@@ -125,6 +125,11 @@ If you use `emlearn` in an academic work, please reference it using:
 
 `emlearn` has been used in the following works.
 
+- [Remote Breathing Rate Tracking in Stationary Position Using the Motion and Acoustic Sensors of Earables](https://www.researchgate.net/publication/369439475_Remote_Breathing_Rate_Tracking_in_Stationary_Position_Using_the_Motion_and_Acoustic_Sensors_of_Earables) by Tousif Ahmed et.al at Samsung Research.
+Developed a system using microphone and accelerometer on earbuds to estimate breathing rate of wearer.
+Tested various models such as Logistic Regression, Multi-layer Perceptron and Random Forest.
+Used emlearn to convert the model to C and run on Samsung Galaxy Buds 2 earbuds.
+Found that the battery consumption was low enough that it could run continiously.
 - [Smart Attack Detection for IoT Networks](https://kth.diva-portal.org/smash/record.jsf?aq2=%5B%5B%5D%5D&c=21&af=%5B%5D&searchType=LIST_LATEST&sortOrder2=title_sort_asc&query=&language=sv&pid=diva2%3A1726212&aq=%5B%5B%5D%5D&sf=all&aqe=%5B%5D&sortOrder=author_sort_asc&onlyFullText=false&noOfRows=50&dswid=-3227) by Yang Yang.
 Implemented a Intrusion Detection System for IoT networks.
 Used Random Forest classifier running on Nordic nRF52840 using Contiki-NG RTOS.
