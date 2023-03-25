@@ -135,7 +135,7 @@ def melfilter_ref(pow_frames, sr, n_mels, n_fft):
         if i == 4:
             print('f', i, fbank[i][10:40])
 
-    refweighs = librosa.filters.mel(sr=sr, n_fft=n_fft, n_fft=n_fft, fmin=0, fmax=22050//2, htk=True, norm=None)
+    refweighs = librosa.filters.mel(sr=sr, n_fft=n_fft, n_mels=n_mels, fmin=0, fmax=22050//2, htk=True, norm=None)
     #numpy.testing.assert_allclose(fbank, refweighs)
 
     filtered = numpy.dot(pow_frames, fbank.T)
