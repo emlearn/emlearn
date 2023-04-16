@@ -14,4 +14,5 @@ User Guide
    :numbered:
    :maxdepth: 3
 
+   model_optimization.rst
    tree_based_models.rst
