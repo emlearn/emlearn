@@ -11,9 +11,9 @@ Welcome to emlearn's documentation!
    :caption: Contents:
 
    source/README.md
+   user_guide
    examples
    api_reference
-   user_guide
    source/LICENSE.md
 
 
