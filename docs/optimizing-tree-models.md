@@ -1,80 +1,17 @@
 
-# TODO
-- Integrate into docs / examples.
-Might be that some of this should go into a user-guide section/chapter
-on "Optimizing models".
-Allows the example to have a more sparse/direct texts
-And also allows to split into several examples, with more singular focus (but referring to user guide for the whole)
+# Optimizing tree models
 
+## Documentation
 
-## Goals for efficient models
+In docs/tree_based_models.rst
 
-When creating models for efficient inference on constrained hardware target,
-there are generally 3 concerns:
-
-- Time to make a prediction (CPU).
-- Working memory required (RAM).
-- Storage required for model (FLASH/program memory).
-
-These tend to heavily correlated,
-though some optimization strategies may influence one aspect more than the others.
-And in a few cases, it may be possible to trade one against the other.
-
-Sometimes it is also desirable to optimize the prediction latency.
-This is usually highly dependent on the feature extraction,
-and so will not be covered here. 
-
-## Optimization of features
-
-Tree-based models are pretty good at ignorning less-useful features.
-Therefore it is not generally neccesary to do separate feature selection step.
-But one might want to remove features that are completely useless or redundant, if present.
-
-Creating new features using feature engineering on the other hand can have a very large impact,
-and should be considered in addition to optimizing the classifier.
-This tends to be very problem/task dependent and is outside of the scope of this example.
-But for inspiration, see for example
-[Energy-efficient activity recognition framework using wearable accelerometers](https://www.mdpi.com/2079-9292/10/21/2640/htm)
-where tree-based models outperform Convolutional Neural Networks.
-
-
-## Hyperparameter optimization
-
-Limit Width and depth.
-There are several hyperparameters which allow limiting depth.
-
-TODO: reference example
-
-
-## Tradeoffs in predictive performance and model costs
-
-A larger model will generally have higher predictive performance, but need more CPU/RAM/storage.
-This leads to a tradeoff, and different applications may chose different operating points. 
-We may try to find a set of [Pareto optimal](https://en.wikipedia.org/wiki/Pareto_efficiency) model alternatives.
-
-TODO: integrate this with notebook
-
-## Quantization
-
-TODO: show in notebook how to do
-
-
-
-## Measuring model costs
-
-The best measurements will be by running the model on the target hardware.
-However, having the hardware in the loop makes it slow to evaluate a large set of models.
-Therefore this is often done at the last stage, only for verification.
-
-The simplest alternative is to use the properties of the model.
-
-Slightly better is to run the generated model on the target hardware.
-One can also compile for the target platform, and inspect the code size and RAM size in that way.
+## Improvements
 
 ### TODO
-TODO: setup tooling for measuring FLASH/SRAM using GCC
-TODO: setup tooling for running benchmark
-TODO: include this in example notebook
+
+- TODO: setup tooling for measuring FLASH/SRAM using GCC
+- TODO: setup tooling for running benchmark
+- TODO: include this in example notebook
 
 #### Size measurement tooling.
 

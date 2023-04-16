@@ -13,6 +13,7 @@ Welcome to emlearn's documentation!
    source/README.md
    examples
    api_reference
+   user_guide
    source/LICENSE.md
 
 
