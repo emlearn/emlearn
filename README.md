@@ -92,7 +92,14 @@ cmodel.save(file='sonar.h')
 
 const int32_t length = 60;
 int32_t values[length] = { ... };
+
+# using generated "inline" code for the decision forest
 const int32_t predicted_class = sonar_predict(values, length):
+
+# ALT: using the generated decision forest datastructure
+const int32_t predicted_class = eml_trees_predict(&sonar, length):
+
+
 ```
 
 
