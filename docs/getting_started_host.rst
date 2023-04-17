@@ -113,6 +113,6 @@ Next
 Now you have the emlearn tool running on your system,
 and it can be used to convert the models that you are interested in.
 
-.. TODO: link to a hardware getting-started. Arduino et.c.
-
+You may be interested in trying it out on a hardware device.
+See for example :ref:`_getting_started_arduino`.
 

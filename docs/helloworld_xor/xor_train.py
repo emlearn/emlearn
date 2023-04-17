@@ -21,5 +21,5 @@ assert score > 0.90, score # verify that we learned the function
 # Convert model using emlearn
 path = 'xor_model.h'
 cmodel = emlearn.convert(estimator, method='inline')
-cmodel.save(file=path, name='xor')
+cmodel.save(file=path, name='xor_model')
 print('Wrote model to', path)

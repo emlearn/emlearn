@@ -15,8 +15,8 @@ main(int argc, const char *argv[])
     const float b = strtod(argv[2], NULL);
     const float features[] = { a, b };
 
-    int out = xor_predict(features, 2); // Alternative A: "inline"
-    out = eml_trees_predict(&xor, features, 2); // Alternative B: "loadable"
+    int out = xor_model_predict(features, 2); // Alternative A: "inline"
+    out = eml_trees_predict(&xor_model, features, 2); // Alternative B: "loadable"
     if (out < 0) {
         return out; // error
     } else {
