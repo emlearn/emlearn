@@ -1,6 +1,9 @@
 
 #ifndef EML_BAYES_H
 #define EML_BAYES_H
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include "eml_common.h"
 #include "eml_fixedpoint.h"
@@ -127,5 +130,7 @@ eml_bayes_predict(EmlBayesModel *model, const float values[], int32_t values_len
 }
 
 
-
+#ifdef __cplusplus
+} // extern "C"
+#endif
 #endif // EML_BAYES_H

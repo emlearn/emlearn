@@ -1,9 +1,12 @@
 
-
 #ifndef EML_IIR
 #define EML_IIR
 
 #include "eml_common.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 // Each stage is implemented using a Biquad filter
 // https://en.wikipedia.org/wiki/Digital_biquad_filter
@@ -62,5 +65,9 @@ eml_iir_filter(EmlIIR filter, float in) {
     }
     return out;
 }
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // EML_IIR

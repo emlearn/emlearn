@@ -6,6 +6,10 @@
 #include <stdint.h>
 #include <stddef.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // EmlError
 typedef enum _EmlError {
     EmlOk = 0,
@@ -127,5 +131,10 @@ static inline
 float eml_min(float a, float b) {
     return (a < b) ? a : b;
 }
+
+#ifdef __cplusplus
+}
+#endif
+
 
 #endif // EML_COMMON_H

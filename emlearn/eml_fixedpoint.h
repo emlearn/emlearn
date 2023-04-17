@@ -2,6 +2,10 @@
 #ifndef EML_FIXEDPOINT_H
 #define EML_FIXEDPOINT_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // Fixed-point helpers
 typedef int32_t eml_q16_t;
 #define EML_Q16_FRACT_BITS 16
@@ -27,5 +31,9 @@ eml_q16_div(eml_q16_t a, eml_q16_t b)
     }
     return (int32_t)(temp / b);
 }
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // EML_FIXEDPOINT_H

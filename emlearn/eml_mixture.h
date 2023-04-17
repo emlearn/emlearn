@@ -1,5 +1,4 @@
 
-
 #ifndef EML_MIXTURE_H
 #define EML_MIXTURE_H
 
@@ -8,10 +7,9 @@
 #include "eml_common.h"
 #include "eml_fixedpoint.h"
 
-#ifndef EML_MAX_CLASSES
-#define EML_MAX_CLASSES 10
+#ifdef __cplusplus
+extern "C" {
 #endif
-
 
 // numpy.log(2*numpy.pi)
 #define EML_LOG_2PI 1.8378770664093453
@@ -258,5 +256,8 @@ eml_mixture_score(EmlMixtureModel *model,
     return EmlOk;
 }
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif // EML_MIXTURE_H

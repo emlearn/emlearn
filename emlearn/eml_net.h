@@ -1,9 +1,15 @@
 
+#ifndef EML_NET_H
+#define EML_NET_H
+
 #include "eml_common.h"
 
 #include <stdint.h>
 #include <math.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 // TODO: implement elu
 // TODO: implement SeLu for SNN
@@ -305,3 +311,8 @@ eml_net_predict(EmlNet *model, const float *features, int32_t features_length) {
     return _class;
 }
 
+#ifdef __cplusplus
+} // extern "C"
+#endif
+
+#endif // EML_NET_H

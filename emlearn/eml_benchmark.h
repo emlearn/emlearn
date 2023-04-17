@@ -1,6 +1,9 @@
 
 #ifndef EML_BENCHMARK_H
 #define EML_BENCHMARK_H
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include "eml_common.h"
 
@@ -94,5 +97,7 @@ eml_benchmark_melspectrogram(EmlAudioMel mel_params,
     return EmlOk;
 }
 
-
+#ifdef __cplusplus
+} // extern "C"
+#endif
 #endif // EML_BENCHMARK_H

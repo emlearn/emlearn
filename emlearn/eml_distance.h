@@ -1,4 +1,11 @@
 
+#ifndef EML_DISTANCE_H
+#define EML_DISTANCE_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <eml_common.h>
 
 /*
@@ -52,3 +59,8 @@ eml_elliptic_envelope_predict(const EmlEllipticEnvelope *self,
 
     return outlier;
 }
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
+#endif // EML_FFT_H

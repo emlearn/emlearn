@@ -1,10 +1,14 @@
 
-#ifndef EMTREES_H
-#define EMTREES_H
+#ifndef EML_TREES_H
+#define EML_TREES_H
 
 #include <stdint.h>
 #include <math.h>
 #include <eml_common.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 typedef struct _EmlTreesNode {
     int8_t feature;
@@ -128,4 +132,8 @@ eml_trees_regress1(const EmlTrees *forest,
     return out[0];
 }
 
-#endif // EMTREES_H
+#ifdef __cplusplus
+}
+#endif
+
+#endif // EML_TREES_H

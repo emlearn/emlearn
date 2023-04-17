@@ -24,8 +24,8 @@
  *   Software.
  */
 
-#ifndef EMFFT_H
-#define EMFFT_H
+#ifndef EML_FFT_H
+#define EML_FFT_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -110,4 +110,4 @@ eml_fft_forward(EmlFFT table, float real[], float imag[], size_t n) {
 #ifdef __cplusplus
 } // extern "C"
 #endif
-#endif // EMVECTOR_H
+#endif // EML_FFT_H

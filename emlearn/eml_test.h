@@ -8,6 +8,10 @@
 
 #include "eml_common.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifndef EML_CSV_BUFFER_LENGTH
 #define EML_CSV_BUFFER_LENGTH 2*1024
 #endif
@@ -66,5 +70,9 @@ eml_test_read_csv(FILE *fp, EmlCsvCallback row_callback) {
     }
     return EmlOk;
 }
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // EML_TEST_H
