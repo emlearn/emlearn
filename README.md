@@ -82,7 +82,7 @@ estimator.fit(X_train, Y_train)
 ```python
 import emlearn
 cmodel = emlearn.convert(estimator, method='inline')
-cmodel.save(file='sonar.h')
+cmodel.save(file='sonar.h', name='sonar')
 ```
 
 3. Use the C code
@@ -91,19 +91,19 @@ cmodel.save(file='sonar.h')
 #include "sonar.h"
 
 const int32_t length = 60;
-int32_t values[length] = { ... };
+float values[length] = { ... };
 
-# using generated "inline" code for the decision forest
+// using generated "inline" code for the decision forest
 const int32_t predicted_class = sonar_predict(values, length):
 
-# ALT: using the generated decision forest datastructure
+// ALT: using the generated decision forest datastructure
 const int32_t predicted_class = eml_trees_predict(&sonar, length):
-
-
 ```
 
+For a complete runnable code see [Getting Started](https://emlearn.readthedocs.io/en/latest/getting_started_host.html).
 
-For full code see [the examples](https://emlearn.readthedocs.io/en/latest/examples.html).
+For full documentation see [examples](https://emlearn.readthedocs.io/en/latest/examples.html),
+the [user guide](https://emlearn.readthedocs.io/en/latest/user_guide.html).
 
 ## Contributors
 
