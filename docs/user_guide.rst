@@ -15,5 +15,6 @@ User Guide
    :maxdepth: 3
 
    getting_started_host.rst
+   getting_started_arduino.rst
    model_optimization.rst
    tree_based_models.rst

@@ -3,8 +3,10 @@
 
 :parenttoc: True
 
+.. _getting_started_arduino:
+
 =========================
-Getting started
+Getting started on PC (Linux/MacOS/Windows)
 =========================
 
 .. currentmodule:: emlearn
