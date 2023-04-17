@@ -127,7 +127,7 @@ eml_trees_regress1(const EmlTrees *forest,
         features, features_length,
         out, 1);
     if (err != EmlOk) {    
-        return nanf("");
+        return NAN;
     }
     return out[0];
 }
