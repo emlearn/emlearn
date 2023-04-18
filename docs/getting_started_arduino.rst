@@ -17,9 +17,9 @@ One very easy way to start testing it out is using the Arduino platform.
 Prerequisites
 ===========================
 
-Ensure that you have **emlearn** setup as per the :ref:`_getting_started_host`. 
+Ensure that you have **emlearn** setup as per the :doc:`getting_started_host`. 
 
-You will also need to have the `Arduino IDE<https://www.arduino.cc/en/software>`_ installed,
+You will also need to have the `Arduino IDE <https://www.arduino.cc/en/software>`_ installed,
 and some Arduino-compatible hardware.
 
 Any Arduino compatible board should work,
@@ -91,19 +91,30 @@ The following should output 1 (LED on)
 .. code-block:: console
 
     A     B
-    high  low  
+    high  low
     low   high
+
+.. image:: helloworld_xor/emlearn-xor-arduino-on-medium.jpg
+  :width: 800
+  :alt: Arduino running emlearn XOR model. LED turned on
 
 The following should output 0 (LED off)
 
 .. code-block:: console
 
     A     B
-    high  high  
+    high  high
     low   low
+
+.. image:: helloworld_xor/emlearn-xor-arduino-off-medium.jpg
+  :width: 800
+  :alt: Arduino running emlearn XOR model. LED turned off
 
 Next
 ========
+
+Now that you have tested emlearn on some real hardware,
+you are ready to develop your application for your particular hardware.
 
 .. TODO: link to guide for PlatformIO
 

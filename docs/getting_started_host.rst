@@ -3,13 +3,18 @@
 
 :parenttoc: True
 
-.. _getting_started_arduino:
+.. _getting_started_host:
 
 =========================
 Getting started on PC (Linux/MacOS/Windows)
 =========================
 
 .. currentmodule:: emlearn
+
+emlearn models work anywhere there is a C99 compiler available.
+This includes common desktop platforms such as Linux, Mac OS, Windows, et.c.
+Since you need such a host platform to develop the Python machine-learning,
+it is convenient also to do the first tests of the model on the host.
 
 Prerequisites
 ===========================
@@ -114,5 +119,5 @@ Now you have the emlearn tool running on your system,
 and it can be used to convert the models that you are interested in.
 
 You may be interested in trying it out on a hardware device.
-See for example :ref:`_getting_started_arduino`.
+See for example :doc:`getting_started_arduino`.
 

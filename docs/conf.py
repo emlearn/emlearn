@@ -45,6 +45,7 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.doctest',
     'sphinx.ext.coverage',
+    #'sphinx.ext.autosectionlabel',
     'sphinx_gallery.gen_gallery',
     'm2r2',
 ]
