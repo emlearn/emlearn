@@ -63,8 +63,8 @@ Run the script
 
 It will generate a file ``xor_model.h`` containing the C code for our model.
 
-Create model in Python
-===========================
+Copy model files into Arduino
+=============================
 
 Copy the ``xor_model.h`` file into your **sketch** folder.
 Also copy the ``emlearn`` include directory into **Arduino libraries folder**.
