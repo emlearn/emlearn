@@ -15,6 +15,7 @@ extern "C" {
 #endif
 
 #include <eml_common.h>
+#include <string.h> // memcpy
 
 #define EML_ARRAY_MAX_DIMS 3
 
@@ -100,6 +101,8 @@ eml_array_data_2d(EmlArray *self, int col, int row)
     if (!(self->n_dims == 2)) { return NULL; }
     if (!(col < self->dims[0])) { return NULL; }
     if (!(row < self->dims[1])) { return NULL; }
+    if (!(col >= 0)) { return NULL; }
+    if (!(row >= 0)) { return NULL; }
 
     const int offset = (row * self->dims[0]) + col;
     void *data = self->data + (self->value_size * offset);
@@ -151,22 +154,76 @@ eml_array_append(EmlArray *self, EmlArray *other)
 }
 
 EmlError
-eml_array_shift_axis(EmlArray *self, int shift)
+eml_array_shift_rows(EmlArray *self, int shift)
 {
-    const int length = self->dims[0];
+    const int rows = self->dims[1];
     EML_PRECONDITION(self->n_dims == 2, EmlUnsupported);
     // trying to shift more than the size of buffer is likely an error
-    EML_PRECONDITION(abs(shift) <= length, EmlSizeMismatch);
+    EML_PRECONDITION(abs(shift) <= rows, EmlSizeMismatch);
+    EML_PRECONDITION(shift <= 0, EmlUnsupported); // TODO: support also forward shifts
 
-    if (shift < 0) {
-        const int from_start = shift;
-        const int to_start = 0;
-        const int to_end = length - shift; 
+    const size_t row_size = self->value_size * self->dims[0];
 
-        //memcpy();
-    } else {
-        const int from = 0;
-        const int to = shift;
+#if 0
+    EML_LOG_BEGIN("eml_array_shift_rows_begin");
+    EML_LOG_ADD_INTEGER("shift", shift);
+    EML_LOG_ADD_INTEGER("rows", rows);
+    EML_LOG_ADD_INTEGER("row_size", row_size);
+    EML_LOG_END();
+#endif
+
+    for (int i=0; i<rows+shift; i++) {
+        const int source_row = i-shift;
+        // Assert never below zero
+        void *target = eml_array_data_2d(self, 0, i);
+        void *source = eml_array_data_2d(self, 0, source_row);
+        if ((target == NULL) || (source == NULL)) {
+            return EmlPostconditionFailed; // XXX: should be invariant failed / generic assert
+        }
+#if 0
+        EML_LOG_BEGIN("eml_array_shift_rows_row");
+        EML_LOG_ADD_INTEGER("target_row", i);
+        EML_LOG_ADD_INTEGER("source_row", source_row);
+        EML_LOG_END();
+#endif
+        memcpy(target, source, row_size);
+    }
+
+    return EmlOk;
+}
+
+EmlError
+eml_array_copy_rows(EmlArray *self, int start, EmlArray *other)
+{
+    // support only 2d
+    EML_PRECONDITION(self->n_dims == 2, EmlUnsupported);
+    EML_PRECONDITION(other->n_dims == 2, EmlUnsupported);
+    // start cannot be negative
+    EML_PRECONDITION(start >= 0, EmlUnsupported);
+    // must have same number of columns
+    EML_PRECONDITION(other->dims[0] == self->dims[0], EmlSizeMismatch);
+    // other must not be too big
+//    fprintf("start %d other_rows %d, self_rows %d", start, other->dims[1], self->dims[1]);
+    EML_PRECONDITION((start + other->dims[1]) < self->dims[1], EmlSizeMismatch);
+
+
+    const size_t row_size = self->value_size * self->dims[0];
+
+    for (int i=0; i<other->dims[1]; i++) {
+
+        const int target_row = i+start;
+        void *target = eml_array_data_2d(self, 0, target_row);
+        void *source = eml_array_data_2d(other, 0, i);
+        if ((target == NULL) || (source == NULL)) {
+            return EmlPostconditionFailed; // XXX: should be invariant failed / generic assert
+        }
+#if 0
+        EML_LOG_BEGIN("eml_array_shift_rows_row");
+        EML_LOG_ADD_INTEGER("target_row", i);
+        EML_LOG_ADD_INTEGER("source_row", source_row);
+        EML_LOG_END();
+#endif
+        memcpy(target, source, row_size);
     }
 
     return EmlOk;

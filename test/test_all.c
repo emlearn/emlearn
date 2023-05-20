@@ -1,7 +1,10 @@
 
 /* Entry-point for running C tests */
 
+#define EML_LOG_ENABLE 1
 #define EML_DEBUG
+
+#include <eml_log.h>
 
 #include "test_array.c"
 #include <unity.c>
