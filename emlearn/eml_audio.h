@@ -12,45 +12,6 @@ extern "C" {
 
 #include <math.h>
 
-// Double buffering
-typedef struct _EmlAudioBufferer {
-    int buffer_length;
-    float *buffer1;
-    float *buffer2;
-
-    float *write_buffer;
-    float *read_buffer;
-    int write_offset;
-} EmlAudioBufferer;
-
-void
-eml_audio_bufferer_reset(EmlAudioBufferer *self) {
-    self->write_buffer = self->buffer1;
-    self->read_buffer = NULL;
-    self->write_offset = 0;
-}
-
-int
-eml_audio_bufferer_add(EmlAudioBufferer *self, float s) {
-
-    self->write_buffer[self->write_offset++] = s; 
-
-    if (self->write_offset == self->buffer_length) {
-
-        if (self->read_buffer) {
-            // consumer has not cleared it
-            return -1;
-        }
-
-        self->write_offset = 0;
-        self->read_buffer = self->write_buffer;
-        self->write_buffer = (self->read_buffer == self->buffer1) ? self->buffer2 : self->buffer1;
-        return 1;
-    } else {
-        return 0;
-    }
-}
-
 
 // Power spectrogram
 // TODO: operate in-place
