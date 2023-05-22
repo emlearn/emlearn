@@ -193,7 +193,7 @@ eml_array_shift_rows(EmlArray *self, int shift)
 }
 
 EmlError
-eml_array_copy_rows(EmlArray *self, int start, EmlArray *other)
+eml_array_copy_rows(EmlArray *self, int start, const EmlArray *other)
 {
     // support only 2d
     EML_PRECONDITION(self->n_dims == 2, EmlUnsupported);
@@ -203,8 +203,10 @@ eml_array_copy_rows(EmlArray *self, int start, EmlArray *other)
     // must have same number of columns
     EML_PRECONDITION(other->dims[0] == self->dims[0], EmlSizeMismatch);
     // other must not be too big
-//    fprintf("start %d other_rows %d, self_rows %d", start, other->dims[1], self->dims[1]);
-    EML_PRECONDITION((start + other->dims[1]) < self->dims[1], EmlSizeMismatch);
+
+//    fprintf(stderr, "start %d - %d- other_rows %d, self_rows %d \n",
+//        start, start+other->dims[1], other->dims[1], self->dims[1]);
+    EML_PRECONDITION((start + other->dims[1]) <= self->dims[1], EmlSizeMismatch);
 
 
     const size_t row_size = self->value_size * self->dims[0];
@@ -213,7 +215,7 @@ eml_array_copy_rows(EmlArray *self, int start, EmlArray *other)
 
         const int target_row = i+start;
         void *target = eml_array_data_2d(self, 0, target_row);
-        void *source = eml_array_data_2d(other, 0, i);
+        void *source = eml_array_data_2d((EmlArray *)other, 0, i);
         if ((target == NULL) || (source == NULL)) {
             return EmlPostconditionFailed; // XXX: should be invariant failed / generic assert
         }
