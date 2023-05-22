@@ -7,123 +7,6 @@
 #include <stdio.h>
 #include "./eml_wave.h"
 
-# if 0
-typedef struct CheckWindowerData_ {
-    int calls;
-    int samples;
-
-    int expect_width;
-    int expect_length;
-    int expect_hop;
-} CheckWindowerData;
-
-void
-check_windower_callback(EmlArray *arr, void *user_data)
-{
-    TestWindowerData *data = (TestWindowerData *);
-
-    data->calls += 0;
-
-    int length = arr->dims[0];
-    TEST_ASSERT_EQUALS(diff, data->expect_length);
-
-    int16_t *values = (int16_t *)arr->data;
-
-    data->samples += arr->dims[1];
-
-    const int first_value = values[0];
-    const int last_value = values[length-1];
-    const int diff = last_value - first_value;
-
-    TEST_ASSERT_EQUALS(diff, length);
-}
-
-EmlError
-fill_array_int16(EmlArray *arr, int start)
-{
-    EML_PRECONDITION(arr->n_dims == 2, EmlSizeMismatch);
-
-    const int rows = arr->dims[0];
-    const int features = arr->dims[1];
-
-    for (int i=0; i<rows; i++) {
-        for (int j=0; j<columns; j++) {
-            int16_t *val = (int16_t *)eml_array_data_2d(arr, i, 0);
-            *val = (rows + start);
-    }
-}
-
-void
-check_signal_windower(int window_length, int hop_length, int input_chunk)
-{
-    const int n_features = 3;
-
-    CheckWindowerData data = { 0 };
-    data.expect_length = window_length;
-    data.expect_hop = hop_length;
-    data.expect_width = n_features;
-
-    EmlSignalWindower _windower;
-    EmlSignalWindower *windower = &_windower;
-
-
-    EmlArray _buffer;
-    EmlArray *buffer = &_buffer;
-    EML_ARRAY_INIT_2D()
-
-    EmlArray _input;
-    EmlArray *input = &_input;
-    EML_ARRAY_INIT_2D(input);
-
-    /* FIXME: fill each line of features with different data */
-    fill_array_int16(input, 0);
-    
-    const EmlError init_err = eml_signal_windower_init(windower, buffer);
-    TEST_ASSERT_EQUAL(init_err, EmlOk); 
-
-    eml_signal_windower_set_callback(windower, signal_test_windower_callback, &data);
-
-    // TODO: test different hop lengths
-    const int n_samples_input = 1;
-    for (int i=0; i<samples; i+n_samples_input) {
-        // create view
-        EML_ARRAY_INIT_2D
-        const EmlError add_err = eml_signal_windower_add(windower, chunk);
-        TEST_ASSERT_EQUAL(add_err, EmlOk);
-    }
-
-    TEST_ASSERT_EQUAL(data.samples, );
-    TEST_ASSERT_EQUAL(data.calls, );
-}
-
-
-void
-test_signal_windower_hops()
-{
-    /* window < input chunk */
-    // hop=1, input=1
-    check_signal_windower(10, 1, 1);
-
-    // hop=1, input=N
-    check_signal_windower(10, 1, 5);
-
-    // hop=N, input=1
-    check_signal_windower(10, 5, 1);
-
-    // hop=N, input=M
-    check_signal_windower(30, 7, 3);
-
-    /* window > input chunk */
-    check_signal_windower(10, 1, 15);
-
-    check_signal_windower(10, 5, 18);
-}
-
-#endif
-
-
-
-
 typedef struct AudioFeatureExtractor_ {
     
     int samplerate;
@@ -137,12 +20,25 @@ typedef struct AudioFeatureExtractor_ {
 } AudioFeatureExtractor;
 
 
+float
+mean_int16(const int16_t *samples, int length)
+{
+    float sum = 0.0;
+    for (int i=0; i<length; i++) {
+        const float s = samples[i]/32768.0f;
+        sum += s;
+    }
+    const float mean = sum / length;
+    return mean;
+}
+
+
 void
 process_window(EmlArray *arr, void *user_data)
 {
     AudioFeatureExtractor *self = (AudioFeatureExtractor *)user_data;
     int16_t *samples = (int16_t *)arr->data;
-    const int length = arr->dims[1];
+    const int length = arr->dims[0];
     // FIXME: check other dimension being 1
 
     /* Compute features */
@@ -151,6 +47,8 @@ process_window(EmlArray *arr, void *user_data)
     const float rms_db = eml_signal_power_to_db(rms);
     const float time = self->sample_counter / (float)self->samplerate;
 
+    const float mean = mean_int16(samples, length);
+
     // Write to output
     fprintf(self->out_file, "%.4f,%.4f,%.4f \n", time, rms_db, zcr);
 
@@ -158,6 +56,8 @@ process_window(EmlArray *arr, void *user_data)
     EML_LOG_ADD_FLOAT("time", time);
     EML_LOG_ADD_FLOAT("rms_db", rms_db);
     EML_LOG_ADD_FLOAT("zcr", zcr);
+    EML_LOG_ADD_FLOAT("mean", mean);
+    EML_LOG_ADD_INTEGER("length", length);
     EML_LOG_ADD_INTEGER("sample", self->sample_counter);
     EML_LOG_END();
 

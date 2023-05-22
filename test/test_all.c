@@ -7,6 +7,8 @@
 #include <eml_log.h>
 
 #include "test_array.c"
+#include "test_signal_windower.c"
+
 #include <unity.c>
 
 void
@@ -28,6 +30,7 @@ int main(void)
 
     // Run the different test modules
     test_eml_array();
+    test_eml_signal_windower();
 
     return UNITY_END();
 }

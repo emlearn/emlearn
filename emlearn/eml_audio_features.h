@@ -42,7 +42,7 @@ eml_signal_zcr_int16(int16_t *pcm, int length)
 {
     int crossings = 0;
 
-	for (int i=0; i<length; i++) {
+	for (int i=0; i<length-1; i++) {
 		const int sign1 = EML_SIGNAL_SIGN(pcm[i]);
 		const int sign2 = EML_SIGNAL_SIGN(pcm[i+1]);
 		if (sign1 != sign2) {
