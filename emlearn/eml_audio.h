@@ -140,7 +140,7 @@ eml_audio_melspectrogram(EmlAudioMel mel_params, EmlFFT fft, EmlVector inout, Em
     const int n_mels = mel_params.n_mels;
  
     // Apply window
-    EML_CHECK_ERROR(eml_vector_hann_apply(inout));
+    EML_CHECK_ERROR(eml_signal_hann_apply(inout.data, inout.length));
 
     // Perform (short-time) FFT
     EML_CHECK_ERROR(eml_vector_set_value(temp, 0.0f));

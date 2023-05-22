@@ -27,9 +27,8 @@ bench_melspec()
     EML_CHECK_ERROR(eml_fft_fill(fft, EML_N_FFT));
 
     eml_benchmark_melspectrogram(mel, fft, input_data, temp_data, EML_N_REPS, times);
-    EmlVector t = { times, EML_N_REPS };
 
-    const float mean = eml_vector_mean(t);
+    const float mean = eml_signal_mean(times, EML_N_REPS);
     printf("melspec;%d;%f\n", EML_N_REPS, mean);
     return EmlOk;
 }
