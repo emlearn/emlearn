@@ -33,6 +33,20 @@ For example, emlearn is known to work together with the following.
 - Android
 - and so on...
 
+### Other programming languages
+
+Since emlearn is a standard C library, it works well with any language that supports C bindings.
+
+- C++
+- Rust
+- Zig
+- Nim
+- Python. Using CFFI or pybind11
+- Node.js/JavaScript
+- WebAssembly/WASM. Using Emscripten
+- Java. Using JNI/JNA
+
+
 ### More
 
 This list is **not exhaustive**, and emlearn should work on *any platform* with a C99 compiler.
