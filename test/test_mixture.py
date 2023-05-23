@@ -20,6 +20,7 @@ import emlearn
 
 import pytest
 
+here = os.path.dirname(__file__)
 random = numpy.random.randint(0, 1000)
 random = 1
 print('random_state={}'.format(random))
@@ -46,7 +47,6 @@ METHODS = [
     #'loadable',
 ]
 
-
 @pytest.mark.parametrize("data", DATASETS.keys())
 @pytest.mark.parametrize("model", MODELS.keys())
 @pytest.mark.parametrize("method", METHODS)
@@ -69,4 +69,11 @@ def test_gaussian_mixture_equals_sklearn(data, model, method):
     estimator.fit(X, y)
   
     numpy.testing.assert_equal(pred_c, pred_original)
+
+    # check that code can be generated
+    out_dir = os.path.join(here, 'out', 'gaussian_mixture', f'{data}_{model}_{method}.c')
+    save_path = os.path.join(out_dir, f'{data}_{model}_{method}.c')
+    if not os.path.exists(out_dir):
+        os.makedirs(out_dir)
+    cmodel.save(file=save_path, name='my_test_model')
 
