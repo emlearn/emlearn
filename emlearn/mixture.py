@@ -1,6 +1,6 @@
 
 import os.path
-import os
+import tempfile
 
 import numpy
 
@@ -139,11 +139,6 @@ def _estimate_log_gaussian_prob(X, means, precisions_chol, covariance_type):
     return s
 
 
-def init_model():
-    
-
-    pass
-
 
 def get_covariance_type(s):
     if s == 'diag':
@@ -247,7 +242,7 @@ def predict(bin_path, X, verbose=1):
     y = [ predict_one(x) for x in numpy.array(X) ]
     return numpy.array(y)
 
-def build_executable_proba(wrapper, name='gmm'):
+def build_executable_proba(wrapper, out_dir, name='gmm'):
     n_components, n_features = wrapper._means.shape
 
     model_code = generate_code(wrapper, name=name)
@@ -293,7 +288,6 @@ def build_executable_proba(wrapper, name='gmm'):
     
 
     # Compile the xor.c example program
-    out_dir = './examples'
     src_path = os.path.join(out_dir, 'gmm.c')
 
     with open(src_path, 'w') as f:
@@ -304,7 +298,7 @@ def build_executable_proba(wrapper, name='gmm'):
 
     return bin_path
 
-def build_executable_score(wrapper, name='gmm'):
+def build_executable_score(wrapper, out_dir, name='gmm'):
     n_components, n_features = wrapper._means.shape
 
     model_code = generate_code(wrapper, name=name)
@@ -346,7 +340,6 @@ def build_executable_score(wrapper, name='gmm'):
     """
 
     # Compile
-    out_dir = './examples'
     src_path = os.path.join(out_dir, 'gmm.c')
 
     with open(src_path, 'w') as f:
@@ -463,8 +456,10 @@ class Wrapper:
 
         py_predictions += self._log_weights
 
-        bin_path = build_executable_proba(self)
-        c_predictions = predict(bin_path, X, verbose=self.verbose)
+        with tempfile.TemporaryDirectory() as out_dir:
+
+            bin_path = build_executable_proba(self, out_dir=out_dir)
+            c_predictions = predict(bin_path, X, verbose=self.verbose)
 
         # XXX: note, this is actually log probabilities
         return c_predictions
@@ -478,8 +473,11 @@ class Wrapper:
         from scipy.special import logsumexp
 
         if True:
-            bin_path = build_executable_score(self)
-            predictions = predict(bin_path, X, verbose=self.verbose)
+            with tempfile.TemporaryDirectory() as out_dir:
+
+                bin_path = build_executable_score(self, out_dir=out_dir)
+                predictions = predict(bin_path, X, verbose=self.verbose)
+
             score = predictions[:,0]
 
         else:
@@ -496,11 +494,10 @@ class Wrapper:
             else:
                 name = os.path.splitext(os.path.basename(file))[0]
 
-        code = "" # Implement
+        code = generate_code(self, name=name)
         if file:
             with open(file, 'w') as f:
                 f.write(code)
 
-        raise NotImplementedError("TODO implement save()")
         return code
 
