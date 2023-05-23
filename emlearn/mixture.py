@@ -1,143 +1,28 @@
 
+"""
+Gaussian Mixture models
+
+Implements the GMM models from scikit-learn,
+and reuses some code for compile-time processing.
+
+https://github.com/scikit-learn/scikit-learn/blob/95119c13af77c76e150b753485c662b7c52a41a2/sklearn/mixture/_gaussian_mixture.py#L380
+https://github.com/scikit-learn/scikit-learn/blob/95119c13af77c76e150b753485c662b7c52a41a2/sklearn/mixture/_bayesian_mixture.py
+https://github.com/scikit-learn/scikit-learn/blob/95119c13af77c76e150b753485c662b7c52a41a2/sklearn/mixture/_base.py
+
+For other GMM implementations in C, see vlfeat
+
+https://www.vlfeat.org/api/gmm.html
+https://github.com/vlfeat/vlfeat/blob/master/vl/gmm.c#L712
+Note: implements only diagonal covariance matrix
+"""
+
+
 import os.path
 import tempfile
 
 import numpy
 
 from . import common, cgen
-
-# Ref 
-"""
-References
-
-https://github.com/scikit-learn/scikit-learn/blob/95119c13af77c76e150b753485c662b7c52a41a2/sklearn/mixture/_gaussian_mixture.py#L380
-
-https://github.com/scikit-learn/scikit-learn/blob/95119c13af77c76e150b753485c662b7c52a41a2/sklearn/mixture/_base.py
-
-_estimate_log_gaussian_prob
-
-log probability is used
-implementation depends on covariance type. Can be known at fit time
-
-Looks like log_det can be known at fit time
-one constant per component
-
-Stores
-means_ means of each component
-weights_ weights of each component
-
-precisions_cholesky_
-which is a Cholesky decomposition of the precision, the inverse of the covariance matrix
-
-for full. components, features, features
-for spherical. components
-for diag. components, features
-for tied, features, features 
-
-BaysianGaussianMixture
-https://github.com/scikit-learn/scikit-learn/blob/95119c13af77c76e150b753485c662b7c52a41a2/sklearn/mixture/_bayesian_mixture.py
-
-Seem to reuse _estimate_log_gaussian_prob from GMM
-Has an additional term log_lambda
-does not seem to depend on X?
-
-
-https://www.vlfeat.org/api/gmm.html
-implements only diagonal covariance matrix
-
-https://github.com/vlfeat/vlfeat/blob/master/vl/gmm.c#L712
-
-"""
-
-from sklearn.mixture._gaussian_mixture import _compute_log_det_cholesky
-from sklearn.utils.extmath import row_norms
-np = numpy
-
-
-def _estimate_log_gaussian_prob(X, means, precisions_chol, covariance_type):
-    """Estimate the log Gaussian probability.
-    Parameters
-    ----------
-    X : array-like of shape (n_samples, n_features)
-    means : array-like of shape (n_components, n_features)
-    precisions_chol : array-like
-        Cholesky decompositions of the precision matrices.
-        'full' : shape of (n_components, n_features, n_features)
-        'tied' : shape of (n_features, n_features)
-        'diag' : shape of (n_components, n_features)
-        'spherical' : shape of (n_components,)
-    covariance_type : {'full', 'tied', 'diag', 'spherical'}
-    Returns
-    -------
-    log_prob : array, shape (n_samples, n_components)
-    """
-    n_samples, n_features = X.shape
-    n_components, _ = means.shape
-    # det(precision_chol) is half of det(precision)
-    log_det = _compute_log_det_cholesky(
-        precisions_chol, covariance_type, n_features)
-
-    if covariance_type == 'full':
-        log_prob = np.empty((n_samples, n_components))
-
-        #print('mm', n_samples, n_features, n_components)
-
-        for i, x in enumerate(X):
-            #print('x', i, x)
-            for k, (mu, prec_chol) in enumerate(zip(means, precisions_chol)):
-
-                pp = 0.0
-   
-                for f in range(x.shape[0]):
-                    dot_m = 0.0
-                    dot_x = 0.0
-
-                    for p in range(prec_chol.shape[0]):
-                        dot_m += (mu[p] * prec_chol[p,f])
-                        dot_x += (x[p] * prec_chol[p,f])
-
-                    y = (dot_x - dot_m)
-                    pp += ( y * y ) 
-
-                #print('k', k, '\n', mu, '\n', prec_chol)
-                dot_x = np.dot(x, prec_chol)
-                dot_m = np.dot(mu, prec_chol)
-                y = dot_x - dot_m
-
-                #print('dot_x', dot_x)
-                #print('dot_m', dot_m)
-                #print('y', y)
-
-                p = np.sum(np.square(y), axis=0) # sum over features
-                #assert p == pp, (p, pp)
-                #print("log_prob", i, k, p)
-
-                log_prob[i, k] = p
-
-    elif covariance_type == 'tied':
-        log_prob = np.empty((n_samples, n_components))
-        for k, mu in enumerate(means):
-            y = np.dot(X, precisions_chol) - np.dot(mu, precisions_chol)
-            log_prob[:, k] = np.sum(np.square(y), axis=1)
-
-    elif covariance_type == 'diag':
-        precisions = precisions_chol ** 2
-        log_prob = (np.sum((means ** 2 * precisions), 1) -
-                    2. * np.dot(X, (means * precisions).T) +
-                    np.dot(X ** 2, precisions.T))
-
-    elif covariance_type == 'spherical':
-        precisions = precisions_chol ** 2
-        log_prob = (np.sum(means ** 2, 1) * precisions -
-                    2 * np.dot(X, means.T * precisions) +
-                    np.outer(row_norms(X, squared=True), precisions))
-
-
-    s = -.5 * (n_features * np.log(2 * np.pi) + log_prob) + log_det
-    #print('s', s, 'log_det\n', log_det)
-
-    return s
-
 
 
 def get_covariance_type(s):
@@ -351,6 +236,12 @@ def build_executable_score(wrapper, out_dir, name='gmm'):
     return bin_path
 
 def convert_to_full(means, precisions_chol, covariance_type):
+    """
+    Convert the different covariance structures into "full" covariance matrix form.
+
+    This means only a single inference implementation is needed.
+    Likely less optimal in terms of run-time, but much simpler.
+    """
 
     n_components, n_features = means.shape
 
@@ -407,11 +298,11 @@ def get_log_weights(estimator):
     # https://github.com/scikit-learn/scikit-learn/blob/7e1e6d09bcc2eaeba98f7e737aac2ac782f0e5f1/sklearn/mixture/_bayesian_mixture.py#L768
     is_bayesian = hasattr(estimator, 'degrees_of_freedom_') 
     if is_bayesian:
-        # Remove `n_features * np.log(self.degrees_of_freedom_)` because the precision matrix is normalized
-        log_weights = log_weights - (0.5 * n_features * np.log(estimator.degrees_of_freedom_))
+        # Remove `n_features * numpy.log(self.degrees_of_freedom_)` because the precision matrix is normalized
+        log_weights = log_weights - (0.5 * n_features * numpy.log(estimator.degrees_of_freedom_))
 
-        log_lambda = n_features * np.log(2.0) + np.sum(
-            digamma(0.5* (estimator.degrees_of_freedom_ - np.arange(0, n_features)[:, np.newaxis])),
+        log_lambda = n_features * numpy.log(2.0) + numpy.sum(
+            digamma(0.5* (estimator.degrees_of_freedom_ - numpy.arange(0, n_features)[:, numpy.newaxis])),
             0,
         )
 
@@ -449,12 +340,6 @@ class Wrapper:
 
 
     def predict_proba(self, X):
-        #from sklearn.mixture._gaussian_mixture import _estimate_log_gaussian_prob
-
-        py_predictions = _estimate_log_gaussian_prob(X, self._means,
-                                    self._precisions_col, self._covariance_type)
-
-        py_predictions += self._log_weights
 
         with tempfile.TemporaryDirectory() as out_dir:
 
