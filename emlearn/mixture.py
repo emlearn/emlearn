@@ -127,7 +127,8 @@ def predict(bin_path, X, verbose=1):
     y = [ predict_one(x) for x in numpy.array(X) ]
     return numpy.array(y)
 
-def build_executable_proba(wrapper, out_dir, name='gmm'):
+
+def build_executable(wrapper, out_dir, output_type, name='gmm'):
     n_components, n_features = wrapper._means.shape
 
     model_code = generate_code(wrapper, name=name)
@@ -137,61 +138,23 @@ def build_executable_proba(wrapper, out_dir, name='gmm'):
     #include <stdlib.h> // stdod
     """
 
-    code = includes + model_code + f"""
+    output_code = None
 
-    static float features[{n_features}] = {{0.0}};
-    static float output[{n_components}] = {{0.0}};
-
-    int
-    main(int argc, const char *argv[])
-    {{
-        const int n_features = {n_features};
-        const int n_components = {n_components};
-
-        if (argc != 1+n_features) {{
-            return -1;
-        }}
-
-        for (int i=1; i<argc; i++) {{
-            features[i-1] = strtod(argv[i], NULL);
-        }}
-
-        const EmlError out = {name}_log_proba(features, n_features, output);
-        if (out != EmlOk) {{
-            return -out; // error
-        }}
-
+    if output_type == 'score':
+        output_code = """
+            printf("%f", score);
+        """
+    elif output_type == 'proba':
+        output_code = """
         for (int i=0; i<n_components; i++) {{
             printf("%.6f", output[i]);
             if (i != (n_components-1)) {{
                 printf(",");
             }}
         }}
-        return 0;
-    }}
-    """
-    
-
-    # Compile the xor.c example program
-    src_path = os.path.join(out_dir, 'gmm.c')
-
-    with open(src_path, 'w') as f:
-        f.write(code)
-
-    include_dirs = [ common.get_include_dir() ]
-    bin_path = common.compile_executable(src_path, out_dir, include_dirs=include_dirs)
-
-    return bin_path
-
-def build_executable_score(wrapper, out_dir, name='gmm'):
-    n_components, n_features = wrapper._means.shape
-
-    model_code = generate_code(wrapper, name=name)
-
-    includes = """
-    #include <stdio.h> // printf
-    #include <stdlib.h> // stdod
-    """
+        """
+    else:
+        raise ValueError(f"Unknown output type {output_type}")
 
     code = includes + model_code + f"""
 
@@ -218,7 +181,7 @@ def build_executable_score(wrapper, out_dir, name='gmm'):
             return -out; // error
         }}
 
-        printf("%f", score);
+        {output_code}
 
         return 0;
     }}
@@ -343,7 +306,7 @@ class Wrapper:
 
         with tempfile.TemporaryDirectory() as out_dir:
 
-            bin_path = build_executable_proba(self, out_dir=out_dir)
+            bin_path = build_executable(self, out_dir=out_dir, output_type='proba')
             c_predictions = predict(bin_path, X, verbose=self.verbose)
 
         # XXX: note, this is actually log probabilities
@@ -355,19 +318,13 @@ class Wrapper:
         return predictions
 
     def score_samples(self, X):
-        from scipy.special import logsumexp
 
-        if True:
-            with tempfile.TemporaryDirectory() as out_dir:
+        with tempfile.TemporaryDirectory() as out_dir:
 
-                bin_path = build_executable_score(self, out_dir=out_dir)
-                predictions = predict(bin_path, X, verbose=self.verbose)
+            bin_path = build_executable(self, out_dir=out_dir, output_type='score')
+            predictions = predict(bin_path, X, verbose=self.verbose)
 
-            score = predictions[:,0]
-
-        else:
-            prob = self.predict_proba(X)
-            score = logsumexp(prob, axis=1)
+        score = predictions[:,0]
 
         return score
 
