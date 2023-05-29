@@ -12,6 +12,31 @@
 #endif
 
 EmlError
+eml_benchmark_melspectrogram(EmlAudioMel mel_params,
+                    EmlFFT fft,
+                    float *input_data, float *temp_data, 
+                    int n_repetitions, float *times)
+{
+    // prepare data
+    EmlVector input = { input_data, mel_params.n_fft };
+    EmlVector temp = { temp_data, mel_params.n_fft };
+
+    // run tests
+    float sum = 0;
+    for (int i=0; i<n_repetitions; i++) {
+        const int64_t start = eml_benchmark_micros();
+
+        eml_audio_melspectrogram(mel_params, fft, input, temp);
+        sum += input.data[0];
+
+        const int64_t end = eml_benchmark_micros();
+        times[i] = (float)(end - start);
+    }
+
+    return EmlOk;
+}
+
+EmlError
 bench_melspec()
 {
     const EmlAudioMel mel = { 64, 0, 20000, EML_N_FFT, 44100 };
