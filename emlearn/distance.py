@@ -45,6 +45,8 @@ def squared_mahalanobis_distance(x1, x2, precision):
 
 def generate_code(means, precision, offset, name='my_elliptic', modifiers='static const'):
 
+    cgen.assert_valid_identifier(name)
+
     n_features = means.shape[0]
     decision_boundary = offset # FIXME, check
    

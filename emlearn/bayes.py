@@ -1,7 +1,7 @@
 import numpy
 numpy.seterr(all='raise')
 
-from . import common
+from . import common, cgen
 
 import os.path
 
@@ -25,6 +25,8 @@ def c_tofixed(v):
 def generate_c(model, name='myclassifier'):
     n_classes, n_features, n_attributes = model.shape
     assert n_attributes == 3 # mean+std+stdlog2 
+
+    cgen.assert_valid_identifier(name)
 
     summaries_data = []
     for class_n, class_summaries in enumerate(model):

@@ -66,6 +66,8 @@ def c_generate_net(activations, weights, biases, prefix):
         init = cgen.struct_init(n_outputs, n_inputs, weights_name, biases_name, activation_func)
         return init
 
+    cgen.assert_valid_identifier(prefix)
+
     buffer_sizes = [ w.shape[0] for w in weights ] + [ w.shape[1] for w in weights ]
     buffer_size = max(buffer_sizes)
     n_layers = len(activations)
