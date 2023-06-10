@@ -115,7 +115,7 @@ Copy and save this as file ``xor_browser.html``.
 
 .. literalinclude:: helloworld_xor/xor_browser.html
    :language: c
-   :emphasize-lines: 4-5,23-24
+   :emphasize-lines: 4-5,27-28,39-40
    :linenos:
 
 
@@ -129,8 +129,8 @@ Run a web server, which will serve the ``xor_browser.html`` file
     python -m http.server
 
 Open browser and navigate to `localhost:8000/xor_browser.html <http://localhost:8000/xor_browser.html>`_.
-You should see a webpage with two sliders and a "Run" button.
-When clicking the button, the JavaScript will call the xor_browser.c via WASM.
+You should see a webpage with two sliders.
+When changing the input values using the slides, the JavaScript will call the xor_browser.c via WASM.
 This runs the model built with emlearn, which classifies the data.
 The result is written to the "Out" element. 
 

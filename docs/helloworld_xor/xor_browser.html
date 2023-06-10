@@ -6,11 +6,15 @@
    <body>
 
       <!-- Some UI elements for input/output -->
-      <h3>emlearn Hello World: XOR</h3>
-      <input id="input1" type="range" min="0" max="1.0" value="0.5" step="0.1" class="slider"  style="display: block">
-      <input id="input2" type="range" min="0" max="1.0" value="0.5" step="0.1" class="slider"  style="display: block">
-      <button id="runButton" style="display: block">Run</button>
-      <div> Out: <span id="answer"/> </div>
+      <div style="width: 300px">
+          <h3>emlearn Hello World: XOR</h3>
+          <input id="input1" type="range" min"0" max="1.0" value="0.5" step="0.1" style="width:200px; height:20px" oninput="inputChanged(this)">
+          <output id="input1val" style="float: right;">0.5</output>
+          <input id="input2" type="range" min="0" max="1.0" value="0.5" step="0.1" style="width:200px; height:20px" oninput="inputChanged(this)">
+          <output id="input2val" style="float: right;">0.5</output>
+          <p><small>Drag sliders to update</small></p>
+          <span id='out' style="width: 200px">Out:</span><span id="answer" style="width: 60px; float: right; text-align: right">Unknown</span>
+      </div>
 
       <script>
         var runModel = function(features)
@@ -28,11 +32,15 @@
             return result;
         }
 
-        runButton.onclick = function()
+        var inputChanged = function()
         {
+            input1val.value = input1.value;
+            input2val.value = input2.value;
             var features = [ input1.value, input2.value ];
             const result = runModel(features);
-            document.getElementById("answer").innerHTML = result;
+            answer.innerHTML = result;
+            const color = (result) ? "green" : "red";
+            document.getElementById('answer').style.backgroundColor= color;
         }
       </script>
    </body>
