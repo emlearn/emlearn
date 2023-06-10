@@ -5,7 +5,7 @@ import os
 
 import numpy
 
-from . import common
+from . import common, cgen
 
 SUPPORTED_ESTIMATORS=[
     'RandomForestClassifier',
@@ -213,6 +213,8 @@ def generate_c_nodes(flat, name):
 def generate_c_inlined(forest, name, dtype='float', classifier=True):
     nodes, roots = forest
 
+    cgen.assert_valid_identifier(name)
+
     def is_leaf(n):
       return n[0] < 0
     def class_value(n):
@@ -322,6 +324,8 @@ def generate_c_inlined(forest, name, dtype='float', classifier=True):
 
 def generate_c_forest(forest, name='myclassifier', dtype='float', classifier=True):
     nodes, roots = forest
+
+    cgen.assert_valid_identifier(name)
 
     nodes_name = name+'_nodes'
     nodes_length = len(nodes)
