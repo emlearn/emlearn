@@ -138,29 +138,9 @@ In our training data input values above ``0.5`` is considered "true".
 So for the XOR function, if **one and only one** of the values is above ``0.5``,
 should get class **1** as output - else class **0**. 
 
-The following should output 1
-
-.. code-block:: console
-
-    0.6 0.0
-    0.1 0.7
-
-.. image:: helloworld_xor/emlearn-xor-arduino-on-medium.jpg
+.. image:: helloworld_xor/emlearn-xor-browser.png
   :width: 800
   :alt: Browser running emlearn XOR model. Output=1
-
-The following should output 0
-
-.. code-block:: console
-
-    0.8 0.7
-    0.0 0.0
-
-
-.. image:: helloworld_xor/emlearn-xor-arduino-on-medium.jpg
-  :width: 800
-  :alt: Browser running emlearn XOR model. Output=0
-
 
 
 Next
