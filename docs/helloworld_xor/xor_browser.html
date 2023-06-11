@@ -6,16 +6,21 @@
    <body>
 
       <!-- Some UI elements for input/output -->
-      <div style="width: 300px">
-          <h3>emlearn Hello World: XOR</h3>
+      <div style="width: 300px; float: left; margin-right: 20px">
+          <h3 style="margin-bottom: 50px">emlearn Hello World: XOR</h3>
           <input id="input1" type="range" min"0" max="1.0" value="0.5" step="0.1" style="width:200px; height:20px" oninput="inputChanged(this)">
           <output id="input1val" style="float: right;">0.5</output>
           <input id="input2" type="range" min="0" max="1.0" value="0.5" step="0.1" style="width:200px; height:20px" oninput="inputChanged(this)">
           <output id="input2val" style="float: right;">0.5</output>
-          <p><small>Drag sliders to update</small></p>
-          <span id='out' style="width: 200px">Out:</span><span id="answer" style="width: 60px; float: right; text-align: right">Unknown</span>
       </div>
 
+    <span id="answer" style="position: absolute; width: 60px; left: 590px; top: 80px; text-align: right">Unknown</span>
+
+
+      <img src="emlearn-xor-attiny.png" style="max-width: 250px; float: left"></img>
+      <img src="emlearn-xor-model-optimal-tree.png" style="max-width: 500px"></img>
+
+    
       <script>
         var runModel = function(features)
         {
@@ -39,7 +44,7 @@
             var features = [ input1.value, input2.value ];
             const result = runModel(features);
             answer.innerHTML = result;
-            const color = (result) ? "green" : "red";
+            const color = (result) ? "rgb(76 175 80 / 91%)" : "rgb(76 175 80 / 22%)";
             document.getElementById('answer').style.backgroundColor= color;
         }
       </script>
