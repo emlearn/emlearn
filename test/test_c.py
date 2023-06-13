@@ -7,14 +7,12 @@ import os
 import re
 import shutil
 import subprocess
-import structlog
 
 import pytest
 
 from emlearn.common import compile_executable
 
 here = os.path.dirname(__file__)
-log = structlog.get_logger()
 
 
 C_TEST_MODULES = [
