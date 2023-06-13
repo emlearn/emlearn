@@ -6,6 +6,7 @@ import json
 import numpy
 from distutils.ccompiler import new_compiler
 
+here = os.path.dirname(__file__)
 
 def run_window_function(options):
     module = 'emlearn.tools.window_function'
@@ -88,7 +89,7 @@ def window_function_test(file_path, args):
 
 def test_window_function_hann():
 
-    file_path = os.path.join('tests','out','window_func.h')
+    file_path = os.path.join(here, 'out','window_function', 'window_func.h')
     args = dict(
         window='hann',
         length=512,
