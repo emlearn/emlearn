@@ -21,6 +21,7 @@ print('random_state={}'.format(random))
 # FIXME: add case with max_depth
 CLASSIFICATION_MODELS = {
     'RFC': RandomForestClassifier(n_estimators=10, random_state=random),
+    'RFC-maxdepth': RandomForestClassifier(n_estimators=10, random_state=random, max_depth=2),
     'ETC': ExtraTreesClassifier(n_estimators=10, random_state=random),
     'DTC': DecisionTreeClassifier(random_state=random),
 }
