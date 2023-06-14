@@ -62,7 +62,7 @@ public:
         free(nodes);
     }
 
-    py::array_t<int32_t>
+    py::array_t<float>
     predict_proba(py::array_t<float, py::array::c_style | py::array::forcecast> in) {
         if (in.ndim() != 2) {
             throw std::runtime_error("predict input must have dimensions 2");
@@ -76,7 +76,7 @@ public:
         
         for (int i=0; i<n_samples; i++) {
             const float *v = in.data(i);
-            float *p = probabilities.mutable_data();
+            float *p = probabilities.mutable_data(i);
             const EmlError err = eml_trees_predict_proba(&forest, v, n_features, p, n_classes);
             if (err != EmlOk) {
                 const std::string msg = eml_error_str(err);
@@ -151,6 +151,7 @@ PYBIND11_MODULE(eml_trees, m) {
             int,
             int>())
         .def("regress", &TreesClassifier::regress)
+        .def("predict_proba", &TreesClassifier::predict_proba)
         .def("predict", &TreesClassifier::predict);
 }
 

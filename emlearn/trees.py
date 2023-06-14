@@ -580,12 +580,16 @@ class Wrapper:
         elif classifier == 'loadable':
             name = 'mytree'
 
+            proba_func = 'eml_trees_predict_proba(&{}, values, length, outputs, N_CLASSES)'\
+                .format(name, self.n_classes)
+
             if self.is_classifier:
                 func = 'eml_trees_predict(&{}, values, length)'.format(name)
             else:
                 func = 'eml_trees_regress1(&{}, values, length)'.format(name)
             code = self.save(name=name)
-            self.classifier_ = common.CompiledClassifier(code, name=name, call=func, out_dtype=out_dtype)
+            self.classifier_ = common.CompiledClassifier(code, name=name,
+                call=func, proba_call=proba_func, out_dtype=out_dtype, n_classes=self.n_classes)
         elif classifier == 'inline':
             name = 'myinlinetree'
             func = '{}_predict(values, length)'.format(name)
