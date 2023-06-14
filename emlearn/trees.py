@@ -68,7 +68,7 @@ def flatten_tree(tree, leaf='argmax', leaf_bits=8):
         
         n_leaves = len(leaf_nodes)
         decision_node_idx = idx - n_leaves
-        print('REF NODE', idx, decision_node_idx)
+        #print('REF NODE', idx, decision_node_idx)
         assert decision_node_idx >= 0
         return decision_node_idx
 
@@ -110,7 +110,6 @@ def flatten_tree(tree, leaf='argmax', leaf_bits=8):
     total_nodes = len(decision_nodes) + len(leaf_nodes)
     assert total_nodes == tree.node_count, (total_nodes, tree.node_count)
 
-    # XXX: TEMP
     #print_tree((decision_nodes, leaf_nodes))
 
     assert_node_references_valid(decision_nodes, leaf_nodes, roots=[0])
@@ -165,11 +164,6 @@ def assert_node_references_valid(nodes, leaves, roots):
     invalid_leaves_right = (right_leaves - leaf_idxs)
     assert invalid_leaves_left == set(), invalid_leaves_left
 
-    #print(leaf_idxs)
-    #print(left_leaves)
-    #print(right_leaves)
-    #print(len(leaves), max(leaf_idxs))
-
     extranous_leaves = (leaf_idxs - (left_leaves | right_leaves))
     assert extranous_leaves == set(), extranous_leaves
 
@@ -177,9 +171,7 @@ def assert_node_references_valid(nodes, leaves, roots):
 def assert_forest_valid(forest):
     nodes, roots, leaves = forest
 
-    print('ASSERT FOREST VALID START')
     assert_node_references_valid(nodes, leaves, roots)
-    print('ASSERT FOREST VALID END')
 
 
 def flatten_forest(trees, leaf='argmax'):
@@ -210,9 +202,9 @@ def flatten_forest(trees, leaf='argmax'):
         forest_nodes += decision_nodes
         forest_leaves += leaf_nodes
 
-        print('offsets', decision_nodes_offset, leaf_nodes_offset)
+        #print('offsets', decision_nodes_offset, leaf_nodes_offset)
 
-        print_forest((forest_nodes, tree_roots, forest_leaves))    
+        #print_forest((forest_nodes, tree_roots, forest_leaves))    
         assert_forest_valid((forest_nodes, tree_roots, forest_leaves))
 
 
@@ -244,8 +236,6 @@ def remove_duplicate_leaves(forest):
         remap_leaves[old_encoded] = new_encoded
 
 
-    print(remap_leaves)
-
     wasted_ratio = (len(leaves) - len(unique_leaves)) / len(nodes)
     
     # Update decision nodes to point to new leaves
@@ -254,7 +244,7 @@ def remove_duplicate_leaves(forest):
         n[3] = remap_leaves.get(n[3], n[3])
 
     f = nodes, roots, unique_leaves
-    print_forest(f)
+    #print_forest(f)
     assert_forest_valid(f)
     return f
 
@@ -350,9 +340,8 @@ def leaves_to_bytelist(leaves, leaf_bits):
 
     elif leaf_bits == 32:
         arr = numpy.array(leaves).astype(numpy.float32)
-        print('arr', arr.shape, arr.dtype)
-
         out = list(arr.tobytes())
+
         leaf_bytes = math.ceil(leaf_bits/8)
         expect_bytes = leaf_bytes*len(leaves)
         assert len(out) == expect_bytes, (len(out), expect_bytes) 
@@ -576,7 +565,6 @@ class Wrapper:
 
             assert type(roots) == list
             leaf_bytes = leaves_to_bytelist(leaves, leaf_bits=self.leaf_bits)
-            print('classifier-construct', len(leaves), len(leaf_bytes))
             self.classifier_ = eml_trees.Classifier(node_data, roots, leaf_bytes,
                 self.leaf_bits, self.n_classes, self.n_features)
 
