@@ -54,8 +54,11 @@ def test_trees_sklearn_classifier_predict(data, model, method):
 
     pred_original = estimator.predict(X[:5])
     pred_c = cmodel.predict(X[:5])
-
     numpy.testing.assert_equal(pred_c, pred_original)
+
+    proba_original = estimator.predict_proba(X[:5])
+    proba_c = cmodel.predict_proba(X[:5])
+    numpy.testing.assert_allclose(proba_c, proba_original, rtol=0.001)
 
 @pytest.mark.parametrize("data", REGRESSION_DATASETS.keys())
 @pytest.mark.parametrize("model", REGRESSION_MODELS.keys())
