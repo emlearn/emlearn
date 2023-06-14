@@ -1,0 +1,47 @@
+<html>
+   <head>
+      <!-- Load WebAssembly module -->
+      <script type="text/javascript" src="xor_browser.js"></script>
+   </head>
+   <body>
+
+      <!-- Some UI elements for input/output -->
+      <div style="width: 300px">
+          <h3>emlearn Hello World: XOR</h3>
+          <input id="input1" type="range" min"0" max="1.0" value="0.5" step="0.1" style="width:200px; height:20px" oninput="inputChanged(this)">
+          <output id="input1val" style="float: right;">0.5</output>
+          <input id="input2" type="range" min="0" max="1.0" value="0.5" step="0.1" style="width:200px; height:20px" oninput="inputChanged(this)">
+          <output id="input2val" style="float: right;">0.5</output>
+          <p><small>Drag sliders to update</small></p>
+          <span id='out' style="width: 200px">Out:</span><span id="answer" style="width: 60px; float: right; text-align: right">Unknown</span>
+      </div>
+
+      <script>
+        var runModel = function(features)
+        {
+            // Convert JavaScript array to WASM/C float array
+            var values = new Float32Array(features);
+            var heapSpace = Module._malloc(values.length * values.BYTES_PER_ELEMENT);
+            Module.HEAPF32.set(values, heapSpace>>2); // float has 4 bytes
+
+            // Run the WASM/C code
+            const result = Module._run_xor_model( heapSpace, values.length );
+
+            // Free allocated memory for input
+            Module._free(heapSpace);
+            return result;
+        }
+
+        var inputChanged = function()
+        {
+            input1val.value = input1.value;
+            input2val.value = input2.value;
+            var features = [ input1.value, input2.value ];
+            const result = runModel(features);
+            answer.innerHTML = result;
+            const color = (result) ? "green" : "red";
+            document.getElementById('answer').style.backgroundColor= color;
+        }
+      </script>
+   </body>
+</html>

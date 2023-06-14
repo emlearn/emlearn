@@ -33,6 +33,8 @@ def get_covariance_type(s):
 
 def generate_code(model, name='fss_mode'):
 
+    cgen.assert_valid_identifier(name)
+
     means = model._means
     log_det = model._log_det
     covar_type = get_covariance_type(model._covariance_type)

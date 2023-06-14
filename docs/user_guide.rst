@@ -16,6 +16,7 @@ User Guide
 
    getting_started_host.rst
    getting_started_arduino.rst
+   getting_started_browser.rst
    platform_support.md
    model_optimization.rst
    tree_based_models.rst

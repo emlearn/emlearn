@@ -190,7 +190,7 @@ Created a C++ model for detecting malware.
 Used a set of hand-engineered features and a Random Forest from emlearn as the classifier.
 Running on Android devices.
 - [RIOT OS](https://www.riot-os.org/) has a package for emlearn.
-[RIOT OS emlearn package example](https://github.com/RIOT-OS/RIOT/tree/master/tests/pkg_emlearn).
+[RIOT OS emlearn package example](https://github.com/RIOT-OS/RIOT/tree/master/tests/pkg/emlearn).
 Their build system automatically runs this test on tens of different hardware boards.
 
 If you are using emlearn, let us know!

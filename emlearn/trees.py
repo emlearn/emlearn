@@ -353,6 +353,7 @@ def leaves_to_bytelist(leaves, leaf_bits):
 def generate_c_inlined(forest, name, n_classes, leaf_bits=0, dtype='float', classifier=True):
     nodes, roots, leaves = forest
 
+    cgen.assert_valid_identifier(name)
     #assert leaf_bits == 0, 'class proportions not supported for inline yet'
 
     tree_names = [ name + '_tree_{}'.format(i) for i,_ in enumerate(roots) ]
@@ -459,6 +460,8 @@ def generate_c_forest(forest, n_features,
         classifier=True):
 
     nodes, roots, leaves = forest
+
+    cgen.assert_valid_identifier(name)
 
     nodes_name = name+'_nodes'
     nodes_length = len(nodes)
