@@ -319,9 +319,11 @@ def forest_to_dot(forest, name='trees', indent="  "):
     return dot
 
 
-def generate_c_nodes(flat, name):
+def generate_c_nodes(flat, name, dtype='float'):
     def node(n):
-        return "{{ {}, {}, {}, {} }}".format(*n)
+        feature, value, left, right  = n
+        value = cgen.constant(value, dtype=dtype)
+        return "{{ {}, {}, {}, {} }}".format(feature, value, left, right)
 
     nodes_structs = ',\n  '.join(node(n) for n in flat)
     nodes_name = name
@@ -359,18 +361,22 @@ def generate_c_inlined(forest, name, n_classes, leaf_bits=0, dtype='float', clas
     tree_names = [ name + '_tree_{}'.format(i) for i,_ in enumerate(roots) ]
 
     ctype = dtype
+    leaf_dtype = 'int'
+    if not classifier:
+        leaf_dtype = 'float'
     indent = 2
 
     def c_leaf(data, depth):
-        return (depth*indent * ' ') + "return {};".format(data)
+        value = cgen.constant(data, dtype=leaf_dtype)
+        return (depth*indent * ' ') + "return {};".format(value)
     def c_internal(n, depth):
         f = """{indent}if (features[{feature}] < {value}) {{
         {left}
         {indent}}} else {{
         {right}
         {indent}}}""".format(**{
-            'feature': n[0],
-            'value': n[1],
+            'feature': cgen.constant(n[0], dtype='int'),
+            'value': cgen.constant(n[1], dtype=dtype),
             'left': c_node(n[2], depth+1),
             'right': c_node(n[3], depth+1),
             'indent': depth*indent*' ',
@@ -465,7 +471,7 @@ def generate_c_forest(forest, n_features,
 
     nodes_name = name+'_nodes'
     nodes_length = len(nodes)
-    nodes_c = generate_c_nodes(nodes, nodes_name)
+    nodes_c = generate_c_nodes(nodes, nodes_name, dtype=dtype)
 
     tree_roots_length = len(roots)
     tree_roots_name = name+'_tree_roots';
