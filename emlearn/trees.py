@@ -579,7 +579,6 @@ class Wrapper:
 
         elif classifier == 'loadable':
             name = 'mytree'
-
             proba_func = 'eml_trees_predict_proba(&{}, values, length, outputs, N_CLASSES)'\
                 .format(name, self.n_classes)
 
@@ -592,9 +591,13 @@ class Wrapper:
                 call=func, proba_call=proba_func, out_dtype=out_dtype, n_classes=self.n_classes)
         elif classifier == 'inline':
             name = 'myinlinetree'
+            # TODO: actually implement inline predict_proba, instead of just using loadable
+            proba_func = 'eml_trees_predict_proba(&{}, values, length, outputs, N_CLASSES)'\
+                .format(name, self.n_classes)
             func = '{}_predict(values, length)'.format(name)
             code = self.save(name=name)
-            self.classifier_ = common.CompiledClassifier(code, name=name, call=func, out_dtype=out_dtype)
+            self.classifier_ = common.CompiledClassifier(code, name=name,
+                call=func, proba_call=proba_func, out_dtype=out_dtype, n_classes=self.n_classes)
         else:
             raise ValueError("Unsupported classifier method '{}'".format(classifier))
 
