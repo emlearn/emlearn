@@ -18,5 +18,6 @@ User Guide
    getting_started_arduino.rst
    getting_started_browser.rst
    platform_support.md
+   event_detection.rst
    model_optimization.rst
    tree_based_models.rst
