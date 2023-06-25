@@ -32,20 +32,20 @@ Applications
 Detecting events using Machine Learning has a wide range of applications,
 and it is commonly performed on sensor data using embedded systems.
 
-Some examples are:
+.. table:: Application examples
+    :widths: auto
 
-
-============    =========================       ============
-Area            Task                            Data
-============    =========================       ============
-Ecology         Birdcall detection              Sound
-Music           Note onset detection            Sound
-Speech          Voice Activity Detection        Sound
-Health          Gait tracking during walking    Accelerometer
-Health          Heart rate monitoring           Optical reflectometer
-Health          Epelepsy seizure                EEG
-Health          Sleep apnea event detection     Accelerometer
-============    =========================       ============
+    ============    =============================       ============
+      Area          Task                                Sensor 
+    ============    =============================       ============
+    Ecology         Birdcall detection                  Sound
+    Music           Note onset detection                Sound
+    Speech          Voice Activity Detection            Sound
+    Health          Gait tracking during walking        Accelerometer
+    Health          Heart rate monitoring               Optical reflectometer
+    Health          Epelepsy seizure                    EEG
+    Health          Sleep apnea event detection         Accelerometer
+    ============    =============================       ============
 
                   
 Binary or multi-class
@@ -65,23 +65,39 @@ or each event class can be modelled using an independent binary event detector m
 Sliding time windows
 ===========================
 
-The input time-series data is usually transformed into a fixed length windows.
-Individual features vectors for one time-step is often referred to as a frame.
-
+The continious input time-series data is usually transformed into a series of fixed-length feature vectors.
+Individual features vector for one time-step is often referred to as a *frame*.
 Multiple frames are often combined to form a context *window*, consisting of N frames.
-Event Detection is usually performed by analysing fixed-length analysis windows.
+This is often referred to as using *sliding windows* or *moving windows*,
+or using a *continious classification* approach.
 
-The input data stream is split into these. 
+.. figure:: images/event_detection_labels_windows.png
+    :width: 800
 
-Overlap
-Hop length
-Window length
+    The training setup for Event Detection as a continious classification problem.
+    The input sensor data is split into fixed-length windows, and the label comes from the event annotations.
+    
+    Image source: "Deep Convolutional and LSTM Recurrent Neural Networks for Multimodal Wearable Activity Recognition" (Roggen et al., 2016)
 
-The combination of slidig
+The distance between windows is known as the *hop length*.
+This is normally smaller than the size of the window (*window length*),
+so effectively there is a degree of *overlap* between consecutive windows.
+The overlap might be as low as 50%, or as high as 99%.
+This ensures that the model sees the events during training at multiple different positions inside the window.
+And a high overlap during inference can give multiple predictions per event,
+which can be merged together to give a better estimate than a single prediction.
 
-.. FIXME: finish this introduction
+The window length is an important hyperparameter for event detection,
+and is preferably tuned through to the task at hand via experimentation.
+A good starting point is that windows are large enough to easily cover
+the transition between event and not (onset/offset).
 
-.. TODO: add an image for input -> frames -> windows
+The hop length decides the time resolution of the output predictions/activations,
+and must be set based on the precision requirements for the task. 
+
+
+
+
 .. emlearn provides the SignalWindower tool to perform this operation.
 .. TODO: describe the SignalWindower tool in emlearn
 .. TODO: link to examples of signal windowing
@@ -112,6 +128,12 @@ and `eml_fft.h <https://github.com/emlearn/emlearn/blob/master/emlearn/eml_fft.h
 .. TODO: add some linkable reference documentation for each function
 .. TODO: link to each function documentation from the reference
 .. TODO: add a couple of executable examples for typical feature extraction cases
+
+Classification models for Event Detection
+===========================
+
+The use of the sliding window approach in combination with feature engineering
+makes it possible to use any standard machine learning classifier for event detection.
 
 
 Training with class imbalance
@@ -150,7 +172,7 @@ There are a number of standard plots used for this purpose, such as:
 - Precision-Recall (PR) curve
 
 .. figure:: images/detection_error_tradeoff_curve.png
-    :scale: 75%
+    :width: 400
 
     A Dection Error Curve (DET) is useful to visualize the tradeoff between False Positive and False Negative,
     as well as compare the performance of multiple models against eachother.
@@ -185,6 +207,9 @@ Others compare performance across the operating range:
 
 Metrics may be computed either per frames or analysis window (*frame-wise*), or *event-wise*.
 
+Frame-wise evaluation
+===========================
+
 Frame-wise evaluation is readily done using the `standard metrics <https://scikit-learn.org/stable/modules/model_evaluation.html#model-evaluation>`_,
 as each frame or window is one *instance*/*sample* for the model to predict on,
 and the prediction is compared with its corresponding label in the same way as standard classification.
@@ -194,11 +219,14 @@ For example we may tolerate a bit of slop in the onset and offset.
 Especially since the groundthruth labels themselves may have some imprecision.
 In the case, the results of frame-wise evaluation may underestimate practical performance.
 
+Event-wise evaluation
+===========================
+
 Event-wise evaluation is often closer to the practical performance.
 It allows to specify some tolerance in time,
 and whether to evaluate only based on onsets, or also offsets/duration.
 However, event-wise evaluation is not as commonly supported in standard machine learning toolkits.
-But one can implement it using a module such as `sed_eval http://tut-arg.github.io/sed_eval/>`_.
+But one can implement it using a module such as `sed_eval <http://tut-arg.github.io/sed_eval>`_.
 
 
 .. Future
