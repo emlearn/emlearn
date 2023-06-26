@@ -25,7 +25,6 @@ is one of the key elements that separates event detection from standard classifi
 Event Detection is usually approached as a supervised learning task,
 and requires that the dataset has a labeled set of events (with start, end and class).
 
-.. TODO: link to classification page
 
 Applications
 ===========================
@@ -134,6 +133,8 @@ Classification models for Event Detection
 
 The use of the sliding window approach in combination with feature engineering
 makes it possible to use any standard machine learning classifier for event detection.
+
+For an overview of available classifiers see :doc:`classification`.
 
 
 Training with class imbalance
