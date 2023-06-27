@@ -43,7 +43,7 @@ Anomaly Detection models
 .. FIXME: add list of models. CSV table?
 
 A basic example of some of the regressions models can be found in
-:ref:`sphx_glr_auto_examples_anomaly_detection.py.`
+:ref:`sphx_glr_auto_examples_anomaly_detection.py`.
 
 
 .. try to connect

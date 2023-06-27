@@ -21,15 +21,15 @@ and it is commonly performed on sensor data using embedded systems.
 .. table:: Application examples
     :widths: auto
 
-    ============    =============================                       ============
-      Area          Task                                                Sensor 
-    ============    =============================                       ============
-    Health          Detection of heart rythm irreguarity                Electrocardiogram (ECG)
-    Wearables       Scene classification for contextual awareness       Sound
-    Farming         Cattle behavior classification for health tracking  Accelerometer
-    Robotics        Material identification for grippers                Capacitive
-    Buildings       Human presence detection                            Radar
-    ============    =============================                       ============
+    ============    ==========================================================  ====================================
+    Area            Task                                                        Sensor 
+    ============    ==========================================================  ====================================
+    Health          Detection of heart rythm irreguarity                        Electrocardiogram (ECG)
+    Wearables       Scene classification for contextual awareness               Sound
+    Farming         Cattle behavior classification for health tracking          Accelerometer
+    Robotics        Material identification for grippers                        Capacitive
+    Buildings       Human presence detection                                    Radar
+    ============    ==========================================================  ====================================
 
 
 .. Classification of behaviors of free-ranging cattle using accelerometry signatures collected by virtual fence collars https://www.frontiersin.org/articles/10.3389/fanim.2023.1083272/full
@@ -41,9 +41,20 @@ and it is commonly performed on sensor data using embedded systems.
 Classification models
 ===========================
 
-.. FIXME: add list of models. CSV table?
+.. table:: Supported classification models
+   :widths: auto
+   
+   ============================     ======
+   Algorithm                        Implementation
+   ============================     ======
+   RandomForest                     `RandomForestClassifier <https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestClassifier.html>`_
+   ExtraTrees                       `ExtraTreesClassifier <https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.ExtraTreesClassifier.html>`_
+   DecisionTree                     `DecisionTreeClassifier <https://scikit-learn.org/stable/modules/generated/sklearn.tree.DecisionTreeClassifier.html>`_
+   Multi-Layer-Perceptron           `MLPClassifier <https://scikit-learn.org/stable/modules/generated/sklearn.neural_network.MLPClassifier.html>`_,  `keras.Sequential <https://keras.io/api/models/sequential/>`_
+   Gaussian Naive Bayes             `GaussianNB <https://scikit-learn.org/stable/modules/generated/sklearn.naive_bayes.GaussianNB.html>`_
+   ============================     ======
 
-A basic example of some classifier models can be found in
+A basic example showing some of these classifier models can be found in
 :ref:`sphx_glr_auto_examples_classifiers.py`.
 
 Related
