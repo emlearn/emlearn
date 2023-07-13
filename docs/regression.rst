@@ -10,8 +10,11 @@ Regression
 
 .. currentmodule:: emlearn
 
+Regression is the task of predict/estimate a *continious* value.
+Training is performed using supervised machine learning, using a labeled dataset.
+It can be applied to standard a set of input values, or to time-series data.
+The output can be either a single datapoint for a time-series, or one per time-step.
 
-.. FIXME: write introduction
 
 Applications
 ===========================
@@ -29,10 +32,9 @@ and it is commonly performed on sensor data using embedded systems.
     Health          Breathing rate estimation                           Sound
     Sensors         Calibration of air quality sensors                  PM2.5 sensor
     Industrial      Gas concentration estimation                        Metal-Oxide semiconductor (MOS)
+    Industrial      Remaining Useful Life (RUL) estimation              *
+    Industrial      Prediction of failures using Time-to-Event          Accelerometer etc.
     ============    ==============================================      ============
-
-
-..     Traffic         Vehicle speed estimation
 
 
 Classification models
@@ -55,6 +57,10 @@ A basic example of some of the regressions models can be found in
 :ref:`sphx_glr_auto_examples_regression.py`.
 
 
-.. TODO: try to add links to related pages
+Related
+===========================
 
+Some specialized task formulations that use regression are:
+Time-series *forecasting*, for predicing future values,
+and Time-to-Event estimation, which is similar to to :doc:`event_detection`.
 

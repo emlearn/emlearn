@@ -10,8 +10,14 @@ Classification
 
 .. currentmodule:: emlearn
 
+Classification is the task of predict/estimate a discrete category (the *class*) from input data.
+Training is performed using supervised machine learning, using a labeled dataset.
+Classification can binary or multi-class.
 
-.. FIXME: write introduction
+Sometimes a single model has multiple outputs, multi-label classification.
+This is not currently supported in emlearn.
+Instead one classification model per output must be used.
+
 
 Applications
 ===========================

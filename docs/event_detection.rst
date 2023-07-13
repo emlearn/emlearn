@@ -157,6 +157,8 @@ Examples of models supported by emlearn with these capabilities are
 and `keras.Sequential <https://keras.io/api/models/model_training_apis/#fit-method>`_.
 
 
+.. _binary_detection_tradeoff:
+
 Tradeoff between False Alarms and Missed Detections
 ===========================
 
@@ -183,7 +185,7 @@ scikit-learn has utilities to produce these, with several examples on
 and `DET and ROC curves <https://scikit-learn.org/stable/auto_examples/model_selection/plot_det.html>`_.
 
 The operating point along such a curve is set by applying a decision threshold on top of a continious output.
-Most models in emlearn support such a continious output with a ``predict_proba()`` function.
+Most classification models in emlearn support such a continious output with a ``predict_proba()`` function.
 
 
 Evaluation metrics

@@ -10,8 +10,6 @@ Anomaly Detection
 
 .. currentmodule:: emlearn
 
-.. FIXME: finish introduction
-
 Anomaly Detection is the task of identifying samples that are *abnormal* / *anomalous*,
 meaning that they deviate considerably from some *normal* / *typical* data.
 The task is highly related to **Outlier Detection** and **Novelty Detection**. 
@@ -22,12 +20,12 @@ with the training data consisting only of normal data (potentially with a low de
 Any deviation from this normal training data is to be considered an *anomaly*.
 This is sometimes called *one-class classification*, as it focuses on modelling a single class (the normal class).
 
-The one-class approach ensures that novel anomalies (different from those seen during development),
+The one-class approach ensures that *novel* anomalies (different from those seen during development),
 are correctly classified as anomalies.
-Using a supervised binary classification approach usually has the problem that novel datapoints
-may be incorrectly marked as normal, because it falls inside a decision boundary in training set.
+If one would use a supervised binary classification, it usually has the problem that novel datapoints
+may be incorrectly marked as normal, because they falls inside a decision boundary in training set.
 
-While labled data is not used in the training set,
+While labled data is not used in the training set when applying unsupervised learning,
 in practice a small labeled dataset is critical for performance evaluation.
 
 
@@ -52,13 +50,43 @@ Here are a few examples.
     ============    =================================================                       ============
 
 
-.. TODO: link to section on class imbalance. Maybe split out from Event Detection
 
-.. TODO: describe setting anomaly score thresholds
-
-Performance evaluation
+Tradeoff between False Alarms and Missed Detections
 ===========================
 
+Anomaly Detection involves a binary decision problem (is it an anomaly or not),
+has an inherent trade-off between False Alarms and Missed Detections.
+
+Anomaly Detection models in emlearn provide a continious anomaly score as output.
+The C function has a name ending with  `_score()`.
+A threshold needs to be applied, in order to convert the continious anomaly score
+to a binary decision.
+
+Selecting anomaly threshold 
+===========================
+
+Models in scikit-learn have an automatic threshold selection,
+based on the hyperparameter `contamination` (proportion of outliers in training data).
+We recommend **not** using this mechanism, but instead analyze the continious anomaly scores
+to determine an appropriate threshold.
+It is smart to plot the histogram over anomaly scores, with the anomaly/normal class indicated (when known).
+
+.. figure:: images/anomaly_score_distribution.png
+    :width: 800
+
+    The anomaly score histogram is very useful plot to visualize.
+    When labels are available, it is also possible to compute a trade-off curve.
+    Image source: "Robust Anomaly Detection in Time Series through Variational AutoEncoders and a Local Similarity Score", Matias et.al., 2021.
+
+The optimal way of setting the threshold, is to use a labeled validation dataset.
+It is then possible to pick a desired false positive vs false negative tradeoff,
+(for example using f-score), and to determine an optimal threshold.
+
+When the labeled data is insufficient or not present,
+one has to resort to other heuristics for selecting the threshold.
+This is often done visually, by picking a point where "most of" the "normal" data look to be included.
+
+.. TODO: link to example for illustrating scores and setting threshold
 
 
 Anomaly Detection models
@@ -83,15 +111,15 @@ A basic example of some of the models can be found in
 Outlier detection for handling unknown data
 ===========================
 
-Anomaly/outlier detection models are used in :doc:`_classification` or :doc:`_regression` systems,
-in order to handle input data that are outside the data distribution of a trained model.
-This is to prevent spurious results on out-of-distribution inputs.
-The input data of the classifier or regressor is also passed through an outlier detection model,
-and the outliers are classified as "unknown".
+Anomaly/outlier detection models are also used in :doc:`classification` or :doc:`regression` systems,
+in order to detect input data that are outside the data distribution of a trained model.
+Such input data can result in spurious results from the classifier/regressor.
+To prevent this the input data is also passed through an outlier detection model,
+and the outliers are marked as "unknown".
+
+.. TODO: link to example with outlier detection of OOD handling
 
 
-.. TODO: write section on combined systems
-.. Anomaly Detection models are often components in monitoring systems.
-.. They may also be combined with classification or regression
-.. to do fault diagnostics, fault localization et.c.
+.. TODO: write section on combined detection + classification.
+.. Ex: fault diagnostics, fault localization et.c.
 
