@@ -58,7 +58,7 @@ Anomaly Detection involves a binary decision problem (is it an anomaly or not),
 has an inherent trade-off between False Alarms and Missed Detections.
 
 Anomaly Detection models in emlearn provide a continious anomaly score as output.
-The C function has a name ending with  `_score()`.
+The C function has a name ending with  ``_score()``
 A threshold needs to be applied, in order to convert the continious anomaly score
 to a binary decision.
 

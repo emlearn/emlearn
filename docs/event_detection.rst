@@ -75,7 +75,6 @@ or using a *continious classification* approach.
 
     The training setup for Event Detection as a continious classification problem.
     The input sensor data is split into fixed-length windows, and the label comes from the event annotations.
-    
     Image source: "Deep Convolutional and LSTM Recurrent Neural Networks for Multimodal Wearable Activity Recognition" (Roggen et al., 2016)
 
 The distance between windows is known as the *hop length*.
@@ -94,46 +93,18 @@ the transition between event and not (onset/offset).
 The hop length decides the time resolution of the output predictions/activations,
 and must be set based on the precision requirements for the task. 
 
-
-
+The sliding-window computation is usually done in combination with :doc:`feature_extraction`.
 
 .. emlearn provides the SignalWindower tool to perform this operation.
 .. TODO: describe the SignalWindower tool in emlearn
 .. TODO: link to examples of signal windowing
 
 
-Feature extraction
-===========================
-
-The raw samples of the sensor data can be hard for a model to learn from,
-as it may be high dimensional and have a low signal to noise ratio wrt to our task. 
-
-Therefore it can be useful to apply feature extraction to make the problem more tractable.
-Common feature extraction techniques for time-series and sensor-data include:
-
-- Time-domain features. Root Mean Square (RMS) energy, Zero Crossing Rate (ZCR)
-- Statistical summaries. min/max, mean/variance, kurtosis/skew et.c.
-- Frequency domain (spectrum). Using Fourier transform (FFT), or filterbanks
-- Time-frequency domain features (spectrogram). Using Short-Term Fourier Transform (STFT)
-
-emlearn provides some tools for computing such features.
-These can be found in files such as:
-
-`eml_audio.h <https://github.com/emlearn/emlearn/blob/master/emlearn/eml_audio.h>`_,
-`eml_iir.h <https://github.com/emlearn/emlearn/blob/master/emlearn/eml_iir.h>`_,
-and `eml_fft.h <https://github.com/emlearn/emlearn/blob/master/emlearn/eml_fft.h>`_.
-
-.. TODO: split feature extraction into its own page
-.. TODO: add some linkable reference documentation for each function
-.. TODO: link to each function documentation from the reference
-.. TODO: add a couple of executable examples for typical feature extraction cases
-
 Classification models for Event Detection
 ===========================
 
 The use of the sliding window approach in combination with feature engineering
 makes it possible to use any standard machine learning classifier for event detection.
-
 For an overview of available classifiers see :doc:`classification`.
 
 

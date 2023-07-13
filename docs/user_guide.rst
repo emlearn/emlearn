@@ -18,6 +18,7 @@ User Guide
    getting_started_arduino.rst
    getting_started_browser.rst
    platform_support.md
+   feature_extraction.rst
    classification.rst
    regression.rst
    anomaly_detection.rst
