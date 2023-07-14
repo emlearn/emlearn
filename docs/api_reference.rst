@@ -18,6 +18,7 @@ Python API
    :titlesonly:
 
    convert.rst
+   evaluate.rst
    common.rst
    cgen.rst
 

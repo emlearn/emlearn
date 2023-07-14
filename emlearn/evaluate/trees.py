@@ -1,4 +1,10 @@
 
+"""
+Tree evaluation metrics
+=========================
+Convert a Python model into C code
+"""
+
 from ..convert import convert as convert_model
 
 import numpy
@@ -14,12 +20,18 @@ def get_tree_estimators(estimator):
     return trees
         
 def model_size_nodes(model, a=None, b=None):    
+    """
+    Size of model, in number of decision nodes
+    """
     em = convert_model(model)
     
     nodes, roots = em.forest_
     return len(nodes)
 
 def model_size_bytes(model, a=None, b=None, node_size=None):
+    """
+    Size of model, in bytes
+    """
     # EmlTreesNode consists of feature index, a threshold value, left-right child indices 
     if node_size is None:
         node_size = 1+4+2+2
@@ -29,6 +41,9 @@ def model_size_bytes(model, a=None, b=None, node_size=None):
     return bytes
 
 def tree_depth_average(model, a=None, b=None):
+    """
+    Average depth of model
+    """
     trees = get_tree_estimators(model)
     depths = [ e.tree_.max_depth for e in trees ]
     return numpy.mean(depths)
@@ -40,6 +55,9 @@ def tree_depth_difference(model, a=None, b=None):
     return numpy.max(depths) - numpy.min(depths)
 
 def count_trees(model, a=None, b=None):
+    """
+    Number of trees in model
+    """
     trees = get_tree_estimators(model)
     return len(trees)
 
