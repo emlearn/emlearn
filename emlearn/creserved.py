@@ -1,4 +1,8 @@
 
+"""
+Reserved words in C
+"""
+
 C89_RESERVED_WORDS = set(\
 """
 auto

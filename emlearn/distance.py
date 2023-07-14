@@ -1,18 +1,15 @@
 
+"""
+Distance functions
+=========================
+"""
+
 import os.path
 import os
 
 import numpy
 
 from . import common, cgen
-
-"""
-
-References
-https://github.com/scikit-learn/scikit-learn/blob/15a949460dbf19e5e196b8ef48f9712b72a3b3c3/sklearn/covariance/_empirical_covariance.py#L297
-
-https://github.com/scikit-learn/scikit-learn/blob/15a949460dbf19e5e196b8ef48f9712b72a3b3c3/sklearn/covariance/_elliptic_envelope.py#L149
-"""
 
 
 def squared_mahalanobis_distance(x1, x2, precision):

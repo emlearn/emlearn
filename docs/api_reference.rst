@@ -1,27 +1,25 @@
 
-API reference
-===========================
+.. Places parent toc into the sidebar
 
-..  automodule:: emlearn.convert
-    :members:
+:parenttoc: True
 
-..  automodule:: emlearn.common
-    :members:
+.. title:: Python API: contents
 
-..  automodule:: emlearn.cgen
-    :members:
+.. _python_api:
 
-..  automodule:: emlearn.signal
-    :members:
+====================
+Python API
+====================
 
-..  automodule:: emlearn.trees
-    :members:
 
-..  automodule:: emlearn.bayes
-    :members:
+.. toctree::
+   :numbered:
+   :maxdepth: 2
+   :titlesonly:
 
-..  automodule:: emlearn.net
-    :members:
+   convert.rst
+   common.rst
+   cgen.rst
 
-..  automodule:: emlearn.distance
-    :members:
+
+

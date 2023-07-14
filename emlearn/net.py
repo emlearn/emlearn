@@ -1,4 +1,9 @@
 
+"""
+Neural networks
+=========================
+"""
+
 from . import common, cgen
 
 import numpy

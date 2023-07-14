@@ -1,4 +1,8 @@
 
+"""
+Tree-based models
+=========================
+"""
 
 import os.path
 import os

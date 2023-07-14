@@ -1,5 +1,8 @@
 
-"""Utilities to generate C code"""
+"""
+C code generation utilities
+=========================
+"""
 
 
 import re
@@ -31,6 +34,19 @@ def constant(val, dtype='float'):
         return str(val)
 
 def constant_declare(name, val, dtype='int'):
+    """
+    Declaration and initialization of a constant value
+
+    >>> from emlearn import cgen
+    >>> cgen.constant_declare('myvariable', 3)
+    'static const int myvariable = 3; '
+
+    Floating point instead
+
+    >>> from emlearn import cgen
+    >>> cgen.constant_declare('myfloat', 3.14, dtype='float')
+    'static const float myfloat = 3.140000f; '
+    """
     v = constant(val, dtype=dtype)
     return f'static const {dtype} {name} = {v}; '
 
@@ -64,15 +80,37 @@ def array_declare(name, size=None, dtype='float', modifiers='static const',
     return '{indent}{modifiers} {dtype} {name}[{size}]{init};{end}'.format(**locals())
 
 def identifier_is_valid(s):
+    """
+    Check whether identifier consists only of valid characters for C
+
+    >>> from emlearn import cgen
+    >>> cgen.identifier_is_reserved("_++")
+    True
+
+    """
     match = re.match(VALID_IDENTIFIER_REGEX, s)
     return match is not None
 
 def identifier_is_reserved(s):
+    """
+    Check whether identifier is a reserved keyword in C
+
+    >>> from emlearn import cgen
+    >>> cgen.identifier_is_reserved("for")
+    True
+
+    """
     reserved = s in RESERVED_WORDS
     return reserved
 
 def assert_valid_identifier(s):
+    """
+    Check whether a identifier is a valid in C
 
+    :raises ValueError: In case this is *not* a valid C string
+
+    """
+    
     valid = identifier_is_valid(s)
     if not valid:
         raise ValueError(f"'{s}' is not a valid C identifier")

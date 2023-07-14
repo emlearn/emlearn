@@ -1,4 +1,9 @@
 
+"""
+Signal processing
+=========================
+"""
+
 from . import cgen
 
 import numpy

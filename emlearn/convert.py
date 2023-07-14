@@ -1,12 +1,59 @@
 
+"""
+Model conversion
+=========================
+Convert a Python model into C code
+"""
+
 from . import trees
 from . import net
 from . import bayes
 from . import distance
 from . import mixture
 
-def convert(estimator, kind=None, method='pymodule', dtype='float'):
-    """Main entrypoint for converting a model"""
+class Model():
+    """Inference model powered by emlearn
+
+    Wrapper around the underlying C code.
+    Allows using the model in Python code, for evaluation/testing.
+    Follows scikit-learn API conventions.
+    """
+
+    def __init__(self):
+        pass
+
+    def save(self, name : str, file : str = None) -> str:
+        """Generate C code
+
+        :param name: Name for the model. Must be valid C identifier
+        :param file: Filepath for where to save the C code (optional)
+
+        :return: The generated C code
+        """
+
+    def predict(self, X):
+        """Run inference, return classes / regression values"""
+        pass
+    def predict_proba(self, X):
+        """Run inference, return probabilities"""
+        pass
+    def score_samples(self, X):
+        """Run inference, return anomaly/outlier scores"""
+        pass
+
+
+def convert(estimator, 
+        kind : str = None,
+        method: str = 'pymodule',
+        dtype: str ='float',
+        ) -> Model:
+    """Convert model to C
+
+    :param method: The inference strategy to use. pymodule|inline|loadable
+    :param dtype: Datatype to use for features. Can be used to enable quantization 
+    :param kind: Explicit name for the type of model. Useful if the model is a subclass of a supported model class
+    :return: A Estimator like class, that uses C code for inference
+    """
 
     if kind is None:
         kind = type(estimator).__name__
