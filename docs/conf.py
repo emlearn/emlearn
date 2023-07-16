@@ -43,6 +43,7 @@ extensions = [
     'sphinx.ext.mathjax',
     'sphinx.ext.viewcode',
     'sphinx.ext.autodoc',
+    'breathe',
     'sphinx.ext.doctest',
     'sphinx.ext.coverage',
     #'sphinx.ext.autosectionlabel',
@@ -199,4 +200,11 @@ sphinx_gallery_conf = {
     'gallery_dirs': 'auto_examples',  # path to where to save gallery generated output
     'filename_pattern': '/', # execute all .py files, not just those with plot_ prefix
 }
+
+
+# -- Breathe for C API documentation using doxygen -------------------------------
+
+breathe_projects = {"emlearn": "./doxygen/xml"}
+breathe_default_project = "emlearn"
+
 

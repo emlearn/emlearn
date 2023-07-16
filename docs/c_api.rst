@@ -4,14 +4,27 @@
 
 :parenttoc: True
 
-.. title:: Python API: contents
+.. title:: C API: contents
 
-.. _python_api:
+.. _c_api:
 
 ====================
 C API
 ====================
 
+.. toctree::
+   :numbered:
+   :maxdepth: 2
+   :titlesonly:
 
-.. doxygenindex::
+   eml_trees.rst
+   eml_net.rst
+   eml_bayes.rst
+   eml_distance.rst
+   eml_mixture.rst
+   eml_iir.rst
+   eml_audio.rst
+   eml_common.rst
+   eml_log.rst
+
 
