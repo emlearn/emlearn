@@ -12,7 +12,9 @@
 extern "C" {
 #endif
 
-// EmlError
+/** @typedef EmlError
+* \brief Error
+*/
 typedef enum _EmlError {
     EmlOk = 0,
     EmlSizeMismatch,
@@ -38,6 +40,9 @@ eml_error_valid(EmlError e) {
     return (e >= EmlOk && e < EmlErrors);
 }
 
+/**
+* \brief Get error description string
+*/
 const char *
 eml_error_str(EmlError e) {
     if (eml_error_valid(e)) {
