@@ -13,7 +13,6 @@ C API
 ====================
 
 .. toctree::
-   :numbered:
    :maxdepth: 2
    :titlesonly:
 
