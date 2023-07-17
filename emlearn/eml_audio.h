@@ -15,6 +15,9 @@ extern "C" {
 
 // Power spectrogram
 // TODO: operate in-place
+/**
+\brief Computer power from magnitude-spectrogram, and normalize based on FFT length
+*/
 EmlError
 eml_audio_power_spectrogram(EmlVector rfft, EmlVector out, int n_fft) {
     const int spec_length = 1+n_fft/2;
@@ -80,7 +83,9 @@ eml_fft_freq(EmlAudioMel params, int n) {
     return (n*end)/steps;
 }
 
-
+/**
+\brief Reduce a SFTF/linear spectrum to Mel-scale coefficiens
+*/
 EmlError
 eml_audio_melspec(EmlAudioMel mel, EmlVector spec, EmlVector mels) {
 
@@ -131,7 +136,18 @@ eml_audio_melspec(EmlAudioMel mel, EmlVector spec, EmlVector mels) {
     return EmlOk;
 }
 
+/**
+* \brief Convert a block of audio to mel-filter spectrum coefficients
 
+Will perform windowing (Hann), followed by FFT and then Mel-filterbank reduction
+
+\param mel_params The mel-filterbank parameters to use
+\param fft FFT instance to use. Must already be initialized
+\param inout Input audio. Will be filled with
+\param temp A temporary buffer
+
+\return EmlOk on success, or error on failure
+*/
 EmlError
 eml_audio_melspectrogram(EmlAudioMel mel_params, EmlFFT fft, EmlVector inout, EmlVector temp)
 {
@@ -153,15 +169,17 @@ eml_audio_melspectrogram(EmlAudioMel mel_params, EmlFFT fft, EmlVector inout, Em
     return EmlOk;
 }
 
-/*
-Apply a sparse filterbank which reduces @input to a smaller @output
+/**
+* \brief Apply a sparse filterbank which reduces @input to a smaller @output
 
-Each filter is on form 0000nonzero0000
+Each filter is on form `0000nonzero0000`.
 The nonzero filter coefficients are stored consecutively in @lut,
-with @start and @end indicating which index (in the input) each filter start/end at
+with @start and @end indicating which index (in the input) each filter start/end at.
 
-Typically the filters are triangular and applied to an FFT power spectrum
-Can be used for mel-filtering a spectrogram
+Typically the filters are triangular and applied to an FFT power spectrum.
+Can be used for mel-filtering a spectrogram.
+
+\return EmlOk on success, or error on failure
 */
 EmlError
 eml_sparse_filterbank(const float *input,

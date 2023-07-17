@@ -8,12 +8,10 @@
 Audio processing (C API)
 =============================
 
-.. doxygenfunction:: eml_audio_power_spectrogram
+.. doxygenfunction:: eml_audio_melspectrogram
 
 .. doxygenfunction:: eml_audio_melspec
 
-.. doxygenfunction:: eml_audio_melspectrogram
+.. doxygenfunction:: eml_audio_power_spectrogram
 
 .. doxygenfunction:: eml_sparse_filterbank
-
-

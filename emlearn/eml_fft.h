@@ -43,13 +43,26 @@ static size_t reverse_bits(size_t x, int n) {
 	return result;
 }
 
+/** @typedef EmlFFT
+*
+* FFT algorithm state
+*/
 typedef struct _EmlFFT {
     int length; // (n/2)
     float *sin;
     float *cos;
 } EmlFFT;
 
+// TODO: provide an eml_fft_init() function
 
+/**
+* Precompute coefficients and fill table
+*
+* \param table EmlFFT instance
+* \param n Length of the FFT operation
+*
+* \return EmlOk on success, or error on failure
+*/
 EmlError
 eml_fft_fill(EmlFFT table, size_t n) {
     EML_PRECONDITION((size_t)table.length == n/2, EmlSizeMismatch);
@@ -62,6 +75,18 @@ eml_fft_fill(EmlFFT table, size_t n) {
     return EmlOk;
 }
 
+/**
+* \brief Compute the FFT
+* 
+* The computation is done in-place, with output being available in the input buffers.
+*
+* \param table EmlFFT instance
+* \param real Real part of input/output values
+* \param imag Imaginary part of input/output values
+* \param n Length of the buffers
+*
+* \return EmlOk on success, or error on failure
+*/
 EmlError
 eml_fft_forward(EmlFFT table, float real[], float imag[], size_t n) {
 
@@ -85,7 +110,7 @@ eml_fft_forward(EmlFFT table, float real[], float imag[], size_t n) {
 			imag[j] = temp;
 		}
 	}
-	
+
 	// Cooley-Tukey decimation-in-time radix-2 FFT
 	for (size_t size = 2; size <= n; size *= 2) {
 		size_t halfsize = size / 2;

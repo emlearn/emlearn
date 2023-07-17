@@ -22,6 +22,7 @@ C API
    eml_distance.rst
    eml_mixture.rst
    eml_iir.rst
+   eml_fft.rst
    eml_audio.rst
    eml_common.rst
    eml_log.rst

@@ -8,7 +8,7 @@
 Gaussian Naive Bayes (C API)
 =============================
 
-.. doxygentypedef:: EmlBayes
+.. doxygentypedef:: EmlBayesModel
 
 .. doxygenfunction:: eml_bayes_predict
 
