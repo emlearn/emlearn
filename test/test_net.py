@@ -13,6 +13,7 @@ warnings.filterwarnings(action='ignore', category=sklearn.exceptions.Convergence
 
 from sklearn.neural_network import MLPClassifier
 from sklearn.datasets import make_classification
+from sklearn.datasets import make_regression
 from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.preprocessing import StandardScaler, MultiLabelBinarizer
 
@@ -114,6 +115,10 @@ KERAS_MODELS = {
     'MLP.4ary.actlayer': keras_mlp_multiclass_activation_layers(3, 4),
 }
 
+KERAS_REGRESSION_MODELS = {
+    'MLP.binary': keras_mlp_binary_activation_params(3),
+}
+
 if getattr(keras.layers, 'ReLu', None):
     KERAS_MODELS['Dropout.Relu.Softmax'] = keras_dropout_relu_softmax(3, 4),
 
@@ -129,6 +134,15 @@ def assert_equivalent(model, X_test, n_classes, method):
         pred = numpy.argmax(pred, axis=1)
 
     assert_equal(pred, cpred)
+
+def assert_equivalent_float(model, X_test, method):
+    cmodel = emlearn.convert(model, method=method)
+
+    cpred = cmodel.regress(X_test) # on the C model
+    pred = model.predict(X_test).flatten() # on keras.Sequential / MLP
+    
+    # assert_equal(pred, cpred)
+    numpy.testing.assert_almost_equal(cpred, pred, decimal=4)
 
 @pytest.mark.parametrize('modelname', KERAS_MODELS.keys())
 def test_net_keras_predict(modelname):
@@ -155,3 +169,22 @@ def test_net_keras_predict(modelname):
         assert_equivalent(model, X_test[:3], params['classes'], method='pymodule')
         assert_equivalent(model, X_test[:3], params['classes'], method='loadable')
 
+@pytest.mark.parametrize('modelname', KERAS_REGRESSION_MODELS.keys())
+def test_net_keras_regress(modelname):
+    model, params = KERAS_REGRESSION_MODELS[modelname]
+
+    for random in range(0, 3):
+        # create dataset
+        rng = numpy.random.RandomState(0)
+        X, y = make_regression(n_features=params['features'], 
+                               n_informative=params['features'],
+                               random_state=rng, n_samples=50)
+        X += 2 * rng.uniform(size=X.shape)
+        X = StandardScaler().fit_transform(X)
+
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=.2)
+
+        model.fit(X_train, y_train, epochs=1, batch_size=10)
+        X_test = X_test[:3]
+
+        assert_equivalent_float(model, X_test[:3], method='regressor')

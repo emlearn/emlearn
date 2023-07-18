@@ -28,6 +28,7 @@ class Wrapper:
         self.biases = biases
         self.classifier = None
 
+        # NOTE: the classifier param does not align well with the initial pymodule|inline|loadable set
         if classifier == 'pymodule':
             import eml_net # import when required
             self.classifier = eml_net.Classifier(activations, weights, biases)
@@ -36,6 +37,11 @@ class Wrapper:
             func = 'eml_net_predict(&{}, values, length)'.format(name)
             code = self.save(name=name)
             self.classifier = common.CompiledClassifier(code, name=name, call=func)
+        elif classifier == 'regressor':
+            name = 'mynet'
+            func = 'eml_net_regress1(&{}, values, length)'.format(name)
+            code = self.save(name=name)
+            self.classifier = common.CompiledClassifier(code, name=name, call=func, out_dtype='float')
         #elif classifier == 'inline':
         else:
             raise ValueError("Unsupported classifier method '{}'".format(classifier))
@@ -46,6 +52,9 @@ class Wrapper:
     def predict(self, X):
         classes = self.classifier.predict(X)
         return classes
+    
+    def regress(self, X):
+        return self.classifier.regress(X)            
 
     def save(self, name=None, file=None):
         if name is None:
@@ -116,16 +125,32 @@ def c_generate_net(activations, weights, biases, prefix):
     ]
 
     name = prefix
+    
     predict_function = f"""
     int32_t
     {name}_predict(const float *features, int32_t n_features)
     {{
         return eml_net_predict(&{name}, features, n_features);
-
     }}
     """
 
-    lines = head_lines + layer_lines + net_lines + [predict_function]
+    regress_function = f"""
+    int32_t
+    {name}_regress(const float *features, int32_t n_features, float *out, int32_t out_length)
+    {{
+        return eml_net_regress(&{name}, features, n_features, out, out_length);
+    }}
+    """
+
+    regress1_function = f"""
+    float
+    {name}_regress1(const float *features, int32_t n_features)
+    {{
+        return eml_net_regress1(&{name}, features, n_features);
+    }}
+    """
+
+    lines = head_lines + layer_lines + net_lines + [predict_function, regress_function, regress1_function]
     out = '\n'.join(lines)
 
     return out
