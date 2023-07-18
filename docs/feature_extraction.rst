@@ -16,56 +16,114 @@ as it may be high dimensional and have a low signal to noise ratio wrt to the ta
 Therefore it can be useful to apply feature extraction to make the problem more tractable.
 Common feature extraction techniques for time-series and sensor-data include:
 
-- Time-domain features. Root Mean Square (RMS) energy, Zero Crossing Rate (ZCR)
-- Statistical summaries. min/max, mean/variance, kurtosis/skew et.c.
-- Frequency domain (spectrum). Using Fourier transform (FFT), or filterbanks
-- Time-frequency domain features (spectrogram). Using Short-Term Fourier Transform (STFT)
+- Time-domain features
+- Statistical summaries
+- Frequency domain (spectrum)
+- Time-frequency domain (spectrogram)
 
-emlearn provides some tools for some of these,
-and some guidelines for how to integrated custom feature extraction.
-
-.. TODO: add some linkable reference documentation C code
-.. TODO: link to each function documentation from the reference
-
+emlearn provides some tools for some of these.
 
 Time-domain features
 ===========================
 
-Root Mean Square (RMS) energy
-Zero Crossing Rate (ZCR)
+Typical features are
 
+- Root Mean Square (RMS) energy
+- Zero Crossing Rate (ZCR)
+
+.. TODO: refer to C code/functions for these
 .. TODO: link an example
+
+Statistical summaries
+===========================
+
+Statistical summaries are ways of extracting compact representations of sets of values.
+This can be useful on time-series data, on spectrum data, or other high-dimensional signals.
+
+Typical features used are:
+
+- minimum/maximum
+- peak2peak
+- variance / standard deviation
+- mean
+- median
+- 25/75 percentile, and Interquartile Distance
+
+.. TODO: refer to C code/functions for these
+.. TODO: link an example. Maybee HAR on accelerometer data
 
 Digital filters
 ===========================
 
-`eml_iir.h <https://github.com/emlearn/emlearn/blob/master/emlearn/eml_iir.h>`_
+Digital filters can be very useful to process a time-series signal.
+
+`Infinite Impulse Response (IIR)<https://en.wikipedia.org/wiki/Infinite_impulse_response>`_ filter is one way of creating digital filters.
+These are useful for:
+
+- Low-pass filters
+- High-pass filters
+- Band-pass filters
+
+In Python the IIR filter coefficients can be designed with
+`scipy.signal.iirfilter <https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.iirfilter.html>`_ (by specifying filter order and critical frequencies)
+or `scipy.signal.iirdesign <https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.iirdesign.html>`_ (by specifying stop/passband frequencies and gains).
+
+The design can be output as second-order sections (format='sos'),
+and then realized in using :doc:`eml_iir`.
+
+.. MAYBE. Link papers on learning IIR filters
+.. Ex: https://www.dafx.de/paper-archive/2020/proceedings/papers/DAFx2020_paper_52.pdf
 
 .. TODO: link an example
 
-Spectrum
-===========================
+Spectrum (frequency domain)
+=====================================
 
-Fast Fourier Transform (FFT)
+Many phenomena can be easier to separate in the frequency domain, rather than the time-domain.
+The most common way to transform is using the FFT,
+which is implemented in :doc:`eml_fft`.
 
-`eml_fft.h <https://github.com/emlearn/emlearn/blob/master/emlearn/eml_fft.h>`_
+.. TODO: show an image of spectrum
 
-Spectrogram
-===========================
+Spectrogram (time-frequency domain)
+========================================
 
-Short-Time Fourier Transform (STFT)
+A spectrogram decomposes a time-series into both time and frequency,
+creating a 2d image-like representation.
+Spectrograms are commonly used with a wide range of input data, such as:
+sound, accelerometer, Electrocardiogram (ECG), seismology, et.c.
 
-Mel-frequency spectrogram
+It is most commonly done by applying the FFT to overlapped consecutive time windows.
+This technique is called Short-Time Fourier Transform (STFT).
+An alternative is to use multiple FIR or IIR bandpass filters to form a filterbank.
 
-`eml_audio.h <https://github.com/emlearn/emlearn/blob/master/emlearn/eml_audio.h>`_,
+A special case of a spectrogram called the Mel-frequency spectrogram
+is particularly popular for audio machine learning applications.
 
+Code can be found in :doc:`eml_audio`.
+
+.. TODO: show an image of spectrogram
 .. TODO: link an example for mel-frequency spectrogram
 
 Integrating feature extraction
-===========================
+===================================
+
+It is practical to start prototyping and testing feature extraction approaches in Python,
+using the wide range of available functions and libraries.
+But once the appropriate feature extraction method has been identified,
+it is normally implemented in C to run on the target device.
+It is recommended to use the same C code also during training.
+This reduces the risk of diverence in feature extraction between target and training,
+which can have very negative impact on predictive performance.
+
+There are two main approaches to use C code during training (in Python):
+
+- Create a C program and use files to pass input/output data
+- Create Python bindings for the C functions.
+
+Python bindings can be created using `pybind11 <https://github.com/pybind/pybind11>`_
+or `CFFI <https://cffi.readthedocs.io/en/latest/>`_.
 
 .. TODO: explain how to make custom scikit-learn Transformer
 
-
-.. TODO: add section on statistical summaries
 
