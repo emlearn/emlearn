@@ -132,6 +132,11 @@ If you use `emlearn` in an academic work, please reference it using:
 
 `emlearn` has been used in the following works.
 
+- [Micro Random Forest: A Local, High-Speed Implementation of a Machine-Learning Fault Location Method for Distribution Power Systems](https://www.researchgate.net/publication/372482984_Micro_Random_Forest_A_Local_High-Speed_Implementation_of_a_Machine-Learning_Fault_Location_Method_for_Distribution_Power_Systems) by Miguel Jimenez Aparicio et.al at Sandia National Laboratories.
+Developed a fault localization method that uses the signature of the travelling wave.
+Tested 4 different sized RandomForest models, evaluted performance on a simulated power network.
+Used emlearn to port the models to the TMS320F28379D chip, a C2000-series DSP from Texas Instruments.
+Found that the total execution time was 1.2 ms, of which only 10 us was used by the classifier.
 - [Remote Breathing Rate Tracking in Stationary Position Using the Motion and Acoustic Sensors of Earables](https://www.researchgate.net/publication/369439475_Remote_Breathing_Rate_Tracking_in_Stationary_Position_Using_the_Motion_and_Acoustic_Sensors_of_Earables) by Tousif Ahmed et.al at Samsung Research.
 Developed a system using microphone and accelerometer on earbuds to estimate breathing rate of wearer.
 Tested various models such as Logistic Regression, Multi-layer Perceptron and Random Forest.
