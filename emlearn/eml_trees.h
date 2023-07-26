@@ -42,7 +42,7 @@ typedef enum _EmlTreesError {
     EmlTreesErrorLength,
 } EmlTreesError;
 
-const char *eml_trees_errors[EmlTreesErrorLength+1] = {
+const char * const eml_trees_errors[EmlTreesErrorLength+1] = {
    "OK",
    "Unknown error",
    "Invalid class predicted",
