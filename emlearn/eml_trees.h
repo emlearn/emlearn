@@ -2,6 +2,10 @@
 #ifndef EML_TREES_H
 #define EML_TREES_H
 
+#ifndef EML_TREES_REGRESSION_ENABLE
+#define EML_TREES_REGRESSION_ENABLE 1
+#endif
+
 #include <stdint.h>
 #include <math.h>
 #include <eml_common.h>
@@ -42,7 +46,7 @@ typedef enum _EmlTreesError {
     EmlTreesErrorLength,
 } EmlTreesError;
 
-const char *eml_trees_errors[EmlTreesErrorLength+1] = {
+const char * const eml_trees_errors[EmlTreesErrorLength+1] = {
    "OK",
    "Unknown error",
    "Invalid class predicted",
@@ -111,6 +115,7 @@ eml_trees_predict(const EmlTrees *forest, const float *features, int8_t features
     return most_voted_class;
 }
 
+#if EML_TREES_REGRESSION_ENABLE
 
 /**
 * \brief Run inference and return regression values
@@ -166,6 +171,8 @@ eml_trees_regress1(const EmlTrees *forest,
     }
     return out[0];
 }
+
+#endif // EML_TREES_REGRESSION_ENABLE
 
 #ifdef __cplusplus
 }
