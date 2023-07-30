@@ -419,14 +419,28 @@ class Wrapper:
 
         return predictions
 
-    def save(self, name=None, file=None):
+    def save(self, name=None, file=None, format='c'):
         if name is None:
             if file is None:
                 raise ValueError('Either name or file must be provided')
             else:
                 name = os.path.splitext(os.path.basename(file))[0]
 
-        code = generate_c_forest(self.forest_, name, dtype=self.dtype, classifier=self.is_classifier)
+        if format == 'c':
+            code = generate_c_forest(self.forest_, name, dtype=self.dtype, classifier=self.is_classifier)
+
+        elif format == 'csv':
+            nodes, roots = self.forest_
+            nodes = nodes.copy()
+            lines = []
+            for r in roots:
+                lines.append(f'r,{r}')
+            for n in nodes:
+                lines.append(f'n,{n[0]},{n[1]},{n[2]},{n[3]}')
+            code = '\r\n'.join(lines) 
+        else:
+            raise ValueError(f"Unsupported format: {format}")
+
         if file:
             with open(file, 'w') as f:
                 f.write(code)
