@@ -136,7 +136,7 @@ def assert_equivalent(model, X_test, n_classes, method):
     assert_equal(pred, cpred)
 
 def assert_equivalent_float(model, X_test, method):
-    cmodel = emlearn.convert(model, method=method)
+    cmodel = emlearn.convert(model, method=method, return_type='regressor')
 
     cpred = cmodel.regress(X_test) # on the C model
     pred = model.predict(X_test).flatten() # on keras.Sequential / MLP
@@ -148,7 +148,7 @@ def assert_equivalent_float(model, X_test, method):
 def test_net_keras_predict(modelname):
     model, params = KERAS_MODELS[modelname]
 
-    for random in range(0, 3):
+    for _ in range(0, 3):
         # create dataset
         rng = numpy.random.RandomState(0)
         X, y = make_classification(n_features=params['features'], n_classes=params['classes'],
@@ -173,7 +173,7 @@ def test_net_keras_predict(modelname):
 def test_net_keras_regress(modelname):
     model, params = KERAS_REGRESSION_MODELS[modelname]
 
-    for random in range(0, 3):
+    for _ in range(0, 3):
         # create dataset
         rng = numpy.random.RandomState(0)
         X, y = make_regression(n_features=params['features'], 
@@ -187,4 +187,4 @@ def test_net_keras_regress(modelname):
         model.fit(X_train, y_train, epochs=1, batch_size=10)
         X_test = X_test[:3]
 
-        assert_equivalent_float(model, X_test[:3], method='regressor')
+        assert_equivalent_float(model, X_test[:3], method='loadable')

@@ -21,30 +21,28 @@ def argmax(sequence):
 
 
 class Wrapper:
-    def __init__(self, activations, weights, biases, classifier):
+    def __init__(self, activations, weights, biases, classifier, return_type='classifier'):
 
         self.activations = activations
         self.weights = weights
         self.biases = biases
         self.classifier = None
 
-        # NOTE: the classifier param does not align well with the initial pymodule|inline|loadable set
-        if classifier == 'pymodule':
+        if classifier == 'pymodule' and return_type == 'classifier':
             import eml_net # import when required
             self.classifier = eml_net.Classifier(activations, weights, biases)
-        elif classifier == 'loadable':
+        elif classifier == 'loadable' and return_type == 'classifier':
             name = 'mynet'
             func = 'eml_net_predict(&{}, values, length)'.format(name)
             code = self.save(name=name)
             self.classifier = common.CompiledClassifier(code, name=name, call=func)
-        elif classifier == 'regressor':
+        elif classifier == 'loadable' and return_type == 'regressor':
             name = 'mynet'
             func = 'eml_net_regress1(&{}, values, length)'.format(name)
             code = self.save(name=name)
             self.classifier = common.CompiledClassifier(code, name=name, call=func, out_dtype='float')
-        #elif classifier == 'inline':
         else:
-            raise ValueError("Unsupported classifier method '{}'".format(classifier))
+            raise ValueError(f"Unsupported classifier method '{classifier}' with return_type of '{return_type}'")
 
     def predict_proba(self, X):
         return self.classifier.predict_proba(X)
@@ -179,7 +177,7 @@ def from_tf_variable(var):
     array = var.eval()
     return array
 
-def convert_keras(model, method):
+def convert_keras(model, method, return_type='classifier'):
     """Convert keras.Sequential models"""
 
     activations = []
@@ -231,5 +229,5 @@ def convert_keras(model, method):
 
     assert len(activations) == len(biases) == len(layer_weights)
     
-    return Wrapper(activations, layer_weights, biases, classifier=method)
+    return Wrapper(activations, layer_weights, biases, classifier=method, return_type=return_type)
 

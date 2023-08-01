@@ -46,12 +46,14 @@ def convert(estimator,
         kind : str = None,
         method: str = 'pymodule',
         dtype: str ='float',
+        return_type: str = 'classifier',
         ) -> Model:
     """Convert model to C
 
+    :param kind: Explicit name for the type of model. Useful if the model is a subclass of a supported model class
     :param method: The inference strategy to use. pymodule|inline|loadable
     :param dtype: Datatype to use for features. Can be used to enable quantization 
-    :param kind: Explicit name for the type of model. Useful if the model is a subclass of a supported model class
+    :param return_type: Return type of the model. 'classifier' (default) creates a classifier (output binarized when needed),  'regressor' creates a regressor (output type is float).
     :return: A Estimator like class, that uses C code for inference
     """
 
@@ -68,7 +70,7 @@ def convert(estimator,
     elif kind == 'MLPClassifier':
         return net.convert_sklearn_mlp(estimator, method)
     elif kind == 'Sequential':
-        return net.convert_keras(estimator, method)
+        return net.convert_keras(estimator, method, return_type)
     elif kind == 'GaussianNB':
         return bayes.Wrapper(estimator, method)
     else:
