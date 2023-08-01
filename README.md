@@ -44,6 +44,7 @@ Classification:
 Regression:
 
 * `eml_trees`: sklearn.RandomForestRegressor, sklearn.ExtraTreesRegressor, sklearn.DecisionTreeRegressor
+* `eml_net`: Keras.Sequential with fully-connected layers (```emlearn.convert(model, method='loadable', return_type='regressor')```)
 
 Unsupervised / Outlier Detection / Anomaly Detection
 
@@ -111,6 +112,10 @@ Copy the generated `.h` file, the `eml_net.h` and `eml_common.h` into your proje
 float values[6] = { ... };
 
 const float_t predicted_value = nnmodel_regress1(values, 6);
+if (predicted_value == NAN) {
+    exit(-1);
+}
+// Process the value as needed
 
 // Or, passing in a result array directly if more than 1 output is generated
 float out[2];
