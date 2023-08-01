@@ -25,7 +25,7 @@ typedef enum _EmlError {
     EmlErrors,
 } EmlError;
 
-static const char *
+const char * const
 eml_error_strs[EmlErrors] = {
     "OK",
     "SizeMismatch",
