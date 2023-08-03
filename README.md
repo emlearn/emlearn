@@ -20,6 +20,7 @@ Embedded-friendly Inference
 * No dynamic allocations
 * Single header file include
 * Support integer/fixed-point math (some methods)
+* Can be embedded/integrated with other languages via C API
 
 Convenient Training
 
@@ -27,6 +28,11 @@ Convenient Training
 * The generated C classifier is also accessible in Python
 
 [MIT licensed](https://github.com/emlearn/emlearn/blob/master/LICENSE.md)
+
+Supporting libraries
+
+- [emlearn-micropython](https://github.com/emlearn/emlearn-micropython).
+Efficient Machine Learning engine for [MicroPython](https://micropython.org), using emlearn.
 
 Can be used as an open source alternative to MATLAB Classification Trees,
 Decision Trees using MATLAB Coder for C/C++ code generation.
