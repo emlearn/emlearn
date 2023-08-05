@@ -27,6 +27,7 @@ class Wrapper:
         self.weights = weights
         self.biases = biases
         self.classifier = None
+        self.return_type = return_type
 
         if classifier == 'pymodule' and return_type == 'classifier':
             import eml_net # import when required
@@ -48,11 +49,13 @@ class Wrapper:
         return self.classifier.predict_proba(X)
 
     def predict(self, X):
-        classes = self.classifier.predict(X)
-        return classes
-    
-    def regress(self, X):
-        return self.classifier.regress(X)            
+        if self.return_type == 'classifier':
+            return self.classifier.predict(X)
+        elif self.return_type == 'regressor':
+            return self.classifier.regress(X)
+        else:
+            raise ValueError(f"Unsupported return_type of '{self.return_type}'")
+ 
 
     def save(self, name=None, file=None):
         if name is None:

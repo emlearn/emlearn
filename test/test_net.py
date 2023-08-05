@@ -138,7 +138,7 @@ def assert_equivalent(model, X_test, n_classes, method):
 def assert_equivalent_float(model, X_test, method):
     cmodel = emlearn.convert(model, method=method, return_type='regressor')
 
-    cpred = cmodel.regress(X_test) # on the C model
+    cpred = cmodel.predict(X_test) # on the C model
     pred = model.predict(X_test).flatten() # on keras.Sequential / MLP
     
     # assert_equal(pred, cpred)
