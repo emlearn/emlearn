@@ -283,7 +283,7 @@ eml_net_infer(EmlNet *model, const float *features, int32_t features_length)
 }
 
 /**
-* \brief Run inference and return probabilities
+* \brief Run inference and return probabilities. Sum of outputs must be approx. 1.
 *
 * \param model EmlNet instance
 * \param features Input data values
@@ -352,6 +352,55 @@ eml_net_predict(EmlNet *model, const float *features, int32_t features_length) {
     }
 
     return _class;
+}
+
+/**
+* \brief Run inference and return the predicted float array (last layer).
+*
+* \param model EmlNet instance
+* \param features Input data values
+* \param features_length Length of input data
+* \param out Buffer to store output
+* \param out_length Length of output buffer
+*
+* \return EmlOk on success, or error on failure
+*/
+EmlError
+eml_net_regress(EmlNet *model, const float *features, int32_t features_length, float *out, int32_t out_length)
+{
+    EML_PRECONDITION(out, EmlUninitialized);
+    const int32_t n_outputs = eml_net_outputs(model);
+    EML_PRECONDITION(out_length == n_outputs, EmlSizeMismatch);
+    EML_CHECK_ERROR(eml_net_infer(model, features, features_length));
+
+    for (int i = 0; i < n_outputs; i++)
+    {
+        const float p = model->activations2[i];
+        out[i] = p;
+    }
+
+    return EmlOk;
+}
+
+/**
+ * \brief Run inference and return single regression value
+ *
+ * \param model EmlNet instance
+ * \param features Input data values
+ * \param features_length Length of input data
+ *
+ * \return The output value on success, or NAN on failure
+ */
+float
+eml_net_regress1(EmlNet *model, const float *features, int32_t features_length)
+{
+    float out[1];
+    EmlError err = eml_net_regress(model, features, features_length, out, 1);
+    if (err != EmlOk)
+    {
+        return NAN;
+    }
+    return out[0];
 }
 
 #ifdef __cplusplus

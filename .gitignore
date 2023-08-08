@@ -1,8 +1,13 @@
 .ipynb_checkpoints/
+.coverage
+*.swp
 *.pyc
 *.so
 *.dll
 *.egg-info/
+melfilter*.png
+*.o
+test/bench
 .pytest_cache/
 build/
 dist/
@@ -10,3 +15,4 @@ prof/
 tmp/
 examples/xor_model.h
 examples/classifiers
+.vs

@@ -10,7 +10,7 @@ here = os.path.dirname(__file__)
 
 def run_window_function(options):
     module = 'emlearn.tools.window_function'
-    args = ['python', '-m', module]
+    args = ['python3', '-m', module]
 
     for key, value in options.items():
         args.append('--{}={}'.format(key, value))
@@ -55,7 +55,7 @@ def run_extract(include, name, length, workdir):
         f.write(prog)
 
     # compile
-    objects = cc.compile([code_path])
+    objects = cc.compile([code_path], output_dir=workdir)
     cc.link("executable", objects, output_filename=output_filename, 
         output_dir=workdir)  
 
@@ -88,7 +88,6 @@ def window_function_test(file_path, args):
 
 
 def test_window_function_hann():
-
     file_path = os.path.join(here, 'out','window_function', 'window_func.h')
     args = dict(
         window='hann',

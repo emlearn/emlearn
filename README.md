@@ -50,6 +50,7 @@ Classification:
 Regression:
 
 * `eml_trees`: sklearn.RandomForestRegressor, sklearn.ExtraTreesRegressor, sklearn.DecisionTreeRegressor
+* `eml_net`: Keras.Sequential with fully-connected layers (```emlearn.convert(model, method='loadable', return_type='regressor')```)
 
 Unsupervised / Outlier Detection / Anomaly Detection
 
@@ -93,6 +94,7 @@ cmodel.save(file='sonar.h', name='sonar')
 
 3. Use the C code
 
+### Simple classifiers
 ```c
 #include "sonar.h"
 
@@ -106,10 +108,43 @@ const int32_t predicted_class = sonar_predict(values, length):
 const int32_t predicted_class = eml_trees_predict(&sonar, length):
 ```
 
+### Neural net regressor
+
+Copy the generated `.h` file, the `eml_net.h` and `eml_common.h` into your project, then
+
+```c
+#include "nnmodel.h" // the generated code basedon on keras.Sequential
+
+float values[6] = { ... };
+
+const float_t predicted_value = nnmodel_regress1(values, 6);
+if (predicted_value == NAN) {
+    exit(-1);
+}
+// Process the value as needed
+
+// Or, passing in a result array directly if more than 1 output is generated
+float out[2];
+EmlError err = nnmodel_regress(values, 6, out, 2);
+if (err != EmlOk)
+{
+    // something went wrong
+}
+else {
+    // predictions are in the out array
+}
+```
+
 For a complete runnable code see [Getting Started](https://emlearn.readthedocs.io/en/latest/getting_started_host.html).
 
 For full documentation see [examples](https://emlearn.readthedocs.io/en/latest/examples.html),
 the [user guide](https://emlearn.readthedocs.io/en/latest/user_guide.html).
+
+## Contributing
+
+Check out the source code, make sure you install the `Unity` submodule as well with `git submodule update --init`
+
+Before committing any code, run the tests by `./test.sh` and install the module locally with `pip install ./ -v`
 
 ## Contributors
 

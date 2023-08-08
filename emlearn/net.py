@@ -21,31 +21,41 @@ def argmax(sequence):
 
 
 class Wrapper:
-    def __init__(self, activations, weights, biases, classifier):
+    def __init__(self, activations, weights, biases, classifier, return_type='classifier'):
 
         self.activations = activations
         self.weights = weights
         self.biases = biases
         self.classifier = None
+        self.return_type = return_type
 
-        if classifier == 'pymodule':
+        if classifier == 'pymodule' and return_type == 'classifier':
             import eml_net # import when required
             self.classifier = eml_net.Classifier(activations, weights, biases)
-        elif classifier == 'loadable':
+        elif classifier == 'loadable' and return_type == 'classifier':
             name = 'mynet'
             func = 'eml_net_predict(&{}, values, length)'.format(name)
             code = self.save(name=name)
             self.classifier = common.CompiledClassifier(code, name=name, call=func)
-        #elif classifier == 'inline':
+        elif classifier == 'loadable' and return_type == 'regressor':
+            name = 'mynet'
+            func = 'eml_net_regress1(&{}, values, length)'.format(name)
+            code = self.save(name=name)
+            self.classifier = common.CompiledClassifier(code, name=name, call=func, out_dtype='float')
         else:
-            raise ValueError("Unsupported classifier method '{}'".format(classifier))
+            raise ValueError(f"Unsupported classifier method '{classifier}' with return_type of '{return_type}'")
 
     def predict_proba(self, X):
         return self.classifier.predict_proba(X)
 
     def predict(self, X):
-        classes = self.classifier.predict(X)
-        return classes
+        if self.return_type == 'classifier':
+            return self.classifier.predict(X)
+        elif self.return_type == 'regressor':
+            return self.classifier.regress(X)
+        else:
+            raise ValueError(f"Unsupported return_type of '{self.return_type}'")
+ 
 
     def save(self, name=None, file=None):
         if name is None:
@@ -116,16 +126,32 @@ def c_generate_net(activations, weights, biases, prefix):
     ]
 
     name = prefix
+    
     predict_function = f"""
     int32_t
     {name}_predict(const float *features, int32_t n_features)
     {{
         return eml_net_predict(&{name}, features, n_features);
-
     }}
     """
 
-    lines = head_lines + layer_lines + net_lines + [predict_function]
+    regress_function = f"""
+    int32_t
+    {name}_regress(const float *features, int32_t n_features, float *out, int32_t out_length)
+    {{
+        return eml_net_regress(&{name}, features, n_features, out, out_length);
+    }}
+    """
+
+    regress1_function = f"""
+    float
+    {name}_regress1(const float *features, int32_t n_features)
+    {{
+        return eml_net_regress1(&{name}, features, n_features);
+    }}
+    """
+
+    lines = head_lines + layer_lines + net_lines + [predict_function, regress_function, regress1_function]
     out = '\n'.join(lines)
 
     return out
@@ -154,7 +180,7 @@ def from_tf_variable(var):
     array = var.eval()
     return array
 
-def convert_keras(model, method):
+def convert_keras(model, method, return_type='classifier'):
     """Convert keras.Sequential models"""
 
     activations = []
@@ -206,5 +232,5 @@ def convert_keras(model, method):
 
     assert len(activations) == len(biases) == len(layer_weights)
     
-    return Wrapper(activations, layer_weights, biases, classifier=method)
+    return Wrapper(activations, layer_weights, biases, classifier=method, return_type=return_type)
 
