@@ -159,7 +159,7 @@ If you use `emlearn` in an academic work, please reference it using:
 
 ```tex
 @misc{emlearn,
-  author       = {Nordby, Jon AND Cooke, Mark},
+  author       = {Nordby, Jon AND Cooke, Mark AND Horvath, Adam},
   title        = {{emlearn: Machine Learning inference engine for 
                    Microcontrollers and Embedded Devices}},
   month        = mar,

@@ -4,6 +4,8 @@ authors:
     given-names: Jon
   - family-names: Cooke
     given-names: Mark
+  - family-names: Horvath
+    given-names: Adam
 identifiers:
   - description: "All archived software versions"
     type: doi
