@@ -173,6 +173,7 @@ eml_neighbors_find_nearest(EmlNeighborsModel *self,
 
     // FIXME: avoid hardcoding length
     static int16_t votes[EML_NEIGHBORS_MAX_CLASSES];
+    memset(votes, 0, sizeof(int16_t) * EML_NEIGHBORS_MAX_CLASSES);
 
     // merge predictions for top-k matches
     for (int i=0; i<k; i++) {
@@ -184,7 +185,7 @@ eml_neighbors_find_nearest(EmlNeighborsModel *self,
         votes[label] += 1;
 
 #if EML_NEIGHBORS_LOG_LEVEL > 2
-        EML_LOG_BEGIN("eml_neighbors_find_nearest_iter");
+        EML_LOG_BEGIN("eml_neighbors_find_nearest_k_iter");
         EML_LOG_ADD_INTEGER("index", i);
         EML_LOG_ADD_INTEGER("distance", d.distance);
         EML_LOG_ADD_INTEGER("label", label);
@@ -195,7 +196,14 @@ eml_neighbors_find_nearest(EmlNeighborsModel *self,
     int32_t most_voted_class = -1;
     int32_t most_voted_votes = 0;
     for (int32_t i=0; i<EML_NEIGHBORS_MAX_CLASSES; i++) {
-        //printf("votes[%d]: %d\n", i, votes[i]);
+
+#if EML_NEIGHBORS_LOG_LEVEL > 1
+        EML_LOG_BEGIN("eml_neighbors_find_nearest_votes_iter");
+        EML_LOG_ADD_INTEGER("index", i);
+        EML_LOG_ADD_INTEGER("votes", votes[i]);
+        EML_LOG_END();
+#endif
+
         if (votes[i] > most_voted_votes) {
             most_voted_class = i;
             most_voted_votes = votes[i];
