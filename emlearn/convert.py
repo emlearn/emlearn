@@ -10,6 +10,7 @@ from . import net
 from . import bayes
 from . import distance
 from . import mixture
+from . import neighbors
 
 class Model():
     """Inference model powered by emlearn
@@ -74,5 +75,7 @@ def convert(estimator,
         return net.convert_keras(estimator, method, return_type)
     elif kind == 'GaussianNB':
         return bayes.Wrapper(estimator, method)
+    elif kind in ['KNeighborsClassifier']:
+        return neighbors.convert_sklearn(estimator, inference=method)
     else:
         raise ValueError("Unknown model type: '{}'".format(kind))
