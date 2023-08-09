@@ -20,6 +20,22 @@ def struct_init(*args):
 
     return '{ ' + ', '.join(str(a) for a in args) + ' }'
 
+def struct_declare(name, type_name, values=[], modifiers='static const'):
+    """
+    Declaration and initialization of a (typedef) struct
+
+    >>> from emlearn import cgen
+    >>> cgen.struct_declare('myinstance', 'SomeStruct', [2, 'foo_array'])
+    'static const SomeStruct myinstance = { 2, foo_array };'
+    """
+
+    init = ''
+    if values is not None:
+        init = f'= {struct_init(*values)}'
+
+    out = f'{type_name} {name}{init};'
+    return out
+    
 
 def constant(val, dtype='float'):
     """A literal value
