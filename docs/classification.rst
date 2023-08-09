@@ -58,6 +58,7 @@ Classification models
    DecisionTree                     `DecisionTreeClassifier <https://scikit-learn.org/stable/modules/generated/sklearn.tree.DecisionTreeClassifier.html>`_
    Multi-Layer-Perceptron           `MLPClassifier <https://scikit-learn.org/stable/modules/generated/sklearn.neural_network.MLPClassifier.html>`_,  `keras.Sequential <https://keras.io/api/models/sequential/>`_
    Gaussian Naive Bayes             `GaussianNB <https://scikit-learn.org/stable/modules/generated/sklearn.naive_bayes.GaussianNB.html>`_
+   Nearest Neighbors                `KNeighborsClassifier <https://scikit-learn.org/stable/modules/generated/sklearn.neighbors.KNeighborsClassifier.html>`_
    ============================     ======
 
 A basic example showing some of these classifier models can be found in
