@@ -11,6 +11,8 @@ in order to support on-device learning.
 
 #include <eml_common.h>
 #include <eml_log.h>
+#include <eml_qsort.h>
+
 #include <stdint.h>
 #include <string.h>
 
@@ -22,11 +24,6 @@ in order to support on-device learning.
 #ifndef EML_NEIGHBORS_MAX_CLASSES
 #define EML_NEIGHBORS_MAX_CLASSES 10
 #endif // EML_NEIGHBORS_MAX_CLASSES
-
-// Forward declarations
-typedef struct _EmlNeighborsDistanceItem EmlNeighborsDistanceItem;
-
-EmlError eml_neighbors_sort_distances(EmlNeighborsDistanceItem *distances, size_t length);
 
 
 int32_t eml_isqrt(int32_t x)
@@ -72,31 +69,22 @@ typedef struct _EmlNeighborsDistanceItem {
     uint32_t distance;
 } EmlNeighborsDistanceItem;
 
-
-static int
-eml_neighbors_distance_item_sort_ascending(const void* a, const void* b)
-{
-    const uint32_t A = ((EmlNeighborsDistanceItem *)a)->distance;
-    const uint32_t B = ((EmlNeighborsDistanceItem *)b)->distance;
-    if( A == B ) return 0;
-    return A < B ? -1 : 1;
-}
-
-#ifdef EML_NEIGHBORS_CUSTOM_SORT
-
-// API consumers must implement eml_neighbors_sort_distances themselves
-
-#else // not EML_NEIGHBORS_CUSTOM_SORT
-
-/* Sort distances while preserving the index */
 EmlError
 eml_neighbors_sort_distances(EmlNeighborsDistanceItem *distances, size_t length)
 {
-    qsort(distances, length, sizeof(EmlNeighborsDistanceItem),
-        eml_neighbors_distance_item_sort_ascending);
+    EmlNeighborsDistanceItem *A = distances;
+    EmlNeighborsDistanceItem tmp;
+
+#define EML_LESS(i, j) A[i].distance < A[j].distance
+#define EML_SWAP(i, j) tmp = A[i], A[i] = A[j], A[j] = tmp
+
+    QSORT(length, EML_LESS, EML_SWAP);
+
+#undef EML_LESS
+#undef EML_SWAP
+
     return EmlOk;
 }
-#endif // EML_NEIGHBORS_CUSTOM_SORT
 
 /** @typedef EmlNeighborsModel
 * \brief Nearest Neighbors Model
@@ -195,7 +183,8 @@ eml_neighbors_infer(EmlNeighborsModel *self,
     return EmlOk;
 }
 
-
+// FIXME: avoid hardcoding length
+int16_t eml_neighbors_votes[EML_NEIGHBORS_MAX_CLASSES];
 
 EmlError
 eml_neighbors_find_nearest(EmlNeighborsModel *self,
@@ -207,8 +196,7 @@ eml_neighbors_find_nearest(EmlNeighborsModel *self,
     // argsort by distance. NOTE: sorts in-place
     eml_neighbors_sort_distances(distances, distances_length);
 
-    // FIXME: avoid hardcoding length
-    static int16_t votes[EML_NEIGHBORS_MAX_CLASSES];
+    int16_t *votes = eml_neighbors_votes;
     memset(votes, 0, sizeof(int16_t) * EML_NEIGHBORS_MAX_CLASSES);
 
     // merge predictions for top-k matches
