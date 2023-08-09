@@ -160,7 +160,7 @@ eml_neighbors_infer(EmlNeighborsModel *self,
             const int16_t *features, int features_length,
             EmlNeighborsDistanceItem *distances, int distances_length)
 {
-    EML_PRECONDITION(distances_length <= self->n_items, EmlSizeMismatch);    
+    EML_PRECONDITION(distances_length >= self->n_items, EmlSizeMismatch);
     EML_PRECONDITION(features_length == self->n_features, EmlSizeMismatch);
 
     // compute distances to all items
