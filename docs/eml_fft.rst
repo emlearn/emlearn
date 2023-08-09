@@ -2,7 +2,7 @@
 .. Places parent toc into the sidebar
 :parenttoc: True
 
-.. _eml_iir:
+.. _eml_fft:
 
 =============================
 Fast Fourier Transform (C API)
