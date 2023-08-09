@@ -18,6 +18,7 @@ here = os.path.dirname(__file__)
 C_TEST_MODULES = [
     #'signal_windower',
     'array',
+    'neighbors',
 ]
 
 def parse_test_summary(stdout):

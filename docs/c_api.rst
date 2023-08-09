@@ -21,6 +21,7 @@ C API
    eml_bayes.rst
    eml_distance.rst
    eml_mixture.rst
+   eml_neighbors.rst
    eml_iir.rst
    eml_fft.rst
    eml_audio.rst

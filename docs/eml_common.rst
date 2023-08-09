@@ -2,7 +2,7 @@
 .. Places parent toc into the sidebar
 :parenttoc: True
 
-.. _eml_net:
+.. _eml_common:
 
 =============================
 Utilities (C API)
