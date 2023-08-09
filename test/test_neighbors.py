@@ -57,6 +57,7 @@ def make_classification_dataset(n_features=10, n_classes=10):
                                random_state=rng, n_clusters_per_class=3, n_samples=50)
     X += 2 * rng.uniform(size=X.shape)
     X = StandardScaler().fit_transform(X)
+    X = numpy.clip(1000*X, -32768, 32767).astype(int) # convert to int16 range
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=.2)
     return X_train, X_test, y_train, y_test
