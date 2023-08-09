@@ -44,24 +44,45 @@ def assert_equivalent(model, X_test, n_classes, method):
     # TODO: support predict_proba, use that instead
     cpred = cmodel.predict(X_test)
     pred = model.predict(X_test)
-    if n_classes == 2:
-        pred = (pred[:,0] > 0.5).astype(int)
-    else:
-        pred = numpy.argmax(pred, axis=1)
 
     assert_equal(pred, cpred)
 
 
+
+def make_classification_dataset(n_features=10, n_classes=10):
+
+    rng = numpy.random.RandomState(0)
+    X, y = make_classification(n_features=n_features, n_classes=n_classes,
+                               n_redundant=0, n_informative=n_features,
+                               random_state=rng, n_clusters_per_class=3, n_samples=50)
+    X += 2 * rng.uniform(size=X.shape)
+    X = StandardScaler().fit_transform(X)
+
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=.2)
+    return X_train, X_test, y_train, y_test
+
 SUPPORTED_PARAMS = {
     'default': dict(),
     'metric=euclidean': dict(metric='euclidean'),
+    'NN1': dict(n_neighbors=1),
 }
 
 @pytest.mark.parametrize('params', SUPPORTED_PARAMS)
 def test_classifier_predict(params):
 
+    n_classes = 10
     p = SUPPORTED_PARAMS[params]
+    model = KNeighborsClassifier(**p)
     print(params, p)
 
-    pass
+    X_train, X_test, y_train, y_test = make_classification_dataset(n_classes=n_classes)
+
+    model.fit(X_train, y_train)
+
+    # only test a subset
+    X_test = X_test[:10]
+
+    #assert_equivalent(model, X_test, params['classes'], method='pymodule')
+    assert_equivalent(model, X_test, n_classes, method='loadable')
+
 
