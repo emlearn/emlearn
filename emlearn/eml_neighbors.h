@@ -175,6 +175,7 @@ eml_neighbors_infer(EmlNeighborsModel *self,
         EML_LOG_BEGIN("eml_neighbors_infer_iter");
         EML_LOG_ADD_INTEGER("index", i);
         EML_LOG_ADD_INTEGER("distance", distance);
+        EML_LOG_ADD_INTEGER("label", self->labels[i]);
         EML_LOG_END();
 #endif
 
@@ -192,6 +193,14 @@ eml_neighbors_find_nearest(EmlNeighborsModel *self,
         int k, int16_t *out)
 {
     EML_PRECONDITION(k <= distances_length, EmlSizeMismatch);
+
+#if EML_NEIGHBORS_LOG_LEVEL > 1
+        EML_LOG_BEGIN("eml_neighbors_find_nearest_start");
+        EML_LOG_ADD_INTEGER("distances", distances_length);
+        EML_LOG_ADD_INTEGER("items", distances_length);
+        EML_LOG_ADD_INTEGER("k", k);
+        EML_LOG_END();
+#endif
 
     // argsort by distance. NOTE: sorts in-place
     eml_neighbors_sort_distances(distances, distances_length);
@@ -267,7 +276,7 @@ eml_neighbors_predict(EmlNeighborsModel *self,
     // Find kNN predictions 
     int16_t label = -1;
     EmlError find_err = \
-        eml_neighbors_find_nearest(self, distances, distances_length, self->k_neighbors, &label);
+        eml_neighbors_find_nearest(self, distances, self->n_items, self->k_neighbors, &label);
     if (find_err != EmlOk) {
         return find_err;
     }
