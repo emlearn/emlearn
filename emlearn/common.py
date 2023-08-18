@@ -52,16 +52,16 @@ def build_classifier(cmodel, name, temp_dir, include_dir, func=None, test_functi
         # be strict about compile warning
         cc_args += [ '-Wall', '-Werror', '-Wno-error=unused-variable' ]
 
-    if n_classes is not None:
+    if n_classes:
         code = """
         #include "{def_file_name}"
         #include <eml_test.h>
 
         #define N_CLASSES {n_classes}
-        float outputs[N_CLASSES];
+        float outputs[N_CLASSES] = {{0.0}};
 
         static void classify_proba(const float *values, int length, int row) {{
-            const EmlError err = {func};
+            {func}; // TODO: handle error
             for (int class_no=0; class_no<N_CLASSES; class_no++) {{
                 const float prob = outputs[class_no];
                 printf("%d,%d,%f\\n", row, class_no, prob);
