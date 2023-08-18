@@ -8,6 +8,7 @@
 
 #include "test_array.c"
 #include "test_neighbors.c"
+#include "test_quantizer.c"
 
 #include <unity.c>
 
@@ -19,10 +20,11 @@ typedef struct _TestModule {
     TestModuleFunction func;
 } TestModule;
 
-#define TEST_MODULES 2
+#define TEST_MODULES 3
 TestModule test_modules[TEST_MODULES] = {
     { "array", test_eml_array },
     { "neighbors", test_eml_neighbors },
+    { "quantizer", test_eml_quantizer },
 };
 
 void
