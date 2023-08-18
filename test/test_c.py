@@ -19,6 +19,7 @@ C_TEST_MODULES = [
     #'signal_windower',
     'array',
     'neighbors',
+    'quantizer',
 ]
 
 def parse_test_summary(stdout):
