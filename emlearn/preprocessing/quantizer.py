@@ -1,8 +1,8 @@
 
 import numpy
-#import sklearn
+from sklearn.base import BaseEstimator, TransformerMixin
 
-class Quantizer():
+class Quantizer(BaseEstimator, TransformerMixin):
 
     """
     Scales the features to fit a target range, usually a signed integer.
