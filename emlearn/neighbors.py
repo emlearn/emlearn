@@ -82,9 +82,6 @@ class Wrapper:
             ])
             func = 'predict_func(values, length)'
 
-            # XXX: temp, for debugging
-            with open('temp_neighbors_classifier.c', 'w') as f:
-                f.write(code)
 
             self.classifier = common.CompiledClassifier(code, name=name, call=func)
         else:
