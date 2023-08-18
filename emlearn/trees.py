@@ -538,21 +538,47 @@ class Wrapper:
         method = self.method
         if method == 'loadable':
             name = 'mytree'
+
             proba_func = 'eml_trees_predict_proba(&{}, values, length, outputs, N_CLASSES)'\
                 .format(name, self.n_classes)
 
             if self.is_classifier:
-                func = 'eml_trees_predict(&{}, values, length)'.format(name)
+                func = 'eml_trees_predict'
             else:
                 func = 'eml_trees_regress1(&{}, values, length)'.format(name)
             code = self.save(name=name)
+
             self.classifier_ = common.CompiledClassifier(code, name=name,
                 call=func, proba_call=proba_func, out_dtype=self.out_dtype, n_classes=self.n_classes)
+
         elif method == 'inline':
+
+            n_features = estimator.n_features_in_
+
+            code = '\n'.join([
+                model_init,
+
+                # Wrapper that is compatible with CompilerClassifier
+                f"""
+                int32_t
+                predict_func(const float *values, int length) {{
+                    // Convert to integer
+                    int16_t features[{n_features}];
+                    for (int i=0; i<length; i++) {{
+                        features[i] = (int16_t)values[i];
+                    }}
+                    const int out = {func}(&{name}, features, length);
+                    return out;
+                }}
+                """
+            ])
+            call_func = 'predict_func(values, length)'
+
             name = 'myinlinetree'
             # TODO: actually implement inline predict_proba, instead of just using loadable
             proba_func = 'eml_trees_predict_proba(&{}, values, length, outputs, N_CLASSES)'\
                 .format(name, self.n_classes)
+
             func = '{}_predict(values, length)'.format(name)
             code = self.save(name=name)
             self.classifier_ = common.CompiledClassifier(code, name=name,

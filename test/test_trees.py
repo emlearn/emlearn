@@ -15,6 +15,7 @@ import sklearn.model_selection
 import sklearn.metrics
 import scipy.stats
 
+from emlearn.preprocessing import Quantizer
 import emlearn
 from emlearn.evaluate.trees import model_size_nodes, tree_depth_average
 import pytest
@@ -86,6 +87,7 @@ def check_csv_export(cmodel):
 def test_trees_sklearn_classifier_predict(data, model, method):
     X, y = CLASSIFICATION_DATASETS[data]
     estimator = CLASSIFICATION_MODELS[model]
+    X = Quantizer().fit_transform(X)
 
     estimator.fit(X, y)
     cmodel = emlearn.convert(estimator, method=method)
@@ -106,6 +108,7 @@ def test_trees_sklearn_classifier_predict(data, model, method):
 def test_trees_sklearn_regressor_predict(data, model, method):
     X, y = REGRESSION_DATASETS[data]
     estimator = REGRESSION_MODELS[model]
+    X = Quantizer().fit_transform(X)
 
     estimator.fit(X, y)
     cmodel = emlearn.convert(estimator, method=method)
