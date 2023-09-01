@@ -171,8 +171,17 @@ If you use `emlearn` in an academic work, please reference it using:
 
 ## Made with emlearn
 
-`emlearn` has been used in the following works.
+`emlearn` has been used in the following works (among others).
 
+If you are using emlearn, let us know!
+You can for example submit a pull request for inclusion in this README,
+or create an issue on Github.
+
+- [Tiny Machine Learning for Real-time Postural Stability Analysis](https://raw.githubusercontent.com/veysiadn/veysiadn.github.io/dcdcd8be5b4b3e1509c5e264501f02259b59da78/assets/pdf/1570901064%20final.pdf) by Veysi Adın et.al.
+Tested an sway analysis algorithm for deploying to on a Nordic NRF52840 (ARM Cortex M4).
+Compared artificial neural network (ANN) model with Random Forests and Gaussian Naive Bayes.
+Found that ANN had the best performance under lower signal-to-noise ratios,
+but that Random Forest had the lowest inference time and similar performance in high SNR cases.
 - [Micro Random Forest: A Local, High-Speed Implementation of a Machine-Learning Fault Location Method for Distribution Power Systems](https://www.researchgate.net/publication/372482984_Micro_Random_Forest_A_Local_High-Speed_Implementation_of_a_Machine-Learning_Fault_Location_Method_for_Distribution_Power_Systems) by Miguel Jimenez Aparicio et.al at Sandia National Laboratories.
 Developed a fault localization method that uses the signature of the travelling wave.
 Tested 4 different sized RandomForest models, evaluted performance on a simulated power network.
@@ -239,8 +248,6 @@ Running on Android devices.
 [RIOT OS emlearn package example](https://github.com/RIOT-OS/RIOT/tree/master/tests/pkg/emlearn).
 Their build system automatically runs this test on tens of different hardware boards.
 
-If you are using emlearn, let us know!
-You can for example submit a pull request for inclusion in this README,
-or create an issue on Github.
+
 
 
