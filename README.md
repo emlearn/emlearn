@@ -177,6 +177,11 @@ If you are using emlearn, let us know!
 You can for example submit a pull request for inclusion in this README,
 or create an issue on Github.
 
+- [C-HAR: Compressive Measurement-Based Human Activity Recognition](https://www.researchgate.net/publication/371821553_C-HAR_Compressive_Measurement-Based_Human_Activity_Recognition) by Billy Dawton et. al.
+Tested using compressive sensing with only 5 Hz samplerate do recognize actions such as "Walking", "Typing", and "Eating".
+Used emlearn to deploy the RandomForest based models to a Teensy 4.1 board.
+Found that they could reach around 90% accuracy, but with 4 times lower sampling rate,
+and 2 times lower execution time compared to existing compressed sensing approaches.
 - [Tiny Machine Learning for Real-time Postural Stability Analysis](https://raw.githubusercontent.com/veysiadn/veysiadn.github.io/dcdcd8be5b4b3e1509c5e264501f02259b59da78/assets/pdf/1570901064%20final.pdf) by Veysi Adın et.al.
 Tested an sway analysis algorithm for deploying to on a Nordic NRF52840 (ARM Cortex M4).
 Compared artificial neural network (ANN) model with Random Forests and Gaussian Naive Bayes.
