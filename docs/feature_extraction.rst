@@ -91,7 +91,7 @@ Spectrogram (time-frequency domain)
 A spectrogram decomposes a time-series into both time and frequency,
 creating a 2d image-like representation.
 Spectrograms are commonly used with a wide range of input data, such as:
-sound, accelerometer, Electrocardiogram (ECG), seismology, et.c.
+sound, accelerometer, Electrocardiogram (ECG), seismology, etc.
 
 It is most commonly done by applying the FFT to overlapped consecutive time windows.
 This technique is called Short-Time Fourier Transform (STFT).
@@ -113,7 +113,7 @@ using the wide range of available functions and libraries.
 But once the appropriate feature extraction method has been identified,
 it is normally implemented in C to run on the target device.
 It is recommended to use the same C code also during training.
-This reduces the risk of diverence in feature extraction between target and training,
+This reduces the risk of divergence in feature extraction between target and training,
 which can have very negative impact on predictive performance.
 
 There are two main approaches to use C code during training (in Python):

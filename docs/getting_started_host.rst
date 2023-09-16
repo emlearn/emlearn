@@ -12,7 +12,7 @@ Getting started on PC (Linux/MacOS/Windows)
 .. currentmodule:: emlearn
 
 emlearn models work anywhere there is a C99 compiler available.
-This includes common desktop platforms such as Linux, Mac OS, Windows, et.c.
+This includes common desktop platforms such as Linux, Mac OS, Windows, etc.
 Since you need such a host platform to develop the Python machine-learning,
 it is convenient also to do the first tests of the model on the host.
 
