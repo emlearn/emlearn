@@ -13,7 +13,7 @@ Event Detection
 An *event* is some phenomena that has a distinct temporal pattern.
 In the simplest case there is a distinct *start* of the event (often called an onset),
 and a distinct *end* of the event (offset).
-But sometimes the end (or start) is a gradual or indistict transition,
+But sometimes the end (or start) is a gradual or indistinct transition,
 More rarely, both the start and end are gradual - like the sound of a car passing by.
 
 Often we are interested in detecting the *time* when the events start and end,
@@ -53,7 +53,7 @@ Binary or multi-class
 Event Detection is often binary (the target event is either present or not),
 but it may also be multi-class (multiple event types that can each be present or not).
 In a multi-class setting, all the event classes can be handled by a single multi-class detector,
-or each event class can be modelled using an independent binary event detector model.
+or each event class can be modeled using an independent binary event detector model.
 
 .. TODO: mention model cascading 
 .. Event Detection is sometimes part of larger systems.
@@ -64,7 +64,7 @@ or each event class can be modelled using an independent binary event detector m
 Sliding time windows
 ===========================
 
-The continious input time-series data is usually transformed into a series of fixed-length feature vectors.
+The continuous input time-series data is usually transformed into a series of fixed-length feature vectors.
 Individual features vector for one time-step is often referred to as a *frame*.
 Multiple frames are often combined to form a context *window*, consisting of N frames.
 This is often referred to as using *sliding windows* or *moving windows*,
@@ -130,7 +130,7 @@ and `keras.Sequential <https://keras.io/api/models/model_training_apis/#fit-meth
 
 .. _binary_detection_tradeoff:
 
-Tradeoff between False Alarms and Missed Detections
+Trade-off between False Alarms and Missed Detections
 ===========================
 
 Event Detection involves a binary decision problem (is it an event or not),
@@ -141,7 +141,7 @@ preferred balance between these two.
 It is useful to visualize the trade-offs that are possible for a given model/system.
 There are a number of standard plots used for this purpose, such as:
 
-- Detection Error Tradeoff (DET) curve
+- Detection Error Trade-off (DET) curve
 - Receiver Operating Characteristic (ROC) curve
 - Precision-Recall (PR) curve
 
@@ -155,8 +155,8 @@ scikit-learn has utilities to produce these, with several examples on
 `Precision-Recall curves <https://scikit-learn.org/stable/auto_examples/model_selection/plot_precision_recall.html>`_
 and `DET and ROC curves <https://scikit-learn.org/stable/auto_examples/model_selection/plot_det.html>`_.
 
-The operating point along such a curve is set by applying a decision threshold on top of a continious output.
-Most classification models in emlearn support such a continious output with a ``predict_proba()`` function.
+The operating point along such a curve is set by applying a decision threshold on top of a continuous output.
+Most classification models in emlearn support such a continuous output with a ``predict_proba()`` function.
 
 
 Evaluation metrics
@@ -190,7 +190,7 @@ and the prediction is compared with its corresponding label in the same way as s
 
 However sometimes we do not need each and every frame to be correct.
 For example we may tolerate a bit of slop in the onset and offset.
-Especially since the groundthruth labels themselves may have some imprecision.
+Especially since the groundtruth labels themselves may have some imprecision.
 In the case, the results of frame-wise evaluation may underestimate practical performance.
 
 Event-wise evaluation

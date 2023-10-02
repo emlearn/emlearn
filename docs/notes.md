@@ -42,8 +42,8 @@ Not assumed.
 Basics
 
 - Convert a model to C, run on computer
-- Run model on microcontroller. Eg Arduino
-- Optimize model. Hyperparamters, conversion parameters. Ex RandomForest
+- Run model on microcontroller. E.g. Arduino
+- Optimize model. Hyperparameters, conversion parameters. Ex RandomForest
 - Collect data from microcontroller. Build model on this data
 
 Classification
@@ -86,7 +86,7 @@ Without spending a lot of optimizing performance
 - Find a model that fits within compute constraints C,
 while reaching performance target T
 
-- Find the pareto optimal model
+- Find the Pareto optimal model
 Accuracy vs compute/energy
 
 - Collect a dataset

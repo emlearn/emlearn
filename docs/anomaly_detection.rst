@@ -18,14 +18,14 @@ Many of the tools and techniques mentioned here can be transferred directly to t
 Anomaly Detection is normally approached as an unsupervised learning problem,
 with the training data consisting only of normal data (potentially with a low degree of contamination).
 Any deviation from this normal training data is to be considered an *anomaly*.
-This is sometimes called *one-class classification*, as it focuses on modelling a single class (the normal class).
+This is sometimes called *one-class classification*, as it focuses on modeling a single class (the normal class).
 
 The one-class approach ensures that *novel* anomalies (different from those seen during development),
 are correctly classified as anomalies.
 If one would use a supervised binary classification, it usually has the problem that novel datapoints
 may be incorrectly marked as normal, because they falls inside a decision boundary in training set.
 
-While labled data is not used in the training set when applying unsupervised learning,
+While labeled data is not used in the training set when applying unsupervised learning,
 in practice a small labeled dataset is critical for performance evaluation.
 
 
@@ -51,15 +51,15 @@ Here are a few examples.
 
 
 
-Tradeoff between False Alarms and Missed Detections
+Trade-off between False Alarms and Missed Detections
 ===========================
 
 Anomaly Detection involves a binary decision problem (is it an anomaly or not),
 has an inherent trade-off between False Alarms and Missed Detections.
 
-Anomaly Detection models in emlearn provide a continious anomaly score as output.
+Anomaly Detection models in emlearn provide a continuous anomaly score as output.
 The C function has a name ending with  ``_score()``
-A threshold needs to be applied, in order to convert the continious anomaly score
+A threshold needs to be applied, in order to convert the continuous anomaly score
 to a binary decision.
 
 Selecting anomaly threshold 
@@ -67,7 +67,7 @@ Selecting anomaly threshold
 
 Models in scikit-learn have an automatic threshold selection,
 based on the hyperparameter `contamination` (proportion of outliers in training data).
-We recommend **not** using this mechanism, but instead analyze the continious anomaly scores
+We recommend **not** using this mechanism, but instead analyze the continuous anomaly scores
 to determine an appropriate threshold.
 It is smart to plot the histogram over anomaly scores, with the anomaly/normal class indicated (when known).
 
@@ -79,7 +79,7 @@ It is smart to plot the histogram over anomaly scores, with the anomaly/normal c
     Image source: "Robust Anomaly Detection in Time Series through Variational AutoEncoders and a Local Similarity Score", Matias et.al., 2021.
 
 The optimal way of setting the threshold, is to use a labeled validation dataset.
-It is then possible to pick a desired false positive vs false negative tradeoff,
+It is then possible to pick a desired false positive vs false negative trade-off,
 (for example using f-score), and to determine an optimal threshold.
 
 When the labeled data is insufficient or not present,

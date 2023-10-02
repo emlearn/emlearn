@@ -16,7 +16,7 @@ This includes running client-side in a web browser,
 by using a compiler like Emscription to target `WebAssembly (WASM) <https://en.wikipedia.org/wiki/WebAssembly>`_.
 
 emlearn is primarily designed for very compute and size constrained microcontrollers.
-This makes it good for macking very small models,
+This makes it good for making very small models,
 which is a benefit also in the browser, in order to minimize download time. 
 Furthermore using a browser can be very useful when developing embedded systems,
 as it enables making demonstrations and tools that are very accessible,

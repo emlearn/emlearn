@@ -61,6 +61,6 @@ Related
 ===========================
 
 Some specialized task formulations that use regression are:
-Time-series *forecasting*, for predicing future values,
+Time-series *forecasting*, for predicting future values,
 and Time-to-Event estimation, which is similar to to :doc:`event_detection`.
 
