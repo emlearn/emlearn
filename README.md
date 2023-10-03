@@ -7,6 +7,8 @@
 Machine learning for microcontroller and embedded systems.
 Train in Python, then do inference on any device with a C99 compiler.
 
+![emlearn logo](./brand/emlearn-logo-wordmark-wide-600px.png)
+
 ## Status
 **Minimally useful**.
 Used in dozens of projects by dozens of developers.
