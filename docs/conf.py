@@ -96,11 +96,18 @@ html_theme = "sphinx_rtd_theme"
 html_theme_options = {
     "collapse_navigation": False,
     'navigation_depth': 3,
+    'logo_only': True,
 }
 
 html_js_files = [
     #'js/custom.js'
 ]
+
+html_css_files = [
+    'css/emlearn.css',
+]
+
+html_logo = '../brand/emlearn-logo-wordmark-wide-600px.png'
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,

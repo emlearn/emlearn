@@ -19,7 +19,7 @@
      bordercolor="#666666"
      borderopacity="1.0"
      inkscape:showpageshadow="2"
-     inkscape:pageopacity="1"
+     inkscape:pageopacity="0"
      inkscape:pagecheckerboard="0"
      inkscape:deskcolor="#d1d1d1"
      inkscape:document-units="mm"
@@ -59,9 +59,9 @@
        x="60.538311"
        y="62.834621"
        id="text2068"
-       inkscape:export-filename="emlearn-logo-wordmark-wide.png"
-       inkscape:export-xdpi="1024.9758"
-       inkscape:export-ydpi="1024.9758"><tspan
+       inkscape:export-filename="emlearn-logo-wordmark-wide-600px.png"
+       inkscape:export-xdpi="356.14139"
+       inkscape:export-ydpi="356.14139"><tspan
          sodipodi:role="line"
          id="tspan2066"
          style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-family:Lato;-inkscape-font-specification:'Lato Bold';stroke-width:0.178958px"
