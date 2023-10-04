@@ -10,10 +10,10 @@ Regression
 
 .. currentmodule:: emlearn
 
-Regression is the task of predict/estimate a *continious* value.
+Regression is the task of predicting / estimating a *continuous* value.
 Training is performed using supervised machine learning, using a labeled dataset.
 It can be applied to standard a set of input values, or to time-series data.
-The output can be either a single datapoint for a time-series, or one per time-step.
+The output can be either a single data point for a time-series, or one per time-step.
 
 
 Applications
