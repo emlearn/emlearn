@@ -13,7 +13,7 @@ Event Detection
 An *event* is some phenomena that has a distinct temporal pattern.
 In the simplest case there is a distinct *start* of the event (often called an onset),
 and a distinct *end* of the event (offset).
-But sometimes the end (or start) is a gradual or indistinct transition,
+But sometimes the end (or start) is a gradual or indistinct transition.
 More rarely, both the start and end are gradual - like the sound of a car passing by.
 
 Often we are interested in detecting the *time* when the events start and end,
@@ -58,7 +58,7 @@ or each event class can be modeled using an independent binary event detector mo
 .. TODO: mention model cascading 
 .. Event Detection is sometimes part of larger systems.
 .. Sometimes it is a first-stage detector before performing more computationally intensive tasks such as classification.
-..Or sometimes event counts and durations are used as features for higher-level models. 
+.. Or sometimes event counts and durations are used as features for higher-level models. 
 
 
 Sliding time windows

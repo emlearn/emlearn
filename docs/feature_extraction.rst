@@ -57,7 +57,7 @@ Digital filters
 
 Digital filters can be very useful to process a time-series signal.
 
-`Infinite Impulse Response (IIR)<https://en.wikipedia.org/wiki/Infinite_impulse_response>`_ filter is one way of creating digital filters.
+`Infinite Impulse Response (IIR) <https://en.wikipedia.org/wiki/Infinite_impulse_response>`_ filter is one way of creating digital filters.
 These are useful for:
 
 - Low-pass filters

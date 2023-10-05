@@ -79,8 +79,8 @@ The two strategies normally give identical results.
 But when combined with other optimizations (see below), they may have slight differences.
 When evaluating performance in Python, the ``method`` argument can be passed to **emlearn.convert()**.
 For example ``emlearn.convert(method='inline')``
-.. TODO: link to Python module docs
 
+.. TODO: link to Python module docs
 .. TODO: link to usage guide for model evaluation
 
 Optimization using feature quantization
