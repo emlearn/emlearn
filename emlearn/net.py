@@ -83,6 +83,45 @@ class Wrapper:
 
         return code
 
+def c_generate_layer_data(activations, weights, biases, prefix : str, include_constants=True, arr_modifiers = 'static const'):
+
+    declarations = []
+    def add_declaration(code):
+        declarations.append(dict(code=code))
+    def format_name(layer_no, variable):
+        name = f'{prefix}_layer_{layer_no}_{variable}'
+        return name
+
+    # Layers
+    for layer_no, (l_act, l_weights, l_bias) in enumerate(zip(activations, weights, biases)):
+        n_in, n_out = l_weights.shape
+
+        # layer sizes
+        if include_constants:
+            in_name = format_name(layer_no, 'input_length')
+            add_declaration(cgen.constant_declare(in_name, n_in))
+            out_name = format_name(layer_no, 'output_length')
+            add_declaration(cgen.constant_declare(out_name, n_out))
+
+        # activation
+        if include_constants:
+            activation_name = format_name(layer_no, 'activation')
+            activation_func = 'EmlNetActivation'+l_act.title()
+            add_declaration(cgen.constant_declare(activation_name, activation_func))
+
+        # bias
+        biases_name = format_name(layer_no, 'biases') 
+        biases_arr = cgen.array_declare(biases_name, len(l_bias), values=l_bias, modifiers=arr_modifiers)
+        add_declaration(biases_arr)
+
+        # weights
+        weights_name = format_name(layer_no, 'weights') 
+        weight_values = numpy.array(l_weights).flatten(order='C')
+        weights_arr = cgen.array_declare(weights_name, n_in * n_out, values=weight_values, modifiers=arr_modifiers)
+        add_declaration(weights_arr)
+
+    return declarations
+
 def c_generate_net_inline(activations, weights, biases, prefix : str,
         data_modifiers : str = 'static const'):
     """
@@ -121,31 +160,8 @@ def c_generate_net_inline(activations, weights, biases, prefix : str,
     add_declaration(cgen.constant_declare(f'{prefix}_n_outputs', n_outputs))
 
     # Layers
-    for layer_no, (l_act, l_weights, l_bias) in enumerate(zip(activations, weights, biases)):
-        n_in, n_out = l_weights.shape
+    declarations += c_generate_layer_data(activations, weights, biases, prefix)
 
-        # layer sizes
-        in_name = format_name(layer_no, 'input_length')
-        add_declaration(cgen.constant_declare(in_name, n_in))
-        out_name = format_name(layer_no, 'output_length')
-        add_declaration(cgen.constant_declare(out_name, n_out))
-
-        # activation
-        activation_name = format_name(layer_no, 'activation')
-        activation_func = 'EmlNetActivation'+l_act.title()
-        add_declaration(cgen.constant_declare(activation_name, activation_func))
-
-        # bias
-        biases_name = format_name(layer_no, 'biases') 
-        biases_arr = cgen.array_declare(biases_name, len(l_bias), values=l_bias, modifiers=arr_modifiers)
-        add_declaration(biases_arr)
-
-        # weights
-        weights_name = format_name(layer_no, 'weights') 
-        weight_values = numpy.array(l_weights).flatten(order='C')
-        weights_arr = cgen.array_declare(weights_name, n_in * n_out, values=weight_values, modifiers=arr_modifiers)
-        add_declaration(weights_arr)
-   
     # Generate the neural network code
     layer_numbers = list(range(len(activations)))
 
@@ -167,7 +183,7 @@ def c_generate_net_loadable(activations, weights, biases, prefix):
         init = cgen.struct_init(n_layers, layers_name, buf1_name, buf2_name, buf_length)
         o = 'static EmlNet {name} = {init};'.format(**locals())
         return o
-    def init_layer(name, n_outputs, n_inputs, weigths_name, biases_name, activation_func):
+    def init_layer(name, n_outputs, n_inputs, weights_name, biases_name, activation_func):
         init = cgen.struct_init(n_outputs, n_inputs, weights_name, biases_name, activation_func)
         return init
 
@@ -187,25 +203,18 @@ def c_generate_net_loadable(activations, weights, biases, prefix):
 
     layer_lines = []
     layers = []
-    for layer_no in range(0, n_layers):
-        l_weights = weights[layer_no]
-        l_bias = biases[layer_no]
-        l_activation = activations[layer_no]
 
+    layer_declarations = c_generate_layer_data(activations, weights, biases, prefix,
+            include_constants=False)
+    for d in layer_declarations:
+        layer_lines.append(d['code'])
+
+    for layer_no, (l_act, l_weights) in enumerate(zip(activations, weights)):
         n_in, n_out = l_weights.shape
-        weights_name = '{prefix}_layer{layer_no}_weights'.format(**locals())
-        biases_name = '{prefix}_layer{layer_no}_biases'.format(**locals())
-        activation_func = 'EmlNetActivation'+l_activation.title()
-        layer_name = '{prefix}_layer{layer_no}'.format(**locals())
-    
-        weight_values = numpy.array(l_weights).flatten(order='C')
-        weights_arr = cgen.array_declare(weights_name, n_in * n_out, values=weight_values)
-        layer_lines.append(weights_arr)
-        bias_values = l_bias
-        biases_arr = cgen.array_declare(biases_name, len(l_bias), values=bias_values)
-        layer_lines.append(biases_arr)
+        layer = f'{prefix}_layer_{layer_no}'
 
-        l = init_layer(layer_name, n_out, n_in, weights_name, biases_name, activation_func)
+        activation_func = 'EmlNetActivation'+l_act.title()
+        l = init_layer(layer, n_out, n_in, f'{layer}_weights', f'{layer}_biases', activation_func)
         layers.append('\n'+l)
 
     net_lines = [
