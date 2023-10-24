@@ -187,62 +187,7 @@ eml_net_find_largest_layer(EmlNet *model) {
 // reached state-of-art in MINST/CIFAR-10 with linear SVM classifier
 // scattering transform also did well
 
-
-EmlError
-eml_net_layer_forward(const EmlNetLayer *layer,
-                    const float *in, int32_t in_length,
-                    float *out, int32_t out_length)
-{
-    EML_PRECONDITION(in_length >= layer->n_inputs, EmlSizeMismatch);
-    EML_PRECONDITION(out_length >= layer->n_outputs, EmlSizeMismatch);
-    EML_PRECONDITION(layer->weights, EmlUninitialized);
-    EML_PRECONDITION(layer->biases, EmlUninitialized);
-
-    //printf("weights "); print_array(layer->weights, layer->n_inputs*layer->n_outputs);
-    //printf("biases "); print_array(layer->biases, layer->n_outputs);
-
-    // TODO: matrix multiplication should be done in blocks. Ex 2x4*4x2 = 2x2
-    // multiply inputs by weights
-    for (int o=0; o<layer->n_outputs; o++) {
-        float sum = 0.0f;
-        for (int i=0; i<layer->n_inputs; i++) {
-            const int w_idx = o+(i*layer->n_outputs); // not stored continious
-            const float w = layer->weights[w_idx];
-            sum += w * in[i];
-        }
-
-        out[o] = sum + layer->biases[o];
-
-    }
-
-    // apply activation function
-    if (layer->activation == EmlNetActivationIdentity) {
-        // no-op
-    } else if (layer->activation == EmlNetActivationRelu) {
-        for (int i=0; i<layer->n_outputs; i++) {
-            out[i] = eml_net_relu(out[i]);
-        }
-    } else if (layer->activation == EmlNetActivationLogistic) {
-        for (int i=0; i<layer->n_outputs; i++) {
-            out[i] = eml_net_expit(out[i]);
-        }
-    } else if (layer->activation == EmlNetActivationTanh) {
-        for (int i=0; i<layer->n_outputs; i++) {
-            out[i] = eml_net_tanh(out[i]);
-        }
-    } else if (layer->activation == EmlNetActivationSoftmax) {
-        eml_net_softmax(out, layer->n_outputs);
-    } else {
-        return EmlUnsupported;
-    }
-
-    //printf("activations "); print_array(out, layer->n_outputs);
-
-    return EmlOk;
-}
-
-
-// FIXME: use this in eml_net_layer_forward
+// Inference for a single layer
 EmlError
 eml_net_forward(const float *in, int32_t in_length,
                 const float *weights,
@@ -287,6 +232,27 @@ eml_net_forward(const float *in, int32_t in_length,
     }
 
     return EmlOk;
+}
+
+
+EmlError
+eml_net_layer_forward(const EmlNetLayer *layer,
+                    const float *in, int32_t in_length,
+                    float *out, int32_t out_length)
+{
+    EML_PRECONDITION(in_length >= layer->n_inputs, EmlSizeMismatch);
+    EML_PRECONDITION(out_length >= layer->n_outputs, EmlSizeMismatch);
+    EML_PRECONDITION(layer->weights, EmlUninitialized);
+    EML_PRECONDITION(layer->biases, EmlUninitialized);
+
+    const EmlError err = eml_net_forward(in, layer->n_inputs,
+            layer->weights,
+            layer->biases,
+            layer->activation,
+            out, layer->n_outputs
+    );
+
+    return err;
 }
 
 
