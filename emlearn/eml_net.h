@@ -3,6 +3,7 @@
 #define EML_NET_H
 
 #include "eml_common.h"
+#include "eml_net_common.h"
 
 #include <stdint.h>
 #include <math.h>
@@ -14,26 +15,7 @@ extern "C" {
 // TODO: implement elu
 // TODO: implement SeLu for SNN
 // TODO: implement HardSigmoid
-/**
-    Activation function. Used in layers
-*/
-typedef enum _EmlNetActivationFunction {
-    EmlNetActivationIdentity = 0,
-    EmlNetActivationRelu,
-    EmlNetActivationLogistic,
-    EmlNetActivationSoftmax,
-    EmlNetActivationTanh,
-    EmlNetActivationFunctions,
-} EmlNetActivationFunction;
 
-static const char *
-eml_net_activation_function_strs[EmlNetActivationFunctions] = {
-    "identity",
-    "relu",
-    "logistic",
-    "softmax",
-    "tanh",
-};
 
 /** @struct EmlNetLayer
 *  Layer of a Neural Network
