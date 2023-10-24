@@ -28,20 +28,26 @@ class Wrapper:
         self.biases = biases
         self.classifier = None
         self.return_type = return_type
+        self.inference_type = classifier
 
-        if classifier == 'pymodule' and return_type == 'classifier':
+        if self.inference_type == 'pymodule' and return_type == 'classifier':
             import eml_net # import when required
             self.classifier = eml_net.Classifier(activations, weights, biases)
-        elif classifier == 'loadable' and return_type == 'classifier':
+        elif self.inference_type == 'loadable' and return_type == 'classifier':
             name = 'mynet'
             func = 'eml_net_predict(&{}, values, length)'.format(name)
             code = self.save(name=name)
             self.classifier = common.CompiledClassifier(code, name=name, call=func)
-        elif classifier == 'loadable' and return_type == 'regressor':
+        elif self.inference_type == 'loadable' and return_type == 'regressor':
             name = 'mynet'
             func = 'eml_net_regress1(&{}, values, length)'.format(name)
             code = self.save(name=name)
             self.classifier = common.CompiledClassifier(code, name=name, call=func, out_dtype='float')
+        elif self.inference_type == 'inline':
+            name = 'mynet'
+            func = f'{name}_predict(values, length)'
+            code = self.save(name=name)
+            self.classifier = common.CompiledClassifier(code, name=name, call=func)
         else:
             raise ValueError(f"Unsupported classifier method '{classifier}' with return_type of '{return_type}'")
 
@@ -64,15 +70,99 @@ class Wrapper:
             else:
                 name = os.path.splitext(os.path.basename(file))[0]
 
-        code = c_generate_net(self.activations, self.weights, self.biases, name)
+        if self.inference_type == 'loadable':
+            code = c_generate_net_loadable(self.activations, self.weights, self.biases, prefix=name)
+        elif self.inference_type == 'inline':
+            code = c_generate_net_inline(self.activations, self.weights, self.biases, prefix=name)
+        else:
+            raise ValueError(f"Unsupported inference strategy {self.inference_type}")
+
         if file:
             with open(file, 'w') as f:
                 f.write(code)
 
         return code
 
+def c_generate_net_inline(activations, weights, biases, prefix : str,
+        data_modifiers : str = 'static const'):
+    """
+    Generate C code for a particular neural network. Aka the "inline" inference strategy
+    """
 
-def c_generate_net(activations, weights, biases, prefix):
+    cgen.assert_valid_identifier(prefix)
+
+    arr_modifiers = data_modifiers
+    buffer_modifiers = 'static'
+
+    # Load template
+    from jinja2 import Environment, FileSystemLoader
+    here = os.path.dirname(__file__)
+    template_dir = os.path.join(here, "templates/")
+    environment = Environment(loader=FileSystemLoader(template_dir))
+    template = environment.get_template("net_float.jinja")
+
+    # Generate declarations
+    declarations = []
+    def add_declaration(code):
+        declarations.append(dict(code=code))
+    def format_name(layer_no, variable):
+        name = f'{prefix}_layer_{layer_no}_{variable}'
+        return name
+
+    # Working buffers
+    buffer_sizes = [ w.shape[0] for w in weights ] + [ w.shape[1] for w in weights ]
+    buffer_size = max(buffer_sizes)
+    add_declaration(cgen.constant_declare(f'{prefix}_activations_length', buffer_size))
+    add_declaration(cgen.array_declare(f'{prefix}_activations1', modifiers=buffer_modifiers, size=buffer_size))
+    add_declaration(cgen.array_declare(f'{prefix}_activations2', modifiers=buffer_modifiers, size=buffer_size))
+
+    # Number of outputs
+    n_outputs = weights[-1].shape[1]
+    add_declaration(cgen.constant_declare(f'{prefix}_n_outputs', n_outputs))
+
+    # Layers
+    for layer_no, (l_act, l_weights, l_bias) in enumerate(zip(activations, weights, biases)):
+        n_in, n_out = l_weights.shape
+
+        # layer sizes
+        in_name = format_name(layer_no, 'input_length')
+        add_declaration(cgen.constant_declare(in_name, n_in))
+        out_name = format_name(layer_no, 'output_length')
+        add_declaration(cgen.constant_declare(out_name, n_out))
+
+        # activation
+        activation_name = format_name(layer_no, 'activation')
+        activation_func = 'EmlNetActivation'+l_act.title()
+        add_declaration(cgen.constant_declare(activation_name, activation_func))
+
+        # bias
+        biases_name = format_name(layer_no, 'biases') 
+        biases_arr = cgen.array_declare(biases_name, len(l_bias), values=l_bias, modifiers=arr_modifiers)
+        add_declaration(biases_arr)
+
+        # weights
+        weights_name = format_name(layer_no, 'weights') 
+        weight_values = numpy.array(l_weights).flatten(order='C')
+        weights_arr = cgen.array_declare(weights_name, n_in * n_out, values=weight_values, modifiers=arr_modifiers)
+        add_declaration(weights_arr)
+   
+    # Generate the neural network code
+    layer_numbers = list(range(len(activations)))
+
+    out = template.render(
+        prefix=prefix,
+        declarations=declarations,
+        layers=layer_numbers,
+    )
+
+    return out
+
+
+def c_generate_net_loadable(activations, weights, biases, prefix):
+    """
+    Generate general C code for neural networks inference. Aka the "loadable" inference strategy
+    """
+
     def init_net(name, n_layers, layers_name, buf1_name, buf2_name, buf_length):
         init = cgen.struct_init(n_layers, layers_name, buf1_name, buf2_name, buf_length)
         o = 'static EmlNet {name} = {init};'.format(**locals())

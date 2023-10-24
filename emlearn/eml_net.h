@@ -242,6 +242,54 @@ eml_net_layer_forward(const EmlNetLayer *layer,
 }
 
 
+// FIXME: use this in eml_net_layer_forward
+EmlError
+eml_net_forward(const float *in, int32_t in_length,
+                const float *weights,
+                const float *biases,
+                EmlNetActivationFunction activation,
+                float *out, int32_t out_length)
+{
+
+    // multiply inputs by weights
+    for (int o=0; o<out_length; o++) {
+        float sum = 0.0f;
+        for (int i=0; i<in_length; i++) {
+            const int w_idx = o+(i*out_length);
+            const float w = weights[w_idx];
+            sum += w * in[i];
+        }
+        out[o] = sum + biases[o];
+    }
+
+    // apply activation function
+    if (activation == EmlNetActivationIdentity) {
+        // no-op
+    } else if (activation == EmlNetActivationRelu) {
+        for (int i=0; i<out_length; i++) {
+            out[i] = eml_net_relu(out[i]);
+        }
+    } else if (activation == EmlNetActivationLogistic) {
+        for (int i=0; i<out_length; i++) {
+            out[i] = eml_net_expit(out[i]);
+        }
+
+    } else if (activation == EmlNetActivationTanh) {
+        for (int i=0; i<out_length; i++) {
+            out[i] = eml_net_tanh(out[i]);
+        }
+
+    } else if (activation == EmlNetActivationSoftmax) {
+        eml_net_softmax(out, out_length);
+
+    } else {
+        return EmlUnsupported;
+    }
+
+    return EmlOk;
+}
+
+
 /*
 * \internal
 * \brief Run inference
