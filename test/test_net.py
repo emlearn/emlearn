@@ -166,8 +166,10 @@ def test_net_keras_predict(modelname):
         X_test = X_test[:3]
 
         # check each method. Done here instead of using parameters to save time, above is slow
+        assert_equivalent(model, X_test[:3], params['classes'], method='inline')
         assert_equivalent(model, X_test[:3], params['classes'], method='pymodule')
         assert_equivalent(model, X_test[:3], params['classes'], method='loadable')
+
 
 @pytest.mark.parametrize('modelname', KERAS_REGRESSION_MODELS.keys())
 def test_net_keras_regress(modelname):
