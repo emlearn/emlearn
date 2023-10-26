@@ -3,6 +3,7 @@
 #define EML_NET_H
 
 #include "eml_common.h"
+#include "eml_net_common.h"
 
 #include <stdint.h>
 #include <math.h>
@@ -14,26 +15,7 @@ extern "C" {
 // TODO: implement elu
 // TODO: implement SeLu for SNN
 // TODO: implement HardSigmoid
-/**
-    Activation function. Used in layers
-*/
-typedef enum _EmlNetActivationFunction {
-    EmlNetActivationIdentity = 0,
-    EmlNetActivationRelu,
-    EmlNetActivationLogistic,
-    EmlNetActivationSoftmax,
-    EmlNetActivationTanh,
-    EmlNetActivationFunctions,
-} EmlNetActivationFunction;
 
-static const char *
-eml_net_activation_function_strs[EmlNetActivationFunctions] = {
-    "identity",
-    "relu",
-    "logistic",
-    "softmax",
-    "tanh",
-};
 
 /** @struct EmlNetLayer
 *  Layer of a Neural Network
@@ -187,6 +169,53 @@ eml_net_find_largest_layer(EmlNet *model) {
 // reached state-of-art in MINST/CIFAR-10 with linear SVM classifier
 // scattering transform also did well
 
+// Inference for a single layer
+EmlError
+eml_net_forward(const float *in, int32_t in_length,
+                const float *weights,
+                const float *biases,
+                EmlNetActivationFunction activation,
+                float *out, int32_t out_length)
+{
+
+    // multiply inputs by weights
+    for (int o=0; o<out_length; o++) {
+        float sum = 0.0f;
+        for (int i=0; i<in_length; i++) {
+            const int w_idx = o+(i*out_length);
+            const float w = weights[w_idx];
+            sum += w * in[i];
+        }
+        out[o] = sum + biases[o];
+    }
+
+    // apply activation function
+    if (activation == EmlNetActivationIdentity) {
+        // no-op
+    } else if (activation == EmlNetActivationRelu) {
+        for (int i=0; i<out_length; i++) {
+            out[i] = eml_net_relu(out[i]);
+        }
+    } else if (activation == EmlNetActivationLogistic) {
+        for (int i=0; i<out_length; i++) {
+            out[i] = eml_net_expit(out[i]);
+        }
+
+    } else if (activation == EmlNetActivationTanh) {
+        for (int i=0; i<out_length; i++) {
+            out[i] = eml_net_tanh(out[i]);
+        }
+
+    } else if (activation == EmlNetActivationSoftmax) {
+        eml_net_softmax(out, out_length);
+
+    } else {
+        return EmlUnsupported;
+    }
+
+    return EmlOk;
+}
+
 
 EmlError
 eml_net_layer_forward(const EmlNetLayer *layer,
@@ -198,47 +227,14 @@ eml_net_layer_forward(const EmlNetLayer *layer,
     EML_PRECONDITION(layer->weights, EmlUninitialized);
     EML_PRECONDITION(layer->biases, EmlUninitialized);
 
-    //printf("weights "); print_array(layer->weights, layer->n_inputs*layer->n_outputs);
-    //printf("biases "); print_array(layer->biases, layer->n_outputs);
+    const EmlError err = eml_net_forward(in, layer->n_inputs,
+            layer->weights,
+            layer->biases,
+            layer->activation,
+            out, layer->n_outputs
+    );
 
-    // TODO: matrix multiplication should be done in blocks. Ex 2x4*4x2 = 2x2
-    // multiply inputs by weights
-    for (int o=0; o<layer->n_outputs; o++) {
-        float sum = 0.0f;
-        for (int i=0; i<layer->n_inputs; i++) {
-            const int w_idx = o+(i*layer->n_outputs); // not stored continious
-            const float w = layer->weights[w_idx];
-            sum += w * in[i];
-        }
-
-        out[o] = sum + layer->biases[o];
-
-    }
-
-    // apply activation function
-    if (layer->activation == EmlNetActivationIdentity) {
-        // no-op
-    } else if (layer->activation == EmlNetActivationRelu) {
-        for (int i=0; i<layer->n_outputs; i++) {
-            out[i] = eml_net_relu(out[i]);
-        }
-    } else if (layer->activation == EmlNetActivationLogistic) {
-        for (int i=0; i<layer->n_outputs; i++) {
-            out[i] = eml_net_expit(out[i]);
-        }
-    } else if (layer->activation == EmlNetActivationTanh) {
-        for (int i=0; i<layer->n_outputs; i++) {
-            out[i] = eml_net_tanh(out[i]);
-        }
-    } else if (layer->activation == EmlNetActivationSoftmax) {
-        eml_net_softmax(out, layer->n_outputs);
-    } else {
-        return EmlUnsupported;
-    }
-
-    //printf("activations "); print_array(out, layer->n_outputs);
-
-    return EmlOk;
+    return err;
 }
 
 

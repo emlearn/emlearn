@@ -28,20 +28,26 @@ class Wrapper:
         self.biases = biases
         self.classifier = None
         self.return_type = return_type
+        self.inference_type = classifier
 
-        if classifier == 'pymodule' and return_type == 'classifier':
+        if self.inference_type == 'pymodule' and return_type == 'classifier':
             import eml_net # import when required
             self.classifier = eml_net.Classifier(activations, weights, biases)
-        elif classifier == 'loadable' and return_type == 'classifier':
+        elif self.inference_type == 'loadable' and return_type == 'classifier':
             name = 'mynet'
             func = 'eml_net_predict(&{}, values, length)'.format(name)
             code = self.save(name=name)
             self.classifier = common.CompiledClassifier(code, name=name, call=func)
-        elif classifier == 'loadable' and return_type == 'regressor':
+        elif self.inference_type == 'loadable' and return_type == 'regressor':
             name = 'mynet'
             func = 'eml_net_regress1(&{}, values, length)'.format(name)
             code = self.save(name=name)
             self.classifier = common.CompiledClassifier(code, name=name, call=func, out_dtype='float')
+        elif self.inference_type == 'inline':
+            name = 'mynet'
+            func = f'{name}_predict(values, length)'
+            code = self.save(name=name)
+            self.classifier = common.CompiledClassifier(code, name=name, call=func)
         else:
             raise ValueError(f"Unsupported classifier method '{classifier}' with return_type of '{return_type}'")
 
@@ -64,20 +70,120 @@ class Wrapper:
             else:
                 name = os.path.splitext(os.path.basename(file))[0]
 
-        code = c_generate_net(self.activations, self.weights, self.biases, name)
+        if self.inference_type == 'loadable':
+            code = c_generate_net_loadable(self.activations, self.weights, self.biases, prefix=name)
+        elif self.inference_type == 'inline':
+            code = c_generate_net_inline(self.activations, self.weights, self.biases, prefix=name)
+        else:
+            raise ValueError(f"Unsupported inference strategy {self.inference_type}")
+
         if file:
             with open(file, 'w') as f:
                 f.write(code)
 
         return code
 
+def c_generate_layer_data(activations, weights, biases, prefix : str, include_constants=True, arr_modifiers = 'static const'):
 
-def c_generate_net(activations, weights, biases, prefix):
+    declarations = []
+    def add_declaration(code):
+        declarations.append(dict(code=code))
+    def format_name(layer_no, variable):
+        name = f'{prefix}_layer_{layer_no}_{variable}'
+        return name
+
+    # Layers
+    for layer_no, (l_act, l_weights, l_bias) in enumerate(zip(activations, weights, biases)):
+        n_in, n_out = l_weights.shape
+
+        # layer sizes
+        if include_constants:
+            in_name = format_name(layer_no, 'input_length')
+            add_declaration(cgen.constant_declare(in_name, n_in))
+            out_name = format_name(layer_no, 'output_length')
+            add_declaration(cgen.constant_declare(out_name, n_out))
+
+        # activation
+        if include_constants:
+            activation_name = format_name(layer_no, 'activation')
+            activation_func = 'EmlNetActivation'+l_act.title()
+            add_declaration(cgen.constant_declare(activation_name, activation_func))
+
+        # bias
+        biases_name = format_name(layer_no, 'biases') 
+        biases_arr = cgen.array_declare(biases_name, len(l_bias), values=l_bias, modifiers=arr_modifiers)
+        add_declaration(biases_arr)
+
+        # weights
+        weights_name = format_name(layer_no, 'weights') 
+        weight_values = numpy.array(l_weights).flatten(order='C')
+        weights_arr = cgen.array_declare(weights_name, n_in * n_out, values=weight_values, modifiers=arr_modifiers)
+        add_declaration(weights_arr)
+
+    return declarations
+
+def c_generate_net_inline(activations, weights, biases, prefix : str,
+        data_modifiers : str = 'static const'):
+    """
+    Generate C code for a particular neural network. Aka the "inline" inference strategy
+    """
+
+    cgen.assert_valid_identifier(prefix)
+
+    arr_modifiers = data_modifiers
+    buffer_modifiers = 'static'
+
+    # Load template
+    from jinja2 import Environment, FileSystemLoader
+    here = os.path.dirname(__file__)
+    template_dir = os.path.join(here, "templates/")
+    environment = Environment(loader=FileSystemLoader(template_dir))
+    template = environment.get_template("net_float.jinja")
+
+    # Generate declarations
+    declarations = []
+    def add_declaration(code):
+        declarations.append(dict(code=code))
+    def format_name(layer_no, variable):
+        name = f'{prefix}_layer_{layer_no}_{variable}'
+        return name
+
+    # Working buffers
+    buffer_sizes = [ w.shape[0] for w in weights ] + [ w.shape[1] for w in weights ]
+    buffer_size = max(buffer_sizes)
+    add_declaration(cgen.constant_declare(f'{prefix}_activations_length', buffer_size))
+    add_declaration(cgen.array_declare(f'{prefix}_activations1', modifiers=buffer_modifiers, size=buffer_size))
+    add_declaration(cgen.array_declare(f'{prefix}_activations2', modifiers=buffer_modifiers, size=buffer_size))
+
+    # Number of outputs
+    n_outputs = weights[-1].shape[1]
+    add_declaration(cgen.constant_declare(f'{prefix}_n_outputs', n_outputs))
+
+    # Layers
+    declarations += c_generate_layer_data(activations, weights, biases, prefix)
+
+    # Generate the neural network code
+    layer_numbers = list(range(len(activations)))
+
+    out = template.render(
+        prefix=prefix,
+        declarations=declarations,
+        layers=layer_numbers,
+    )
+
+    return out
+
+
+def c_generate_net_loadable(activations, weights, biases, prefix):
+    """
+    Generate general C code for neural networks inference. Aka the "loadable" inference strategy
+    """
+
     def init_net(name, n_layers, layers_name, buf1_name, buf2_name, buf_length):
         init = cgen.struct_init(n_layers, layers_name, buf1_name, buf2_name, buf_length)
         o = 'static EmlNet {name} = {init};'.format(**locals())
         return o
-    def init_layer(name, n_outputs, n_inputs, weigths_name, biases_name, activation_func):
+    def init_layer(name, n_outputs, n_inputs, weights_name, biases_name, activation_func):
         init = cgen.struct_init(n_outputs, n_inputs, weights_name, biases_name, activation_func)
         return init
 
@@ -97,25 +203,18 @@ def c_generate_net(activations, weights, biases, prefix):
 
     layer_lines = []
     layers = []
-    for layer_no in range(0, n_layers):
-        l_weights = weights[layer_no]
-        l_bias = biases[layer_no]
-        l_activation = activations[layer_no]
 
+    layer_declarations = c_generate_layer_data(activations, weights, biases, prefix,
+            include_constants=False)
+    for d in layer_declarations:
+        layer_lines.append(d['code'])
+
+    for layer_no, (l_act, l_weights) in enumerate(zip(activations, weights)):
         n_in, n_out = l_weights.shape
-        weights_name = '{prefix}_layer{layer_no}_weights'.format(**locals())
-        biases_name = '{prefix}_layer{layer_no}_biases'.format(**locals())
-        activation_func = 'EmlNetActivation'+l_activation.title()
-        layer_name = '{prefix}_layer{layer_no}'.format(**locals())
-    
-        weight_values = numpy.array(l_weights).flatten(order='C')
-        weights_arr = cgen.array_declare(weights_name, n_in * n_out, values=weight_values)
-        layer_lines.append(weights_arr)
-        bias_values = l_bias
-        biases_arr = cgen.array_declare(biases_name, len(l_bias), values=bias_values)
-        layer_lines.append(biases_arr)
+        layer = f'{prefix}_layer_{layer_no}'
 
-        l = init_layer(layer_name, n_out, n_in, weights_name, biases_name, activation_func)
+        activation_func = 'EmlNetActivation'+l_act.title()
+        l = init_layer(layer, n_out, n_in, f'{layer}_weights', f'{layer}_biases', activation_func)
         layers.append('\n'+l)
 
     net_lines = [

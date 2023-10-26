@@ -20,6 +20,7 @@ C_TEST_MODULES = [
     'array',
     'neighbors',
     'quantizer',
+    'net',
 ]
 
 def parse_test_summary(stdout):
