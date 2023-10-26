@@ -33,6 +33,14 @@ def test_unsupported_activation():
     assert 'fake22' in str(ex.value)
 
 
+def assert_equivalent_sklearn(model, X_test, n_classes, method):
+    cmodel = emlearn.convert(model, method=method)
+
+    cpred = cmodel.predict(X_test)
+    pred = model.predict(X_test)
+    assert_equal(pred, cpred)
+
+
 SKLEARN_PARAMS = [
     ( dict(hidden_layer_sizes=(4,), activation='relu'), {'classes': 3, 'features': 2}),
     ( dict(hidden_layer_sizes=(4,), activation='tanh'), {'classes': 2, 'features': 3}),
@@ -63,11 +71,12 @@ def test_sklearn_predict(modelparams,params):
             X_test = X_test[:3]
             cproba = cmodel.predict_proba(X_test)
             proba = model.predict_proba(X_test)
-            cpred = cmodel.predict(X_test)
-            pred = model.predict(X_test)
 
+        assert_equivalent_sklearn(model, X_test, params['classes'], method='inline')
+        assert_equivalent_sklearn(model, X_test, params['classes'], method='pymodule')
+        assert_equivalent_sklearn(model, X_test, params['classes'], method='loadable')
         assert_almost_equal(proba, cproba, decimal=6)
-        assert_equal(pred, cpred)
+
 
 
 def keras_mlp_multiclass_activation_layers(features, classes, activation='relu'):
