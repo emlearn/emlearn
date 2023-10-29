@@ -43,11 +43,13 @@ class Wrapper:
             func = 'eml_net_regress1(&{}, values, length)'.format(name)
             code = self.save(name=name)
             self.classifier = common.CompiledClassifier(code, name=name, call=func, out_dtype='float')
-        elif self.inference_type == 'inline':
+        elif self.inference_type == 'inline' and return_type == 'classifier':
             name = 'mynet'
             func = f'{name}_predict(values, length)'
             code = self.save(name=name)
             self.classifier = common.CompiledClassifier(code, name=name, call=func)
+        elif self.inference_type == 'inline' and return_type == 'regressor':
+            raise NotImplementedError("Inline inference not supported for regressors, use loadable instead")
         else:
             raise ValueError(f"Unsupported classifier method '{classifier}' with return_type of '{return_type}'")
 
@@ -255,7 +257,7 @@ def c_generate_net_loadable(activations, weights, biases, prefix):
 
     return out
 
-def convert_sklearn_mlp(model, method):
+def convert_sklearn_mlp(model, method, return_type='classifier'):
     """Convert sklearn.neural_network.MLPClassifier models"""
 
     if (model.n_layers_ < 3):
@@ -265,7 +267,7 @@ def convert_sklearn_mlp(model, method):
     biases = model.intercepts_
     activations = [model.activation]*(len(weights)-1) + [ model.out_activation_ ]
 
-    return Wrapper(activations, weights, biases, classifier=method)
+    return Wrapper(activations, weights, biases, classifier=method, return_type=return_type)
 
 def from_keras_activation(act):
     name = act.__name__
