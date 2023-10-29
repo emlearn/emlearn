@@ -255,7 +255,7 @@ def c_generate_net_loadable(activations, weights, biases, prefix):
 
     return out
 
-def convert_sklearn_mlp(model, method):
+def convert_sklearn_mlp(model, method, return_type='classifier'):
     """Convert sklearn.neural_network.MLPClassifier models"""
 
     if (model.n_layers_ < 3):
@@ -265,7 +265,7 @@ def convert_sklearn_mlp(model, method):
     biases = model.intercepts_
     activations = [model.activation]*(len(weights)-1) + [ model.out_activation_ ]
 
-    return Wrapper(activations, weights, biases, classifier=method)
+    return Wrapper(activations, weights, biases, classifier=method, return_type=return_type)
 
 def from_keras_activation(act):
     name = act.__name__

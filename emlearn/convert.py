@@ -69,8 +69,8 @@ def convert(estimator,
         return distance.Wrapper(estimator, method, dtype=dtype)
     elif kind in ['GaussianMixture', 'BayesianGaussianMixture']:
         return mixture.Wrapper(estimator, method, dtype=dtype)
-    elif kind == 'MLPClassifier':
-        return net.convert_sklearn_mlp(estimator, method)
+    elif kind in ('MLPClassifier', 'MLPRegressor'):
+        return net.convert_sklearn_mlp(estimator, method, return_type=return_type)
     elif kind == 'Sequential':
         return net.convert_keras(estimator, method, return_type)
     elif kind == 'GaussianNB':

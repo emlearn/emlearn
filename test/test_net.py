@@ -11,7 +11,7 @@ import sys
 import warnings
 warnings.filterwarnings(action='ignore', category=sklearn.exceptions.ConvergenceWarning)
 
-from sklearn.neural_network import MLPClassifier
+from sklearn.neural_network import MLPClassifier, MLPRegressor
 from sklearn.datasets import make_classification
 from sklearn.datasets import make_regression
 from sklearn.model_selection import train_test_split, cross_val_score
@@ -76,6 +76,34 @@ def test_sklearn_predict(modelparams,params):
         assert_equivalent_sklearn(model, X_test, params['classes'], method='pymodule')
         assert_equivalent_sklearn(model, X_test, params['classes'], method='loadable')
         assert_almost_equal(proba, cproba, decimal=6)
+
+
+
+@pytest.mark.parametrize('modelparams,params', SKLEARN_PARAMS)
+def test_sklearn_regress(modelparams,params):
+
+    model = MLPRegressor(**modelparams, max_iter=10)
+
+    for random in range(0, 3):
+        # create dataset
+        rng = numpy.random.RandomState(0)
+        X, y = make_regression(n_features=params['features'], 
+                               n_informative=params['features'],
+                               random_state=rng, n_samples=50)
+        X += 2 * rng.uniform(size=X.shape)
+        X = StandardScaler().fit_transform(X)
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=.2)
+
+        # train model
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            model.fit(X_train, y_train)
+
+        # check equivalence
+        cmodel = emlearn.convert(model)
+        X_test = X_test[:3]
+        assert_equivalent_float(model, X_test, method='loadable')
+        #assert_equivalent_float(model, X_test, method='inline') # not supported at the moment
 
 
 
