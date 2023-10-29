@@ -43,11 +43,13 @@ class Wrapper:
             func = 'eml_net_regress1(&{}, values, length)'.format(name)
             code = self.save(name=name)
             self.classifier = common.CompiledClassifier(code, name=name, call=func, out_dtype='float')
-        elif self.inference_type == 'inline':
+        elif self.inference_type == 'inline' and return_type == 'classifier':
             name = 'mynet'
             func = f'{name}_predict(values, length)'
             code = self.save(name=name)
             self.classifier = common.CompiledClassifier(code, name=name, call=func)
+        elif self.inference_type == 'inline' and return_type == 'regressor':
+            raise NotImplementedError("Inline inference not supported for regressors, use loadable instead")
         else:
             raise ValueError(f"Unsupported classifier method '{classifier}' with return_type of '{return_type}'")
 
