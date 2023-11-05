@@ -107,11 +107,11 @@ def array_declare_fixedpoint(name, fixedpoint : FixedPointFormat = None, values=
 
     if fixedpoint is None:
         # use float
-        return  cgen.array_declare(name, values=values, **kwargs)
+        return array_declare(name, values=values, **kwargs)
 
     assert fixedpoint.total_bits == 32, ('code assumes 32 bit size for the fixed-point format')
     converted = from_float(values, fmt=fixedpoint)
-    return cgen.array_declare(name, values=converted, dtype=fixedpoint.ctype, **kwargs)
+    return array_declare(name, values=converted, dtype=fixedpoint.ctype, **kwargs)
 
 
 def identifier_is_valid(s):

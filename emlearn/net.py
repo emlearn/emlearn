@@ -5,6 +5,7 @@ Neural networks
 """
 
 from . import common, cgen
+from .fixedpoint import FixedPointFormat
 
 import numpy
 
@@ -21,7 +22,10 @@ def argmax(sequence):
 
 
 class Wrapper:
-    def __init__(self, activations, weights, biases, classifier, return_type='classifier'):
+    def __init__(self, activations, weights, biases, classifier,
+            return_type='classifier',
+            use_fixedpoint=False,
+        ):
 
         self.activations = activations
         self.weights = weights
@@ -29,6 +33,10 @@ class Wrapper:
         self.classifier = None
         self.return_type = return_type
         self.inference_type = classifier
+        self.use_fixedpoint = use_fixedpoint
+
+        if self.use_fixedpoint and self.inference_type != 'inline':
+            raise NotImplementedError("Fixed-point only implemented with 'inline' inference type")
 
         if self.inference_type == 'pymodule' and return_type == 'classifier':
             import eml_net # import when required
@@ -45,8 +53,24 @@ class Wrapper:
             self.classifier = common.CompiledClassifier(code, name=name, call=func, out_dtype='float')
         elif self.inference_type == 'inline' and return_type == 'classifier':
             name = 'mynet'
-            func = f'{name}_predict(values, length)'
             code = self.save(name=name)
+
+            if self.use_fixedpoint:
+                # inject a conversion between float and fixed-point
+                n_features = self.weights[0].shape[0]
+                code += f"""
+                eml_q16_t {name}_fixed_values[{n_features}];
+
+                int {name}_predict_float(float *values, int length) {{
+                    for (int i=0; i<length; i++) {{
+                        {name}_fixed_values[i] = EML_Q16_FROMFLOAT(values[i]);
+                    }}
+                    return {name}_predict({name}_fixed_values, length); 
+                }}
+                """
+                func = f'{name}_predict_float(values, length)'                
+            else:
+                func = f'{name}_predict(values, length)'
             self.classifier = common.CompiledClassifier(code, name=name, call=func)
         elif self.inference_type == 'inline' and return_type == 'regressor':
             raise NotImplementedError("Inline inference not supported for regressors, use loadable instead")
@@ -75,7 +99,10 @@ class Wrapper:
         if self.inference_type == 'loadable':
             code = c_generate_net_loadable(self.activations, self.weights, self.biases, prefix=name)
         elif self.inference_type == 'inline':
-            code = c_generate_net_inline(self.activations, self.weights, self.biases, prefix=name)
+            code = c_generate_net_inline(self.activations, self.weights, self.biases,
+                prefix=name,
+                use_fixedpoint=self.use_fixedpoint,
+            )
         else:
             raise ValueError(f"Unsupported inference strategy {self.inference_type}")
 
@@ -85,7 +112,16 @@ class Wrapper:
 
         return code
 
-def c_generate_layer_data(activations, weights, biases, prefix : str, include_constants=True, arr_modifiers = 'static const'):
+def array_declare(name, fixedpoint : FixedPointFormat = None, **kwargs):
+
+    # if fixedpoint==None, uses float
+    return cgen.array_declare_fixedpoint(name, fixedpoint=fixedpoint, **kwargs)
+
+
+def c_generate_layer_data(activations, weights, biases, prefix : str,
+            include_constants=True,
+            use_fixedpoint=False,
+            arr_modifiers = 'static const'):
 
     declarations = []
     def add_declaration(code):
@@ -93,6 +129,9 @@ def c_generate_layer_data(activations, weights, biases, prefix : str, include_co
     def format_name(layer_no, variable):
         name = f'{prefix}_layer_{layer_no}_{variable}'
         return name
+
+    # TODO: pick most appropriate fixed-point format
+    weights_format = FixedPointFormat(integer_bits=8, fraction_bits=23) if use_fixedpoint else None
 
     # Layers
     for layer_no, (l_act, l_weights, l_bias) in enumerate(zip(activations, weights, biases)):
@@ -113,18 +152,21 @@ def c_generate_layer_data(activations, weights, biases, prefix : str, include_co
 
         # bias
         biases_name = format_name(layer_no, 'biases') 
-        biases_arr = cgen.array_declare(biases_name, len(l_bias), values=l_bias, modifiers=arr_modifiers)
+        biases_arr = array_declare(biases_name, size=len(l_bias),
+            values=l_bias, modifiers=arr_modifiers, fixedpoint=weights_format)
         add_declaration(biases_arr)
 
         # weights
         weights_name = format_name(layer_no, 'weights') 
         weight_values = numpy.array(l_weights).flatten(order='C')
-        weights_arr = cgen.array_declare(weights_name, n_in * n_out, values=weight_values, modifiers=arr_modifiers)
+        weights_arr = array_declare(weights_name, size=n_in * n_out,
+            values=weight_values, modifiers=arr_modifiers, fixedpoint=weights_format)
         add_declaration(weights_arr)
 
     return declarations
 
 def c_generate_net_inline(activations, weights, biases, prefix : str,
+        use_fixedpoint = False,
         data_modifiers : str = 'static const'):
     """
     Generate C code for a particular neural network. Aka the "inline" inference strategy
@@ -135,12 +177,15 @@ def c_generate_net_inline(activations, weights, biases, prefix : str,
     arr_modifiers = data_modifiers
     buffer_modifiers = 'static'
 
+    buffers_ctype = 'eml_fixed32_t' if use_fixedpoint else 'float'
+    template_name = "net_fixedpoint.jinja" if use_fixedpoint else "net_float.jinja" 
+
     # Load template
     from jinja2 import Environment, FileSystemLoader
     here = os.path.dirname(__file__)
     template_dir = os.path.join(here, "templates/")
     environment = Environment(loader=FileSystemLoader(template_dir))
-    template = environment.get_template("net_float.jinja")
+    template = environment.get_template(template_name)
 
     # Generate declarations
     declarations = []
@@ -154,15 +199,15 @@ def c_generate_net_inline(activations, weights, biases, prefix : str,
     buffer_sizes = [ w.shape[0] for w in weights ] + [ w.shape[1] for w in weights ]
     buffer_size = max(buffer_sizes)
     add_declaration(cgen.constant_declare(f'{prefix}_activations_length', buffer_size))
-    add_declaration(cgen.array_declare(f'{prefix}_activations1', modifiers=buffer_modifiers, size=buffer_size))
-    add_declaration(cgen.array_declare(f'{prefix}_activations2', modifiers=buffer_modifiers, size=buffer_size))
+    add_declaration(cgen.array_declare(f'{prefix}_activations1', dtype=buffers_ctype, modifiers=buffer_modifiers, size=buffer_size))
+    add_declaration(cgen.array_declare(f'{prefix}_activations2', dtype=buffers_ctype, modifiers=buffer_modifiers, size=buffer_size))
 
     # Number of outputs
     n_outputs = weights[-1].shape[1]
     add_declaration(cgen.constant_declare(f'{prefix}_n_outputs', n_outputs))
 
     # Layers
-    declarations += c_generate_layer_data(activations, weights, biases, prefix)
+    declarations += c_generate_layer_data(activations, weights, biases, prefix, use_fixedpoint=use_fixedpoint)
 
     # Generate the neural network code
     layer_numbers = list(range(len(activations)))
