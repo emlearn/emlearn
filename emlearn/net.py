@@ -302,7 +302,7 @@ def c_generate_net_loadable(activations, weights, biases, prefix):
 
     return out
 
-def convert_sklearn_mlp(model, method, return_type='classifier'):
+def convert_sklearn_mlp(model, method, **kwargs):
     """Convert sklearn.neural_network.MLPClassifier models"""
 
     if (model.n_layers_ < 3):
@@ -312,7 +312,7 @@ def convert_sklearn_mlp(model, method, return_type='classifier'):
     biases = model.intercepts_
     activations = [model.activation]*(len(weights)-1) + [ model.out_activation_ ]
 
-    return Wrapper(activations, weights, biases, classifier=method, return_type=return_type)
+    return Wrapper(activations, weights, biases, classifier=method, **kwargs)
 
 def from_keras_activation(act):
     name = act.__name__
@@ -326,7 +326,7 @@ def from_tf_variable(var):
     array = var.eval()
     return array
 
-def convert_keras(model, method, return_type='classifier'):
+def convert_keras(model, method, **kwargs):
     """Convert keras.Sequential models"""
 
     activations = []
@@ -378,5 +378,5 @@ def convert_keras(model, method, return_type='classifier'):
 
     assert len(activations) == len(biases) == len(layer_weights)
     
-    return Wrapper(activations, layer_weights, biases, classifier=method, return_type=return_type)
+    return Wrapper(activations, layer_weights, biases, classifier=method, **kwargs)
 

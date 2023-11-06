@@ -48,6 +48,7 @@ def convert(estimator,
         method: str = 'pymodule',
         dtype: str ='float',
         return_type: str = 'classifier',
+        **kwargs,
         ) -> Model:
     """Convert model to C
 
@@ -70,9 +71,9 @@ def convert(estimator,
     elif kind in ['GaussianMixture', 'BayesianGaussianMixture']:
         return mixture.Wrapper(estimator, method, dtype=dtype)
     elif kind in ('MLPClassifier', 'MLPRegressor'):
-        return net.convert_sklearn_mlp(estimator, method, return_type=return_type)
+        return net.convert_sklearn_mlp(estimator, method, return_type=return_type, **kwargs)
     elif kind == 'Sequential':
-        return net.convert_keras(estimator, method, return_type)
+        return net.convert_keras(estimator, method, return_type=return_type, **kwargs)
     elif kind == 'GaussianNB':
         return bayes.Wrapper(estimator, method)
     elif kind in ['KNeighborsClassifier']:
