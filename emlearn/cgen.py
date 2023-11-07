@@ -10,6 +10,8 @@ import re
 VALID_IDENTIFIER_REGEX = r'^[_a-zA-Z][_a-zA-Z0-9]*$' # valid C identifiers
 from .creserved import RESERVED_WORDS
 
+from .fixedpoint import FixedPointFormat, from_float
+
 def struct_init(*args):
     """Struct initializer
 
@@ -94,6 +96,23 @@ def array_declare(name, size=None, dtype='float', modifiers='static const',
         init = ' = {{ {init_values} }}'.format(**locals())
 
     return '{indent}{modifiers} {dtype} {name}[{size}]{init};{end}'.format(**locals())
+
+
+def array_declare_fixedpoint(name, fixedpoint : FixedPointFormat = None, values=None, **kwargs):
+    """
+    Declare and optionally initialize an fixed-point array.
+
+    Handles conversion of floating-point values to fixed-point.
+    """
+
+    if fixedpoint is None:
+        # use float
+        return array_declare(name, values=values, **kwargs)
+
+    assert fixedpoint.total_bits == 32, ('code assumes 32 bit size for the fixed-point format')
+    converted = from_float(values, fmt=fixedpoint)
+    return array_declare(name, values=converted, dtype=fixedpoint.ctype, **kwargs)
+
 
 def identifier_is_valid(s):
     """

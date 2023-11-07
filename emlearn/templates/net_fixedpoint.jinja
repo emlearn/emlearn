@@ -1,0 +1,81 @@
+// !!! This file is generated using emlearn
+//
+// Implementation of a neural network, using fixed-point operations
+
+#include <eml_common.h>
+#include <eml_net_fixedpoint.h>
+
+// Constants for the network
+{% for c in declarations %}
+    {{c['code']}}
+{% endfor %}
+
+/*
+* Run inference of the entire network
+* Returns: EmlOk on success.
+* Leaves results in activations2
+*/
+EmlError 
+{{ prefix }}_infer(const eml_q16_t *in, int32_t in_length,
+        eml_fixed32_t *activations1,
+        eml_fixed32_t *activations2,
+        int32_t buffer_length
+    )
+{
+    eml_fixed32_t *buffer1 = activations1;
+    eml_fixed32_t *buffer2 = activations2;
+
+    // Copy input to working buffer
+    for (int i=0; i<in_length; i++) {
+        buffer1[i] = in[i];
+    }
+
+    // Run inference on input layer + hidden layers + output layer
+    {% for layer_no in layers %}
+
+        EML_CHECK_ERROR(eml_net_forward_q16(buffer1,
+                {{ prefix }}_layer_{{layer_no}}_input_length,
+                {{ prefix }}_layer_{{layer_no}}_weights,
+                {{ prefix }}_layer_{{layer_no}}_biases,
+                {{ prefix }}_layer_{{layer_no}}_activation,
+                buffer2,
+                {{ prefix }}_layer_{{layer_no}}_output_length
+        ));
+
+        for (int i=0; i<buffer_length; i++) {
+            buffer1[i] = buffer2[i];
+        }
+    {% endfor %}
+
+    return EmlOk;
+}
+
+
+// Perform single-output classification
+int32_t 
+{{ prefix }}_predict(const eml_q16_t *in, int32_t in_length) 
+{
+
+    eml_fixed32_t *activations1 = {{ prefix }}_activations1;
+    eml_fixed32_t *activations2 = {{ prefix }}_activations2;
+    const int activations_length = {{ prefix }}_activations_length;
+
+    const EmlError error = \
+        {{prefix}}_infer(in, in_length, activations1, activations2, activations_length);
+    if (error != EmlOk) {
+        return -error;
+    }
+
+    const int32_t n_outputs = {{ prefix }}_n_outputs;
+
+    int32_t _class = -EmlUnknownError;
+    if (n_outputs == 1) {
+        _class = (activations2[0] > 0.5f) ? 1 : 0;
+    } else if (n_outputs > 1) {
+        _class = eml_argmax_fixed32(activations2, n_outputs);
+    }
+
+    return _class;
+
+}
+
