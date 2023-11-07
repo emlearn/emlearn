@@ -61,7 +61,7 @@ class Wrapper:
                 code += f"""
                 eml_q16_t {name}_fixed_values[{n_features}];
 
-                int {name}_predict_float(float *values, int length) {{
+                int {name}_predict_float(const float *values, int length) {{
                     for (int i=0; i<length; i++) {{
                         {name}_fixed_values[i] = EML_Q16_FROMFLOAT(values[i]);
                     }}
