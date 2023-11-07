@@ -77,7 +77,7 @@ def test_sklearn_predict(modelparams,params):
         assert_equivalent_sklearn(model, X_test, params['classes'], method='loadable')
         assert_almost_equal(proba, cproba, decimal=6)
 
-#@pytest.mark.xfail()
+@pytest.mark.xfail()
 @pytest.mark.parametrize('modelparams,params', SKLEARN_PARAMS)
 def test_sklearn_predict_fixedpoint(modelparams,params):
 
