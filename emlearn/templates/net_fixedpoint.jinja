@@ -72,7 +72,7 @@ int32_t
     if (n_outputs == 1) {
         _class = (activations2[0] > 0.5f) ? 1 : 0;
     } else if (n_outputs > 1) {
-        _class = eml_net_argmax(activations2, n_outputs);
+        _class = eml_argmax_fixed32(activations2, n_outputs);
     }
 
     return _class;

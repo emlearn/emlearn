@@ -68,6 +68,25 @@ FIXME: implement
 }
 
 
+int32_t
+eml_argmax_fixed32(const eml_fixed32_t *values, int values_length)
+{
+    if (values_length <= 0) {
+        return -1;
+    }
+
+    eml_fixed32_t vmax = values[0];
+    int32_t argmax = -1;
+    for (int i=0; i<values_length; i++) {
+        if (values[i] > vmax) {
+            vmax = values[i];
+            argmax = i;
+        }
+    }
+    return argmax;
+}
+
+
 #ifdef __cplusplus
 }
 #endif
