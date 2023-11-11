@@ -179,6 +179,12 @@ If you are using emlearn, let us know!
 You can for example submit a pull request for inclusion in this README,
 or create an issue on Github.
 
+- [IoT Next Generation Smart Grid Meter (NGSM) for On-Edge Household Appliances Detection Based on Deep Learning and Embedded Linux](https://www.researchgate.net/publication/375226746_IoT_Next_Generation_Smart_Grid_Meter_NGSM_for_On-Edge_Household_Appliances_Detection_Based_on_Deep_Learning_and_Embedded_Linux) by Noor El-Deen M. Mohamed et. al at Helwan University in Cairo, Egypt.
+Developed a smart grid meter for households that can detect when different appliances are running.
+This is done using a Energy Disaggregation / Non-Intrusive Load Monitoring (NILM) model,
+which implemented using a neural network.
+The system runs on Embedded Linux using a Allwinner F1C200s system-on-chip.
+Used emlearn instead of Tensorflow Lite to have a more light-weight approach.
 - [C-HAR: Compressive Measurement-Based Human Activity Recognition](https://www.researchgate.net/publication/371821553_C-HAR_Compressive_Measurement-Based_Human_Activity_Recognition) by Billy Dawton et. al.
 Tested using compressive sensing with only 5 Hz samplerate do recognize actions such as "Walking", "Typing", and "Eating".
 Used emlearn to deploy the RandomForest based models to a Teensy 4.1 board.
