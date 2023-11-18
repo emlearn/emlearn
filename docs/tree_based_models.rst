@@ -78,7 +78,7 @@ Make sure you are using suitable compiler options to enable such optimization.
 The two strategies normally give identical results.
 But when combined with other optimizations (see below), they may have slight differences.
 When evaluating performance in Python, the ``method`` argument can be passed to **emlearn.convert()**.
-For example ``emlearn.convert(method='inline')``
+For example ``emlearn.convert(method='inline')``.
 
 .. TODO: link to Python module docs
 .. TODO: link to usage guide for model evaluation
@@ -95,9 +95,12 @@ and this has multiple benefits.
 
 - Reduces the RAM space needed for features
 - Avoids using floating-point code. Big benefit when there is no hardware FPU
-- On 16-bit architectures, model may take up less code space
+- On 8-bit and 16-bit microprocessor architectures, model may take up less code space
 
-.. TODO: link to example of quantization+leaf-deduplication
+To use this feature, make sure all the input data is scaled to be integers that fits in 8/16/32 bits,
+and set the ``dtype`` argument of ``emlearn.convert()`` to the appropriate C datatype.
+For example **emlearn.convert(model, dtype='int8')**.
+A complete example can be found in :ref:`sphx_glr_auto_examples_trees_feature_quantization.py`
 
 
 Optimization using target quantization and leaf-deduplication
