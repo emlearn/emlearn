@@ -10,6 +10,8 @@ import subprocess
 from typing import Dict
 from pathlib import Path
 
+from emlearn import common
+
 def parse_binutils_size_c_output(stdout : str) -> Dict[str, int]:
     """
     Parse the output of GNU binutils program size, with the option -C
@@ -48,7 +50,8 @@ def run_binutils_size(elf_file : Path, binary : str) -> Dict[str, int]:
 
 def build_avr8_code(code, work_dir : Path,
         mcu : str = 'atmega2560',
-        makefile : Path =None,
+        makefile : Path = None,
+        extra_cflags : str = '',
         make : str ='make'):
 
     # FIXME: improve path
@@ -68,17 +71,17 @@ def build_avr8_code(code, work_dir : Path,
         '-f', makefile,
         f'OBJS={code_basename}.o',
         f'MCU={mcu}',
-        'BIN=out',
+        f'BIN=out',
+        f'EXTRA_CFLAGS={extra_cflags}',
     ]
     output = subprocess.check_output(args, cwd=work_dir)
-    print(output)
 
     elf_path = os.path.join(work_dir, 'out.elf')
     assert os.path.exists(elf_path), os.listdir(work_dir)
 
     return elf_path
 
-def get_program_size(code : str, platform : str):
+def get_program_size(code : str, platform : str, include_dirs=None):
 
     if platform != 'avr':
         # FIXME: also support "host"
@@ -88,10 +91,21 @@ def get_program_size(code : str, platform : str):
 
     size_bin = 'avr-size'
 
+    emlearn_include_dir = common.get_include_dir()
+    if include_dirs is None:
+        # default
+        include_dirs = [ emlearn_include_dir ]
+
+    cflags = ' '.join([ f"-I{d}" for d in include_dirs ])
+
     with tempfile.TemporaryDirectory() as temp_dir:
 
         # build program
-        elf_path = build_avr8_code(code, work_dir=temp_dir)
+        try:
+            elf_path = build_avr8_code(code, work_dir=temp_dir, extra_cflags=cflags)
+        except subprocess.CalledProcessError as e:
+            print('STDOUT', e.stdout)
+            raise e
 
         sizes = run_binutils_size(elf_path, binary=size_bin)
 
