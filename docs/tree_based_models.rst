@@ -27,7 +27,7 @@ This influences both the predictive performance and computational costs of the m
 A larger model will generally have higher predictive performance, but need more CPU/RAM/storage.
 This leads to a trade-off, and different applications may chose different operating points. 
 We may try to find a set of `Pareto optimal <https://en.wikipedia.org/wiki/Pareto_efficiency>`_ model alternatives.
-This is illustrated in the example :ref:`sphx_glr_auto_examples_optimizing_tree_ensembles.py`.
+This is illustrated in the example :ref:`sphx_glr_auto_examples_trees_hyperparameters.py`.
 
 
 Inference strategy: Inline vs loadable 
@@ -100,7 +100,7 @@ and this has multiple benefits.
 To use this feature, make sure all the input data is scaled to be integers that fits in 8/16/32 bits,
 and set the ``dtype`` argument of ``emlearn.convert()`` to the appropriate C datatype.
 For example **emlearn.convert(model, dtype='int8')**.
-A complete example can be found in :ref:`sphx_glr_auto_examples_trees_feature_quantization.py`
+A complete example can be found in :ref:`sphx_glr_auto_examples_trees_feature_quantization.py`.
 
 
 Optimization using target quantization and leaf-deduplication
