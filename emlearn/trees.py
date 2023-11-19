@@ -284,7 +284,7 @@ def generate_c_inlined(forest, name, dtype='float', classifier=True):
         return avg/{n_classes};
     }}
     """.format(**{
-      'function_name': name,
+      'function_name': name+"_predict",
       'n_classes': n_classes,
       'tree_predictions': '\n    '.join([ tree_vote_regressor(n) for n in tree_names ]),
       'ctype': ctype,
@@ -309,7 +309,7 @@ def generate_c_inlined(forest, name, dtype='float', classifier=True):
         return most_voted_class;
     }}
     """.format(**{
-      'function_name': name,
+      'function_name': name+"_predict",
       'n_classes': n_classes,
       'tree_predictions': '\n    '.join([ tree_vote_classifier(n) for n in tree_names ]),
       'ctype': ctype,
@@ -326,9 +326,8 @@ def generate_c_inlined(forest, name, dtype='float', classifier=True):
 
     return '\n\n'.join(tree_funcs + [forest_func])
 
-def generate_c_forest(forest, name='myclassifier', dtype='float', classifier=True):
+def generate_c_loadable(forest, name, dtype='float', classifier=True):
     nodes, roots = forest
-
     cgen.assert_valid_identifier(name)
 
     nodes_name = name+'_nodes'
@@ -353,11 +352,8 @@ def generate_c_forest(forest, name='myclassifier', dtype='float', classifier=Tru
     #include <eml_trees.h>
     """
 
-    inline = generate_c_inlined(forest, name+'_predict', dtype=dtype, classifier=classifier)
-
-    return '\n\n'.join([head, nodes_c, tree_roots, forest_struct, inline]) 
-
-
+    code = '\n\n'.join([head, nodes_c, tree_roots, forest_struct])
+    return code
 
 
 class Wrapper:
@@ -419,7 +415,8 @@ class Wrapper:
 
         return predictions
 
-    def save(self, name=None, file=None, format='c'):
+    def save(self, name=None, file=None, format='c', inference=['inline', 'loadable']):
+
         if name is None:
             if file is None:
                 raise ValueError('Either name or file must be provided')
@@ -427,7 +424,14 @@ class Wrapper:
                 name = os.path.splitext(os.path.basename(file))[0]
 
         if format == 'c':
-            code = generate_c_forest(self.forest_, name, dtype=self.dtype, classifier=self.is_classifier)
+            code = ""
+            generate_args = dict(forest=self.forest_, name=name, dtype=self.dtype, classifier=self.is_classifier)
+            if 'loadable' in inference:
+                code += '\n\n' + generate_c_loadable(**generate_args)
+            if 'inline' in inference:
+                code += '\n\n' + generate_c_inlined(**generate_args)
+            if not code:
+                raise ValueError("No code generated. Check that 'inference' specifies valid strategies")
 
         elif format == 'csv':
             nodes, roots = self.forest_
