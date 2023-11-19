@@ -89,22 +89,26 @@ class Wrapper:
             raise ValueError(f"Unsupported return_type of '{self.return_type}'")
  
 
-    def save(self, name=None, file=None):
+    def save(self, name=None, file=None, inference=['loadable']):
         if name is None:
             if file is None:
                 raise ValueError('Either name or file must be provided')
             else:
                 name = os.path.splitext(os.path.basename(file))[0]
 
-        if self.inference_type == 'loadable':
-            code = c_generate_net_loadable(self.activations, self.weights, self.biases, prefix=name)
-        elif self.inference_type == 'inline':
-            code = c_generate_net_inline(self.activations, self.weights, self.biases,
+        if ('loadable' in inference) and ('inline' in inference):
+            raise ValueError("Specify either 'loadable' or 'inline' inference. Both together is not supported")
+
+        code = ""
+        if 'loadable' in inference:
+            code += '\n' + c_generate_net_loadable(self.activations, self.weights, self.biases, prefix=name)
+        if 'inline' in inference:
+            code += '\n' + c_generate_net_inline(self.activations, self.weights, self.biases,
                 prefix=name,
                 use_fixedpoint=self.use_fixedpoint,
             )
-        else:
-            raise ValueError(f"Unsupported inference strategy {self.inference_type}")
+        if not code:
+            raise ValueError("No code generated. Check that 'inference' specifies valid strategies")
 
         if file:
             with open(file, 'w') as f:
