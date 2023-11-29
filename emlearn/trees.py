@@ -246,7 +246,7 @@ def generate_c_inlined(forest, name, dtype='float', classifier=True):
         {right}
         {indent}}}""".format(**{
             'feature': n[0],
-            'value': n[1],
+            'value': cgen.constant(n[1], dtype=dtype),
             'left': c_node(n[2], depth+1),
             'right': c_node(n[3], depth+1),
             'indent': depth*indent*' ',

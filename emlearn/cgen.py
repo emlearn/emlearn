@@ -48,6 +48,8 @@ def constant(val, dtype='float'):
     """
     if dtype == 'float':
         return "{:.6f}f".format(val)
+    elif 'int' in dtype:
+        return "{:d}".format(int(val))
     else:
         return str(val)
 
