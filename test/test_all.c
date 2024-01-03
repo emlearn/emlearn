@@ -7,6 +7,10 @@
 #include <eml_log.h>
 
 #include "test_array.c"
+#include "test_neighbors.c"
+#include "test_quantizer.c"
+#include "test_net.c"
+
 #include <unity.c>
 
 // Declare the different modules
@@ -17,9 +21,12 @@ typedef struct _TestModule {
     TestModuleFunction func;
 } TestModule;
 
-#define TEST_MODULES 1
+#define TEST_MODULES 4
 TestModule test_modules[TEST_MODULES] = {
     { "array", test_eml_array },
+    { "neighbors", test_eml_neighbors },
+    { "quantizer", test_eml_quantizer },
+    { "net", test_eml_net },
 };
 
 void

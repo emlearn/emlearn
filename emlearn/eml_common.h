@@ -14,7 +14,9 @@ extern "C" {
 
 #include <eml_log.h>
 
-// EmlError
+/** @typedef EmlError
+* \brief Error
+*/
 typedef enum _EmlError {
     EmlOk = 0,
     EmlSizeMismatch,
@@ -25,7 +27,7 @@ typedef enum _EmlError {
     EmlErrors,
 } EmlError;
 
-static const char *
+const char * const
 eml_error_strs[EmlErrors] = {
     "OK",
     "SizeMismatch",
@@ -40,6 +42,9 @@ eml_error_valid(EmlError e) {
     return (e >= EmlOk && e < EmlErrors);
 }
 
+/**
+* \brief Get error description string
+*/
 const char *
 eml_error_str(EmlError e) {
     if (eml_error_valid(e)) {

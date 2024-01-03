@@ -1,19 +1,9 @@
 
 """
-Gaussian Mixture models
+Gaussian Mixture Model (GMM)
+=========================
 
-Implements the GMM models from scikit-learn,
-and reuses some code for compile-time processing.
-
-https://github.com/scikit-learn/scikit-learn/blob/95119c13af77c76e150b753485c662b7c52a41a2/sklearn/mixture/_gaussian_mixture.py#L380
-https://github.com/scikit-learn/scikit-learn/blob/95119c13af77c76e150b753485c662b7c52a41a2/sklearn/mixture/_bayesian_mixture.py
-https://github.com/scikit-learn/scikit-learn/blob/95119c13af77c76e150b753485c662b7c52a41a2/sklearn/mixture/_base.py
-
-For other GMM implementations in C, see vlfeat
-
-https://www.vlfeat.org/api/gmm.html
-https://github.com/vlfeat/vlfeat/blob/master/vl/gmm.c#L712
-Note: implements only diagonal covariance matrix
+Implements the GMM models from scikit-learn.
 """
 
 

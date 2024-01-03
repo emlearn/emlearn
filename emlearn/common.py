@@ -1,4 +1,9 @@
 
+"""
+Utilities
+=========================
+"""
+
 import os
 import sys
 import subprocess
@@ -7,7 +12,10 @@ from distutils.ccompiler import new_compiler
 
 import numpy
 
-def get_include_dir():
+def get_include_dir() -> str:
+    """
+    Get the include directory with C headers for emlearn
+    """
     return os.path.join(os.path.dirname(__file__))
 
 
@@ -169,10 +177,24 @@ class CompiledClassifier():
 
 
 
-def compile_executable(code_file,
-                    out_dir,
-                    name='main',
+def compile_executable(code_file : str,
+                    out_dir : str,
+                    name : str ='main',
                     include_dirs=[]):
+    """
+    Compile C code on the host.
+
+    Useful to integrate small C executables in a Python-based script or notebook.
+    Uses distutil.ccompiler, same as what is used to build Python modules.
+    Should work portably on all platforms.
+
+    :param code_file: Path to file with C code to compile
+    :param out_dir: Path to directory where output executable will be located
+    :param name: Base name of the executable
+    :param include_dirs: Include directories for C headers   
+
+    :return: Path to executable
+    """
 
     cc = new_compiler(force=1)
 

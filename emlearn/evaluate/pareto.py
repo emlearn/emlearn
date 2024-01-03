@@ -1,4 +1,9 @@
 
+"""
+Pareto-optimal evaluation
+=========================
+"""
+
 import numpy
 
 def is_pareto_efficient_simple(costs):
@@ -20,11 +25,20 @@ def is_pareto_efficient_simple(costs):
 
 
 def find_pareto_front(df,
-    cost_metric='mean_test_compute',
-    performance_metric='mean_test_accuracy',
-    higher_is_better=True,
-    min_performance=None):
-    
+    cost_metric : str = 'mean_test_compute',
+    performance_metric : str = 'mean_test_accuracy',
+    higher_is_better : bool = True,
+    min_performance=None):    
+    """
+    Find the Pareto front
+
+    :param cost_metric: Column with model compute cost. Lower cost always better
+    :param performance_metric: Column with model predictive performance.
+    :param higher_is_better: Whether higher or lower is better for @performance_metric
+    :param min_performance: Cut datapoints with worse performance than this
+
+    :returns: The rows that make up the Pareto front
+    """
 
     # prevnt mutating input    
     df = df.copy()
@@ -60,6 +74,11 @@ def plot_pareto_front(results,
                       cost_metric='mean_test_compute',
                       performance_metric='mean_test_accuracy',
                       size_metric='mean_test_size'):
+    """
+    Utility for plotting performance vs compute cost and size of a model.
+    
+    Can also compute and plot the pareto front. 
+    """
 
     import seaborn
 

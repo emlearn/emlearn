@@ -14,6 +14,7 @@ Welcome to emlearn's documentation!
    user_guide
    examples
    api_reference
+   c_api
    source/LICENSE.md
 
 

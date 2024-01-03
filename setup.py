@@ -159,7 +159,7 @@ setup(
     description='Machine learning for microcontrollers and embedded systems',
     long_description=read_readme(),
     long_description_content_type="text/markdown",
-    packages=['emlearn', 'emlearn.tools'],
+    packages=['emlearn', 'emlearn.tools', 'emlearn.preprocessing', 'emlearn.evaluate'],
     entry_points={
         "console_scripts": [
             'eml-window-function = emlearn.tools.window_function:main',

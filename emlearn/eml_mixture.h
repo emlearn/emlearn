@@ -87,6 +87,11 @@ typedef enum EmlCovarianceType_ {
     EmlCovarianceSpherical,
 } EmlCovarianceType;
 
+/**
+* \brief Model
+*
+* Normally initialized by code generated using emlearn.
+*/
 typedef struct _EmlMixtureModel {
    int32_t n_components;
    int32_t n_features;
@@ -140,6 +145,20 @@ print_array(const float *array, int n) {
 }
 #endif
 
+// FIXME: should return EmlError
+/**
+* \brief Run inference and return log-probability scores
+*
+* Low-level function that underlies eml_mixture_score()
+* Useful when operating with log probabilities is preferred.
+*
+* \param model Model instance
+* \param values Input data values
+* \param values_length Input data values
+* \param probabilities Return location for probabilities. Must be length == n_components
+*
+* \return EmlOk on success, or error on failure
+*/
 int32_t
 eml_mixture_log_proba(EmlMixtureModel *model,
                         const float values[], int32_t values_length,
@@ -227,6 +246,18 @@ eml_mixture_log_proba(EmlMixtureModel *model,
    return EmlOk;
 }
 
+// FIXME: should return EmlError
+/**
+* Run inference and return component-wise probabilities and outlier score
+*
+* \param model Model instance
+* \param values Input data values
+* \param values_length Input data values
+* \param probabilities Return location for probabilities. Must be length == n_components
+* \param out_score Return location for the overall outlier score (single value).
+*
+* \return EmlOk on success, or error on failure
+*/
 int32_t
 eml_mixture_score(EmlMixtureModel *model,
                     const float values[], int32_t values_length,

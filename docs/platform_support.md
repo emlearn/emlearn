@@ -15,6 +15,8 @@ For example, emlearn is known to work together with the following.
 - FreeRTOS
 - Contiki-NG
 - RIOT
+- Apache mynewt
+- Azure RTOS ThreadX
 - and so on..
 
 ### Microcontroller hardware platforms

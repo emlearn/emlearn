@@ -1,4 +1,8 @@
 
+"""
+Tree-based models
+=========================
+"""
 
 import os.path
 import os
@@ -320,12 +324,28 @@ def forest_to_dot(forest, name='trees', indent="  "):
 
 
 def generate_c_nodes(flat, name, dtype='float'):
-    def node(n):
-        feature, value, left, right  = n
+    child_value_max = 2**15
+    child_value_min = -2**15
+
+    def assert_valid_child(value):
+        assert value >= child_value_min, value
+        assert value <= child_value_max, value
+
+    def make_node(index, node):
+        feature, value, left_index, right_index = node
+
+        # XXX: consider using relative jumps?
+        left = left_index
+        right = right_index
+    
+        assert_valid_child(left)
+        assert_valid_child(right)
+
         value = cgen.constant(value, dtype=dtype)
+
         return "{{ {}, {}, {}, {} }}".format(feature, value, left, right)
 
-    nodes_structs = ',\n  '.join(node(n) for n in flat)
+    nodes_structs = ',\n  '.join(make_node(i, n) for i, n in enumerate(flat))
     nodes_name = name
     nodes_length = len(flat)
     nodes = "EmlTreesNode {nodes_name}[{nodes_length}] = {{\n  {nodes_structs} \n}};".format(**locals());
@@ -352,7 +372,7 @@ def leaves_to_bytelist(leaves, leaf_bits):
         # FIxME: support class proportions, with up to 8 bits
         raise ValueError('Only 0 or 32 supported for leaf_bits')
 
-def generate_c_inlined(forest, name, n_classes, leaf_bits=0, dtype='float', classifier=True):
+def generate_c_inlined(forest, name, n_features, n_classes=0, leaf_bits=0, dtype='float', classifier=True):
     nodes, roots, leaves = forest
 
     cgen.assert_valid_identifier(name)
@@ -416,7 +436,8 @@ def generate_c_inlined(forest, name, n_classes, leaf_bits=0, dtype='float', clas
         return avg/{n_trees};
     }}
     """.format(**{
-      'function_name': name,
+      'function_name': name+"_predict",
+      'n_classes': n_classes,
       'n_trees': len(roots),
       'tree_predictions': '\n    '.join([ tree_vote_regressor(n) for n in tree_names ]),
       'ctype': ctype,
@@ -441,7 +462,7 @@ def generate_c_inlined(forest, name, n_classes, leaf_bits=0, dtype='float', clas
         return most_voted_class;
     }}
     """.format(**{
-      'function_name': name,
+      'function_name': name+"_predict",
       'n_classes': n_classes,
       'tree_predictions': '\n    '.join([ tree_vote_classifier(n) for n in tree_names ]),
       'ctype': ctype,
@@ -458,13 +479,8 @@ def generate_c_inlined(forest, name, n_classes, leaf_bits=0, dtype='float', clas
 
     return '\n\n'.join(tree_funcs + [forest_func])
 
-def generate_c_forest(forest, n_features,
-        n_classes=0,
-        leaf_bits=0,
-        name='myclassifier',
-        dtype='float',
-        classifier=True):
 
+def generate_c_loadable(forest, name, n_features, dtype='float', classifier=True, n_classes=0, leaf_bits=0):
     nodes, roots, leaves = forest
 
     cgen.assert_valid_identifier(name)
@@ -504,26 +520,8 @@ def generate_c_forest(forest, n_features,
     #include <eml_trees.h>
     """
 
-    inline = generate_c_inlined(forest, name+'_predict',
-        n_classes=n_classes,
-        leaf_bits=leaf_bits,
-        dtype=dtype,
-        classifier=classifier,
-    )
-
-    parts = [
-        head,
-        nodes_c,
-        tree_roots,
-        leaves,
-        forest_struct,
-        inline,
-    ]
-    out = '\n\n'.join(parts)
-
-    return out
-
-
+    code = '\n\n'.join([head, nodes_c, tree_roots, leaves, forest_struct])
+    return code
 
 
 class Wrapper:
@@ -557,10 +555,17 @@ class Wrapper:
         self.forest_ = flatten_forest(trees, leaf=leaf)
         self.forest_ = remove_duplicate_leaves(self.forest_)
 
+
         self.n_features = estimators[0].n_features_in_
         self.n_classes = 0
         if self.is_classifier:
             self.n_classes = estimators[0].n_classes_
+
+        n_nodes = len(self.forest_[0])
+        max_nodes = 2**15 # limited by int16_t for children in EmlTreeNode structure
+        if n_nodes > max_nodes:
+            raise ValueError(f"Model has {n_nodes} nodes. Max supported is {max_nodes} nodes.")
+
 
         if classifier == 'pymodule':
             # FIXME: use Nodes,Roots directly, as Numpy Array
@@ -616,21 +621,42 @@ class Wrapper:
         probabilities = self.classifier_.predict_proba(X)
         return probabilities
 
-    def save(self, name=None, file=None):
+    def save(self, name=None, file=None, format='c', inference=['inline', 'loadable']):
         if name is None:
             if file is None:
                 raise ValueError('Either name or file must be provided')
             else:
                 name = os.path.splitext(os.path.basename(file))[0]
 
-        code = generate_c_forest(self.forest_,
-                n_features=self.n_features,
+        if format == 'c':
+            code = ""
+            generate_args = dict(forest=self.forest_,
                 name=name,
                 dtype=self.dtype,
                 classifier=self.is_classifier,
                 leaf_bits=self.leaf_bits,
                 n_classes=self.n_classes,
-        )
+                n_features=self.n_features,
+            )
+            if 'loadable' in inference:
+                code += '\n\n' + generate_c_loadable(**generate_args)
+            if 'inline' in inference:
+                code += '\n\n' + generate_c_inlined(**generate_args)
+            if not code:
+                raise ValueError("No code generated. Check that 'inference' specifies valid strategies")
+
+        elif format == 'csv':
+            nodes, roots = self.forest_
+            nodes = nodes.copy()
+            lines = []
+            for r in roots:
+                lines.append(f'r,{r}')
+            for n in nodes:
+                lines.append(f'n,{n[0]},{n[1]},{n[2]},{n[3]}')
+            code = '\r\n'.join(lines) 
+        else:
+            raise ValueError(f"Unsupported format: {format}")
+
         if file:
             with open(file, 'w') as f:
                 f.write(code)

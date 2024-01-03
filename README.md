@@ -7,6 +7,8 @@
 Machine learning for microcontroller and embedded systems.
 Train in Python, then do inference on any device with a C99 compiler.
 
+![emlearn logo](./brand/emlearn-logo-wordmark-wide-600px.png)
+
 ## Status
 **Minimally useful**.
 Used in dozens of projects by dozens of developers.
@@ -20,6 +22,7 @@ Embedded-friendly Inference
 * No dynamic allocations
 * Single header file include
 * Support integer/fixed-point math (some methods)
+* Can be embedded/integrated with other languages via C API
 
 Convenient Training
 
@@ -27,6 +30,11 @@ Convenient Training
 * The generated C classifier is also accessible in Python
 
 [MIT licensed](https://github.com/emlearn/emlearn/blob/master/LICENSE.md)
+
+Supporting libraries
+
+- [emlearn-micropython](https://github.com/emlearn/emlearn-micropython).
+Efficient Machine Learning engine for [MicroPython](https://micropython.org), using emlearn.
 
 Can be used as an open source alternative to MATLAB Classification Trees,
 Decision Trees using MATLAB Coder for C/C++ code generation.
@@ -44,6 +52,7 @@ Classification:
 Regression:
 
 * `eml_trees`: sklearn.RandomForestRegressor, sklearn.ExtraTreesRegressor, sklearn.DecisionTreeRegressor
+* `eml_net`: Keras.Sequential with fully-connected layers (```emlearn.convert(model, method='loadable', return_type='regressor')```)
 
 Unsupervised / Outlier Detection / Anomaly Detection
 
@@ -87,6 +96,7 @@ cmodel.save(file='sonar.h', name='sonar')
 
 3. Use the C code
 
+### Simple classifiers
 ```c
 #include "sonar.h"
 
@@ -100,10 +110,43 @@ const int32_t predicted_class = sonar_predict(values, length):
 const int32_t predicted_class = eml_trees_predict(&sonar, length):
 ```
 
+### Neural net regressor
+
+Copy the generated `.h` file, the `eml_net.h` and `eml_common.h` into your project, then
+
+```c
+#include "nnmodel.h" // the generated code basedon on keras.Sequential
+
+float values[6] = { ... };
+
+const float_t predicted_value = nnmodel_regress1(values, 6);
+if (predicted_value == NAN) {
+    exit(-1);
+}
+// Process the value as needed
+
+// Or, passing in a result array directly if more than 1 output is generated
+float out[2];
+EmlError err = nnmodel_regress(values, 6, out, 2);
+if (err != EmlOk)
+{
+    // something went wrong
+}
+else {
+    // predictions are in the out array
+}
+```
+
 For a complete runnable code see [Getting Started](https://emlearn.readthedocs.io/en/latest/getting_started_host.html).
 
 For full documentation see [examples](https://emlearn.readthedocs.io/en/latest/examples.html),
 the [user guide](https://emlearn.readthedocs.io/en/latest/user_guide.html).
+
+## Contributing
+
+Check out the source code, make sure you install the `Unity` submodule as well with `git submodule update --init`
+
+Before committing any code, run the tests by `./test.sh` and install the module locally with `pip install ./ -v`
 
 ## Contributors
 
@@ -118,7 +161,7 @@ If you use `emlearn` in an academic work, please reference it using:
 
 ```tex
 @misc{emlearn,
-  author       = {Jon Nordby},
+  author       = {Nordby, Jon AND Cooke, Mark AND Horvath, Adam},
   title        = {{emlearn: Machine Learning inference engine for 
                    Microcontrollers and Embedded Devices}},
   month        = mar,
@@ -130,8 +173,33 @@ If you use `emlearn` in an academic work, please reference it using:
 
 ## Made with emlearn
 
-`emlearn` has been used in the following works.
+`emlearn` has been used in the following works (among others).
 
+If you are using emlearn, let us know!
+You can for example submit a pull request for inclusion in this README,
+or create an issue on Github.
+
+- [IoT Next Generation Smart Grid Meter (NGSM) for On-Edge Household Appliances Detection Based on Deep Learning and Embedded Linux](https://www.researchgate.net/publication/375226746_IoT_Next_Generation_Smart_Grid_Meter_NGSM_for_On-Edge_Household_Appliances_Detection_Based_on_Deep_Learning_and_Embedded_Linux) by Noor El-Deen M. Mohamed et. al at Helwan University in Cairo, Egypt.
+Developed a smart grid meter for households that can detect when different appliances are running.
+This is done using a Energy Disaggregation / Non-Intrusive Load Monitoring (NILM) model,
+which implemented using a neural network.
+The system runs on Embedded Linux using a Allwinner F1C200s system-on-chip.
+Used emlearn instead of Tensorflow Lite to have a more light-weight approach.
+- [C-HAR: Compressive Measurement-Based Human Activity Recognition](https://www.researchgate.net/publication/371821553_C-HAR_Compressive_Measurement-Based_Human_Activity_Recognition) by Billy Dawton et. al.
+Tested using compressive sensing with only 5 Hz samplerate do recognize actions such as "Walking", "Typing", and "Eating".
+Used emlearn to deploy the RandomForest based models to a Teensy 4.1 board.
+Found that they could reach around 90% accuracy, but with 4 times lower sampling rate,
+and 2 times lower execution time compared to existing compressed sensing approaches.
+- [Tiny Machine Learning for Real-time Postural Stability Analysis](https://raw.githubusercontent.com/veysiadn/veysiadn.github.io/dcdcd8be5b4b3e1509c5e264501f02259b59da78/assets/pdf/1570901064%20final.pdf) by Veysi Adın et.al.
+Tested an sway analysis algorithm for deploying to on a Nordic NRF52840 (ARM Cortex M4).
+Compared artificial neural network (ANN) model with Random Forests and Gaussian Naive Bayes.
+Found that ANN had the best performance under lower signal-to-noise ratios,
+but that Random Forest had the lowest inference time and similar performance in high SNR cases.
+- [Micro Random Forest: A Local, High-Speed Implementation of a Machine-Learning Fault Location Method for Distribution Power Systems](https://www.researchgate.net/publication/372482984_Micro_Random_Forest_A_Local_High-Speed_Implementation_of_a_Machine-Learning_Fault_Location_Method_for_Distribution_Power_Systems) by Miguel Jimenez Aparicio et.al at Sandia National Laboratories.
+Developed a fault localization method that uses the signature of the travelling wave.
+Tested 4 different sized RandomForest models, evaluted performance on a simulated power network.
+Used emlearn to port the models to the TMS320F28379D chip, a C2000-series DSP from Texas Instruments.
+Found that the total execution time was 1.2 ms, of which only 10 us was used by the classifier.
 - [Remote Breathing Rate Tracking in Stationary Position Using the Motion and Acoustic Sensors of Earables](https://www.researchgate.net/publication/369439475_Remote_Breathing_Rate_Tracking_in_Stationary_Position_Using_the_Motion_and_Acoustic_Sensors_of_Earables) by Tousif Ahmed et.al at Samsung Research.
 Developed a system using microphone and accelerometer on earbuds to estimate breathing rate of wearer.
 Tested various models such as Logistic Regression, Multi-layer Perceptron and Random Forest.
@@ -193,8 +261,6 @@ Running on Android devices.
 [RIOT OS emlearn package example](https://github.com/RIOT-OS/RIOT/tree/master/tests/pkg/emlearn).
 Their build system automatically runs this test on tens of different hardware boards.
 
-If you are using emlearn, let us know!
-You can for example submit a pull request for inclusion in this README,
-or create an issue on Github.
+
 
 

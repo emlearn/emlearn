@@ -1,0 +1,19 @@
+cff-version: 1.2.0
+authors:
+  - family-names: Nordby
+    given-names: Jon
+  - family-names: Cooke
+    given-names: Mark
+  - family-names: Horvath
+    given-names: Adam
+identifiers:
+  - description: "All archived software versions"
+    type: doi
+    value: 10.5281/zenodo.2589393
+  - description: "First citable version"
+    type: doi
+    value: 10.5281/zenodo.2589394
+license: MIT
+message: "If you use this software, please cite it using these metadata."
+repository-code: "https://github.com/emlearn/emlearn"
+title: "emlearn: Machine Learning inference engine for Microcontrollers and Embedded Devices"

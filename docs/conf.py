@@ -15,8 +15,9 @@
 
 import os
 import sys
-sys.path.insert(0, os.path.abspath('..'))
+import subprocess
 
+sys.path.insert(0, os.path.abspath('..'))
 
 # -- Project information -----------------------------------------------------
 
@@ -43,6 +44,7 @@ extensions = [
     'sphinx.ext.mathjax',
     'sphinx.ext.viewcode',
     'sphinx.ext.autodoc',
+    'breathe',
     'sphinx.ext.doctest',
     'sphinx.ext.coverage',
     #'sphinx.ext.autosectionlabel',
@@ -69,7 +71,7 @@ master_doc = 'index'
 #
 # This is also used if you do content translation via gettext catalogs.
 # Usually you set "language" from the command line for these cases.
-language = None
+language = 'en'
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
@@ -94,11 +96,18 @@ html_theme = "sphinx_rtd_theme"
 html_theme_options = {
     "collapse_navigation": False,
     'navigation_depth': 3,
+    'logo_only': True,
 }
 
 html_js_files = [
     #'js/custom.js'
 ]
+
+html_css_files = [
+    'css/emlearn.css',
+]
+
+html_logo = '../brand/emlearn-logo-wordmark-wide-600px.png'
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
@@ -199,4 +208,15 @@ sphinx_gallery_conf = {
     'gallery_dirs': 'auto_examples',  # path to where to save gallery generated output
     'filename_pattern': '/', # execute all .py files, not just those with plot_ prefix
 }
+
+
+# -- Breathe for C API documentation using doxygen -------------------------------
+
+breathe_projects = {"emlearn": "./doxygen/xml"}
+breathe_default_project = "emlearn"
+
+# Run doxygen on ReadTheDocs
+read_the_docs_build = os.environ.get('READTHEDOCS', None) == 'True'
+if read_the_docs_build:
+     subprocess.call('cd ./doxygen; doxygen', shell=True)
 

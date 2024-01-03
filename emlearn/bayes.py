@@ -1,3 +1,9 @@
+
+"""
+Gaussian Naive Bayes
+=========================
+"""
+
 import numpy
 numpy.seterr(all='raise')
 
@@ -75,6 +81,9 @@ def generate_c(model, name='myclassifier'):
 # TODO: support class_priors_
 # TODO: support predict_log_proba / predict_proba
 class Wrapper(object):
+    """
+    Python API for Bayes classifier implemented in C
+    """
     def __init__(self, estimator, method):
 
         # FIXME: use var,mean numpy arrays directly

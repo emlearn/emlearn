@@ -25,9 +25,9 @@ The complexity of a tree-based ensemble is a function of its width (the number o
 This influences both the predictive performance and computational costs of the model.
 
 A larger model will generally have higher predictive performance, but need more CPU/RAM/storage.
-This leads to a tradeoff, and different applications may chose different operating points. 
+This leads to a trade-off, and different applications may chose different operating points. 
 We may try to find a set of `Pareto optimal <https://en.wikipedia.org/wiki/Pareto_efficiency>`_ model alternatives.
-This is illustrated in the example :ref:`sphx_glr_auto_examples_optimizing_tree_ensembles.py`.
+This is illustrated in the example :ref:`sphx_glr_auto_examples_trees_hyperparameters.py`.
 
 
 Inference strategy: Inline vs loadable 
@@ -47,7 +47,7 @@ and the merging of the results from multiple trees is also generated code.
 This code has no dependencies on emlearn headers.
 
 In general, the *inline* strategy is expected to have the fastest execution time.
-Howver the exact impact on code space and execution time depends on the particular model,
+However the exact impact on code space and execution time depends on the particular model,
 the target architecture and compiler options.
 So it may need to be tested for your particular application.
 
@@ -78,9 +78,9 @@ Make sure you are using suitable compiler options to enable such optimization.
 The two strategies normally give identical results.
 But when combined with other optimizations (see below), they may have slight differences.
 When evaluating performance in Python, the ``method`` argument can be passed to **emlearn.convert()**.
-For example ``emlearn.convert(method='inline')``
-.. TODO: link to Python module docs
+For example ``emlearn.convert(method='inline')``.
 
+.. TODO: link to Python module docs
 .. TODO: link to usage guide for model evaluation
 
 Optimization using feature quantization
@@ -95,9 +95,12 @@ and this has multiple benefits.
 
 - Reduces the RAM space needed for features
 - Avoids using floating-point code. Big benefit when there is no hardware FPU
-- On 16-bit architectures, model may take up less code space
+- On 8-bit and 16-bit microprocessor architectures, model may take up less code space
 
-.. TODO: link to example of quantization+leaf-deduplication
+To use this feature, make sure all the input data is scaled to be integers that fits in 8/16/32 bits,
+and set the ``dtype`` argument of ``emlearn.convert()`` to the appropriate C datatype.
+For example **emlearn.convert(model, dtype='int8')**.
+A complete example can be found in :ref:`sphx_glr_auto_examples_trees_feature_quantization.py`.
 
 
 Optimization using target quantization and leaf-deduplication
@@ -105,7 +108,7 @@ Optimization using target quantization and leaf-deduplication
 
 The leaf-nodes are the output of the trees.
 For classification this is the class index or class-probabilities,
-and for regression it is the prediced value.
+and for regression it is the predicted value.
 
 emlearn implements leaf de-duplication, such that identical leaves are only stored once across all trees.
 This can considerably reduce the storage needed for the model.
@@ -128,7 +131,7 @@ Optimization of features
 A high-performing and computationally efficient model is dependent on good input features.
 
 Predictive performance of tree-based models is relatively robust against less-useful features.
-However they do tend to get used a bit, and may cause higher than-neccesary computational costs. 
+However they do tend to get used a bit, and may cause higher than-necessary computational costs. 
 Therefore it is good practice to remove features that are completely useless or redundant.
 This can be achieved with `standard feature selection <https://scikit-learn.org/stable/modules/feature_selection.html>`_ methods.
 

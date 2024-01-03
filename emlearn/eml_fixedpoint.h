@@ -7,6 +7,20 @@ extern "C" {
 #endif
 
 // Fixed-point helpers
+
+/** @typedef eml_fixed32_t
+*  Fixed-point number with 32-bit size in variable format
+*
+* Used when the format is not a standard one
+*/
+typedef int32_t eml_fixed32_t;
+
+
+/** @typedef eml_q16_t
+*  Signed fixed-point number in Q16.16 format
+*
+* Uses 32 bits storage. 1 bit for sign, 15 bits for integer part, and 16 bits for fraction.
+*/
 typedef int32_t eml_q16_t;
 #define EML_Q16_FRACT_BITS 16
 #define EML_Q16_ONE (1 << EML_Q16_FRACT_BITS)
@@ -14,8 +28,6 @@ typedef int32_t eml_q16_t;
 #define EML_Q16_FROMFLOAT(x) ((int)((x) * (1 << EML_Q16_FRACT_BITS))) 
 #define EML_Q16_TOINT(x) ((x) >> EML_Q16_FRACT_BITS)
 #define EML_Q16_TOFLOAT(x) (((float)(x)) / (1 << EML_Q16_FRACT_BITS))
-
-// TODO: namespace properly
 
 // Fixed-point math
 #define eml_q16_mul(x, y) ( ((x) >> EML_Q16_FRACT_BITS/2) * ((y)>> EML_Q16_FRACT_BITS/2) )

@@ -28,11 +28,14 @@ eml_biquad_tdf2(float s1[2], float s2[2],
 // TODO: implement DirectForm1 for fixed-point.
 // Should possibly also use first-order noise shaping
 
-
-// IIR filters using cascades of Second Order Sections (SOS)
-// Follows conventions of scipy.signal.sosfilt
-//
-// A single second-order filter is just a special case with n_stages=1
+/** @typedef EmlIIR
+* \brief Filter definition and state
+* 
+* IIR filters using cascades of Second Order Sections (SOS)
+* Follows conventions of scipy.signal.sosfilt
+*
+* A single second-order filter is just a special case with n_stages=1
+*/
 typedef struct _EmlIIR {
     int n_stages;
     float *states;
@@ -42,6 +45,13 @@ typedef struct _EmlIIR {
 } EmlIIR;
 
 
+/**
+* \brief Check that filter is correctly initialized
+*
+* \param filter Filter instance
+*
+* \return EmlOk on success, or error on failure
+*/
 EmlError
 eml_iir_check(EmlIIR filter) {
     EML_PRECONDITION(filter.n_stages >= 1, EmlUninitialized);
@@ -52,6 +62,17 @@ eml_iir_check(EmlIIR filter) {
     return EmlOk;
 }
 
+/**
+* \brief Run filter to comput new values
+*
+* Modifies state internally.
+* NOTE: no error checking is performed. See eml_iir_check() for that
+*
+* \param filter Filter instance
+* \param in Input value
+*
+* \return Filtered value
+*/
 float
 eml_iir_filter(EmlIIR filter, float in) {
 

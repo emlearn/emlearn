@@ -9,6 +9,7 @@ from sklearn.ensemble import ExtraTreesClassifier, ExtraTreesRegressor
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 
 import emlearn
+from emlearn.evaluate.trees import model_size_nodes
 import pytest
 
 random = numpy.random.randint(0, 1000)
@@ -76,6 +77,19 @@ def test_trees_sklearn_regressor_predict(data, model, method):
 
     numpy.testing.assert_allclose(pred_c, pred_original, rtol=1e-3, atol=2)
 
+def test_trees_too_many_nodes():
+    """should give nice error"""
+    X, Y = datasets.make_classification(n_classes=2, n_samples=1000, random_state=1)
+    estimator = RandomForestClassifier(n_estimators=1000, max_depth=20, random_state=1)
+    estimator.fit(X, Y)
+
+    with pytest.raises(ValueError) as ex:
+        cmodel = emlearn.convert(estimator, method='loadable')
+
+    error = str(ex.value).lower()
+    assert 'nodes' in error
+    assert 'model has ' in error
+    assert 'max supported ' in error
 
 def test_trees_to_dot():
     X, Y = datasets.make_classification(n_classes=2, n_samples=10, random_state=1)
