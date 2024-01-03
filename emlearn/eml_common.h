@@ -12,6 +12,8 @@
 extern "C" {
 #endif
 
+#include <eml_log.h>
+
 /** @typedef EmlError
 * \brief Error
 */

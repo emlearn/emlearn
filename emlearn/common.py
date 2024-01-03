@@ -10,6 +10,8 @@ import subprocess
 import platform
 from distutils.ccompiler import new_compiler
 
+import numpy
+
 def get_include_dir() -> str:
     """
     Get the include directory with C headers for emlearn
@@ -17,7 +19,7 @@ def get_include_dir() -> str:
     return os.path.join(os.path.dirname(__file__))
 
 
-def build_classifier(cmodel, name, temp_dir, include_dir, func=None, test_function=None):
+def build_classifier(cmodel, name, temp_dir, include_dir, func=None, test_function=None, n_classes=None):
     if not os.path.exists(temp_dir):
         os.makedirs(temp_dir)
 
@@ -42,18 +44,38 @@ def build_classifier(cmodel, name, temp_dir, include_dir, func=None, test_functi
         libraries = ["m"] # math library / libm
         cc_args = ["-std=c99"]
 
-    # Trivial program that reads values on stdin, and returns classifications on stdout
-    code = """
-    #include "{def_file_name}"
-    #include <eml_test.h>
+    if n_classes is not None:
+        code = """
+        #include "{def_file_name}"
+        #include <eml_test.h>
 
-    static void classify(const float *values, int length, int row) {{
-        printf("%d,%f\\n", row, (float){func});
-    }}
-    int main() {{
-        {test_function}(stdin, classify);
-    }}
-    """.format(**locals())
+        #define N_CLASSES {n_classes}
+        float outputs[N_CLASSES];
+
+        static void classify_proba(const float *values, int length, int row) {{
+            const EmlError err = {func};
+            for (int class_no=0; class_no<N_CLASSES; class_no++) {{
+                const float prob = outputs[class_no];
+                printf("%d,%d,%f\\n", row, class_no, prob);
+            }}
+        }}
+        int main() {{
+            {test_function}(stdin, classify_proba);
+        }}
+        """.format(**locals())
+    else:
+        # Trivial program that reads values on stdin, and returns classifications on stdout
+        code = """
+        #include "{def_file_name}"
+        #include <eml_test.h>
+
+        static void classify(const float *values, int length, int row) {{
+            printf("%d,%f\\n", row, (float){func});
+        }}
+        int main() {{
+            {test_function}(stdin, classify);
+        }}
+        """.format(**locals())
 
     with open(def_file, 'w') as f:
         f.write(cmodel)
@@ -87,9 +109,16 @@ def run_classifier(bin_path, data, out_dtype='int', float_precision=8):
 
     # Parse output
     outputs = []
-    for line in out.split('\n'):
+    lines = out.split('\n')
+    for line in lines:
         if line:
-            row,out_ = line.split(',')
+            tokens = line.split(',')
+            row = tokens[0]
+            if len(tokens) == 2:
+                out_ = tokens[1]
+            else:
+                out_ = tokens
+
             if out_dtype == 'int':
                 out_ = int(float(out_))
             elif out_dtype == 'float':
@@ -98,20 +127,50 @@ def run_classifier(bin_path, data, out_dtype='int', float_precision=8):
                 out_ = out_dtype(out_)
             outputs.append(out_)
 
-    assert len(outputs) == len(data), (len(outputs), len(data), out)
-
     return outputs
 
 class CompiledClassifier():
-    def __init__(self, cmodel, name, call=None, include_dir=None, temp_dir='tmp', test_function=None, out_dtype='int'):
+    def __init__(self, cmodel, name, call=None, include_dir=None, temp_dir='tmp',
+            test_function=None,
+            out_dtype='int',
+            proba_call=None,
+            n_classes=None):
+
         if include_dir == None:
             include_dir = get_include_dir()
         self.bin_path = build_classifier(cmodel, name,
-                include_dir=include_dir, temp_dir=temp_dir, func=call, test_function=test_function) 
+                include_dir=include_dir, temp_dir=temp_dir, func=call, test_function=test_function)
+
+        self.proba_bin_path = None
+        if proba_call is not None:
+            self.proba_bin_path = build_classifier(cmodel, name+'_proba',
+                    include_dir=include_dir, temp_dir=temp_dir,
+                    func=proba_call, n_classes=n_classes,
+                    test_function=test_function)
+
         self._out_dtype = out_dtype
+        self.n_classes = n_classes
 
     def predict(self, X):
-        return run_classifier(self.bin_path, X, out_dtype=self._out_dtype)
+        out = run_classifier(self.bin_path, X, out_dtype=self._out_dtype)
+        assert len(out) == len(X), out
+        return out
+
+    def predict_proba(self, X):
+        if self.proba_bin_path is None:
+            raise ValueError('predict_proba() not supported')
+
+        def convert_out(raw):
+            row, cls, prob = raw 
+            return int(row), int(cls), float(prob)
+
+        result = run_classifier(self.proba_bin_path, X, out_dtype=convert_out)
+        out = numpy.empty(shape=(len(X), self.n_classes))
+        for i, (row, cls, prob) in enumerate(result):
+            out[row][cls] = prob
+
+        assert len(out) == len(X), out
+        return out
 
     def regress(self, X):
         return self.predict(X)

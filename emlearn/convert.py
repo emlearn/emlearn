@@ -12,6 +12,7 @@ from . import distance
 from . import mixture
 from . import neighbors
 
+
 class Model():
     """Inference model powered by emlearn
 
@@ -65,7 +66,7 @@ def convert(estimator,
     # Use name instead of instance to avoid hard dependency on the libraries
     if kind in set(trees.SUPPORTED_ESTIMATORS):
         # return_type is intentionally not passed through - the Wrapper will guess based on Class name
-        return trees.Wrapper(estimator, method, dtype=dtype)
+        return trees.Wrapper(estimator, method, dtype=dtype, **kwargs)
     elif kind in ['EllipticEnvelope']:
         return distance.Wrapper(estimator, method, dtype=dtype)
     elif kind in ['GaussianMixture', 'BayesianGaussianMixture']:
