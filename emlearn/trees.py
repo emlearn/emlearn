@@ -202,10 +202,26 @@ def forest_to_dot(forest, name='trees', indent="  "):
 
 
 def generate_c_nodes(flat, name):
-    def node(n):
-        return "{{ {}, {}, {}, {} }}".format(*n)
+    child_value_max = 2**15
+    child_value_min = -2**15
 
-    nodes_structs = ',\n  '.join(node(n) for n in flat)
+    def assert_valid_child(value):
+        assert value >= child_value_min, value
+        assert value <= child_value_max, value
+
+    def make_node(index, node):
+        feature, value, left_index, right_index = node
+
+        # XXX: consider using relative jumps?
+        left = left_index
+        right = right_index
+    
+        assert_valid_child(left)
+        assert_valid_child(right)
+
+        return "{{ {}, {}, {}, {} }}".format(feature, value, left, right)
+
+    nodes_structs = ',\n  '.join(make_node(i, n) for i, n in enumerate(flat))
     nodes_name = name
     nodes_length = len(flat)
     nodes = "EmlTreesNode {nodes_name}[{nodes_length}] = {{\n  {nodes_structs} \n}};".format(**locals());
@@ -377,6 +393,11 @@ class Wrapper:
 
         self.forest_ = flatten_forest(trees, leaf=leaf)
         self.forest_ = remove_duplicate_leaves(self.forest_)
+
+        n_nodes = len(self.forest_[0])
+        max_nodes = 2**15 # limited by int16_t for children in EmlTreeNode structure
+        if n_nodes > max_nodes:
+            raise ValueError(f"Model has {n_nodes} nodes. Max supported is {max_nodes} nodes.")
 
         if classifier == 'pymodule':
             # FIXME: use Nodes,Roots directly, as Numpy Array
