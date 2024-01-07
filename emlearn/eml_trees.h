@@ -78,7 +78,12 @@ eml_trees_predict_tree(const EmlTrees *forest, int32_t tree_root,
         const float value = features[feature];
         const float point = forest->nodes[node_idx].value;
         //printf("node %d feature %d. %d < %d\n", node_idx, feature, value, point);
-        node_idx = (value < point) ? forest->nodes[node_idx].left : forest->nodes[node_idx].right;
+        const int16_t child = (value < point) ? forest->nodes[node_idx].left : forest->nodes[node_idx].right;
+        if (child >= 0) {
+            node_idx += child;
+        } else {
+            node_idx = child;
+        }
     }
 
     const int16_t leaf = -node_idx-1;

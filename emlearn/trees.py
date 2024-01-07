@@ -331,16 +331,25 @@ def generate_c_nodes(flat, name, dtype='float'):
         assert value >= child_value_min, value
         assert value <= child_value_max, value
 
-    def make_node(index, node):
-        feature, value, left_index, right_index = node
-
-        # XXX: consider using relative jumps?
-        left = left_index
-        right = right_index
+    def encode_child(index, child):
+        if child >= 0:
+            # decision node, use relative jump
+            assert child >= index
+            encoded = child - index
+            # must not become negative, would be confused with a leaf
+            assert encoded >= 0
+        else:
+            # leaf node, leave as-as
+            encoded = child
     
-        assert_valid_child(left)
-        assert_valid_child(right)
+        assert_valid_child(encoded)
+        return encoded
 
+    def make_node(index, node):
+        feature, value, left_child, right_child = node
+
+        left = encode_child(index, left_child)
+        right = encode_child(index, right_child)
         value = cgen.constant(value, dtype=dtype)
 
         return "{{ {}, {}, {}, {} }}".format(feature, value, left, right)
@@ -560,11 +569,6 @@ class Wrapper:
         self.n_classes = 0
         if self.is_classifier:
             self.n_classes = estimators[0].n_classes_
-
-        n_nodes = len(self.forest_[0])
-        max_nodes = 2**15 # limited by int16_t for children in EmlTreeNode structure
-        if n_nodes > max_nodes:
-            raise ValueError(f"Model has {n_nodes} nodes. Max supported is {max_nodes} nodes.")
 
 
         if classifier == 'pymodule':

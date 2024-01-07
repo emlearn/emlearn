@@ -25,7 +25,7 @@ def model_size_nodes(model, a=None, b=None):
     """
     em = convert_model(model)
     
-    nodes, roots = em.forest_
+    nodes, roots, leaves = em.forest_
     return len(nodes)
 
 def model_size_bytes(model, a=None, b=None, node_size=None):
