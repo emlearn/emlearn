@@ -2,5 +2,4 @@ include LICENSE.md
 include requirements*.txt
 include emlearn/*.h
 include emlearn/templates/*.jinja
-include bindings/*.hpp
 include emlearn/VERSION.txt
