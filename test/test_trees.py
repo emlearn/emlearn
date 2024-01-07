@@ -1,8 +1,10 @@
 
+import os
+
 import sklearn
 import numpy
 import numpy.testing
-
+import joblib
 from sklearn import datasets
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.ensemble import ExtraTreesClassifier, ExtraTreesRegressor
@@ -11,6 +13,8 @@ from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 import emlearn
 from emlearn.evaluate.trees import model_size_nodes
 import pytest
+
+here = os.path.dirname(__file__)
 
 random = numpy.random.randint(0, 1000)
 print('random_state={}'.format(random))
@@ -77,19 +81,27 @@ def test_trees_sklearn_regressor_predict(data, model, method):
 
     numpy.testing.assert_allclose(pred_c, pred_original, rtol=1e-3, atol=2)
 
-def test_trees_too_many_nodes():
-    """should give nice error"""
+@pytest.fixture()
+def huge_trees_model():
+    store_classifier_path = os.path.join(here, 'out/test_trees_huge.model.pickle')
     X, Y = datasets.make_classification(n_classes=2, n_samples=1000, random_state=1)
-    estimator = RandomForestClassifier(n_estimators=1000, max_depth=20, random_state=1)
-    estimator.fit(X, Y)
+    est = RandomForestClassifier(n_estimators=1000, max_depth=20, random_state=1)
+    est.fit(X, Y)
 
-    with pytest.raises(ValueError) as ex:
-        cmodel = emlearn.convert(estimator, method='loadable')
+    n_nodes = model_size_nodes(est)
+    assert n_nodes >= 90*1000
 
-    error = str(ex.value).lower()
-    assert 'nodes' in error
-    assert 'model has ' in error
-    assert 'max supported ' in error
+    return X, Y, est
+
+@pytest.mark.parametrize("method", ['loadable', 'inline'])
+def test_trees_huge(method, huge_trees_model):
+    """Should work just the same as a smaller model"""
+    X, Y, estimator = huge_trees_model
+
+    cmodel = emlearn.convert(estimator, method=method)
+    pred_original = estimator.predict(X)
+    pred_c = cmodel.predict(X)
+    numpy.testing.assert_equal(pred_c, pred_original)
 
 def test_trees_to_dot():
     X, Y = datasets.make_classification(n_classes=2, n_samples=10, random_state=1)
