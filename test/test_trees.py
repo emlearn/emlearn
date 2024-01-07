@@ -81,7 +81,7 @@ def test_trees_sklearn_regressor_predict(data, model, method):
 
     numpy.testing.assert_allclose(pred_c, pred_original, rtol=1e-3, atol=2)
 
-@pytest.fixture()
+@pytest.fixture(scope='module')
 def huge_trees_model():
     store_classifier_path = os.path.join(here, 'out/test_trees_huge.model.pickle')
     X, Y = datasets.make_classification(n_classes=2, n_samples=1000, random_state=1)
