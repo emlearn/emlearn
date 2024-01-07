@@ -94,6 +94,7 @@ def huge_trees_model():
     return X, Y, est
 
 @pytest.mark.parametrize("method", ['loadable', 'inline'])
+@pytest.mark.skipif(not bool(int(os.environ.get('EMLEARN_TESTS_SLOW', '0'))), reason='EMLEARN_TESTS_SLOW not enabled')
 def test_trees_huge(method, huge_trees_model):
     """Should work just the same as a smaller model"""
     X, Y, estimator = huge_trees_model
