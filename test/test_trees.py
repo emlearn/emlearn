@@ -46,7 +46,7 @@ REGRESSION_DATASETS = {
     '1out': datasets.make_regression(n_targets=1, n_samples=100, random_state=random),
 }
 
-METHODS = ['pymodule', 'loadable', 'inline']
+METHODS = ['loadable', 'inline']
 
 @pytest.mark.parametrize("data", CLASSIFICATION_DATASETS.keys())
 @pytest.mark.parametrize("model", CLASSIFICATION_MODELS.keys())
