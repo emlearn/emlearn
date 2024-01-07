@@ -1,6 +1,5 @@
 
 import emlearn
-import eml_net
 
 import pytest
 import sklearn
@@ -83,7 +82,6 @@ def test_classifier_predict(params):
     # only test a subset
     X_test = X_test[:10]
 
-    #assert_equivalent(model, X_test, params['classes'], method='pymodule')
     assert_equivalent(model, X_test, n_classes, method='loadable')
 
 

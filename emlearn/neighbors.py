@@ -44,11 +44,7 @@ class Wrapper:
 
         name = 'mymodel'
 
-        if inference == 'pymodule':
-            raise NotImplementedError(f'inference=pymodule not yet supported')
-            #import eml_net # import when required
-            #self.classifier = eml_net.Classifier(activations, weights, biases)
-        elif inference == 'loadable':
+        if inference == 'loadable':
             distance_length = len(self.fit_data_X)
             n_features = self.fit_data_X.shape[1]
 

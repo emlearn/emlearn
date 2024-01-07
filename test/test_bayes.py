@@ -14,7 +14,6 @@ from sklearn import metrics
 from sklearn.utils.estimator_checks import check_estimator 
 
 import emlearn
-import eml_bayes
 
 import pytest
 
@@ -28,7 +27,7 @@ DATASETS = {
     'binary': datasets.make_classification(n_classes=2, n_samples=100, random_state=random),
     '5way': datasets.make_classification(n_classes=5, n_informative=5, n_samples=100, random_state=random),
 }
-METHODS = ['pymodule', 'loadable']
+METHODS = ['loadable']
 
 @pytest.mark.parametrize("data", DATASETS.keys())
 @pytest.mark.parametrize("model", MODELS.keys())

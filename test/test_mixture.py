@@ -43,7 +43,6 @@ DATASETS = {
 }
 METHODS = [
     'inline',
-    #'pymodule',
     #'loadable',
 ]
 

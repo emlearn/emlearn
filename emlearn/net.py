@@ -38,10 +38,7 @@ class Wrapper:
         if self.use_fixedpoint and self.inference_type != 'inline':
             raise NotImplementedError("Fixed-point only implemented with 'inline' inference type")
 
-        if self.inference_type == 'pymodule' and return_type == 'classifier':
-            import eml_net # import when required
-            self.classifier = eml_net.Classifier(activations, weights, biases)
-        elif self.inference_type == 'loadable' and return_type == 'classifier':
+        if self.inference_type == 'loadable' and return_type == 'classifier':
             name = 'mynet'
             func = 'eml_net_predict(&{}, values, length)'.format(name)
             code = self.save(name=name)

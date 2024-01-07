@@ -514,6 +514,10 @@ def generate_c_loadable(forest, name, n_features,
 
     nodes, roots, leaves = forest
 
+    print('nodex', len(nodes))
+    print('trees', len(roots))
+    print('leaves', len(leaves))
+
     cgen.assert_valid_identifier(name)
 
     nodes_name = name+'_nodes'
@@ -593,23 +597,7 @@ class Wrapper:
         if self.is_classifier:
             self.n_classes = estimators[0].n_classes_
 
-
-        if classifier == 'pymodule':
-            # FIXME: use Nodes,Roots directly, as Numpy Array
-            import eml_trees # import when required
-            nodes, roots, leaves = self.forest_
-            node_data = []
-            for node in nodes:
-                assert len(node) == 4
-                node_data += node
-            assert len(node_data) % 4 == 0
-
-            assert type(roots) == list
-            leaf_bytes = leaves_to_bytelist(leaves, leaf_bits=self.leaf_bits)
-            self.classifier_ = eml_trees.Classifier(node_data, roots, leaf_bytes,
-                self.leaf_bits, self.n_classes, self.n_features)
-
-        elif classifier == 'loadable':
+        if classifier == 'loadable':
             name = 'mytree'
             proba_func = 'eml_trees_predict_proba(&{}, values, length, outputs, N_CLASSES)'\
                 .format(name, self.n_classes)

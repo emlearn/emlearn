@@ -46,7 +46,7 @@ class Model():
 
 def convert(estimator, 
         kind : str = None,
-        method: str = 'pymodule',
+        method: str = 'loadable',
         dtype: str ='float',
         return_type: str = 'classifier',
         **kwargs,
@@ -54,7 +54,7 @@ def convert(estimator,
     """Convert model to C
 
     :param kind: Explicit name for the type of model. Useful if the model is a subclass of a supported model class
-    :param method: The inference strategy to use. pymodule|inline|loadable
+    :param method: The inference strategy to use. inline|loadable
     :param dtype: Datatype to use for features. Can be used to enable quantization 
     :param return_type: Return type of the model. 'classifier' (default) creates a classifier (output binarized when needed),  'regressor' creates a regressor (output type is float).
     :return: A Estimator like class, that uses C code for inference

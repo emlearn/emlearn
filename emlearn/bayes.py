@@ -106,11 +106,7 @@ class Wrapper(object):
                 model[class_n,feature_n] = (mean, std, std_log2)
         self.model = model
 
-        if method == 'pymodule':
-            import eml_bayes # import when required
-            flattened = list(numpy.ravel(self.model))
-            self.classifier = eml_bayes.Classifier(flattened, n_classes, n_features)
-        elif method == 'loadable':
+        if method == 'loadable':
             name = 'mybayes'
             func = 'eml_bayes_predict(&{}_model, values, length)'.format(name)
             code = self.save(name=name)

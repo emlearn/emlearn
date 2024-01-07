@@ -1,6 +1,5 @@
 
 import emlearn
-import eml_net
 
 import pytest
 import sklearn
@@ -73,7 +72,6 @@ def test_sklearn_predict(modelparams,params):
             proba = model.predict_proba(X_test)
 
         assert_equivalent_sklearn(model, X_test, params['classes'], method='inline')
-        assert_equivalent_sklearn(model, X_test, params['classes'], method='pymodule')
         assert_equivalent_sklearn(model, X_test, params['classes'], method='loadable')
         assert_almost_equal(proba, cproba, decimal=6)
 
@@ -226,7 +224,6 @@ def test_net_keras_predict(modelname):
 
         # check each method. Done here instead of using parameters to save time, above is slow
         assert_equivalent(model, X_test[:3], params['classes'], method='inline')
-        assert_equivalent(model, X_test[:3], params['classes'], method='pymodule')
         assert_equivalent(model, X_test[:3], params['classes'], method='loadable')
 
 
