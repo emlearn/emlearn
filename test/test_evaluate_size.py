@@ -1,47 +1,47 @@
 
 import pytest
 import shutil
-from emlearn.evaluate.size import get_program_size
+from emlearn.evaluate.size import get_program_size, check_build_tools
 
-def check_programs(programs):
-    needed = set(programs)
-    have = set([ p for p in needed if shutil.which(p) ])
-    missing = needed - have
-    if missing == set():
-        return None
+PLATFORM_CPUS = [
+    'avr/atmega328',
+    'avr/atmega2560',
+    'arm/Cortex-M0',
+    'arm/Cortex-M0+',
+    'arm/Cortex-M3',
+    'arm/Cortex-M4F',
+]
 
-    return f"Missing programs: {', '.join(missing)}"
+@pytest.mark.parametrize('platform_mcu', PLATFORM_CPUS)
+def test_model_size(platform_mcu):
 
-missing_avr_buildtools = check_programs(['avr-size', 'avr-gcc', 'make',])
+    platform, mcu = platform_mcu.split('/')
+    missing_buildtools = check_build_tools(platform)
 
-@pytest.mark.skipif(bool(missing_avr_buildtools), reason=str(missing_avr_buildtools))
-def test_model_size_avr8():
+    if missing_buildtools:
+        pytest.skip(str(missing_buildtools))
 
-    avr_example_program = \
+    # Just a simple portable program that does some computations, including floatin point
+    example_program = \
     """
+    #include <stdint.h>
     #include <stdbool.h>
-    #include <avr/io.h>
-    #include <util/delay.h>
+
+    int function1(int a) {
+        const float f = 2.0f + (a*3.3f / 7.4f);
+        const int out = f < 1.5;
+        return out;
+    }
 
     int main()
     {
-        // set PINB0 to output in DDRB
-        DDRB |= 0b00000001;
-
-        // Set input
-        DDRB &= ~(1 << PINB4);
-
-        const bool pin_state = (PINB & (1 << PINB4)) >> PINB4;
-
-        const float f = 2.0+ (pin_state*3.3 / 7.4);
-        const int out = f < 1.5;     
-
-        // set PINB0 low
-        PORTB &= 0b11111110 + out;
-        _delay_ms(500);
+        volatile bool input;
+        input = true;
+        const int out = function1(input);
+        return out;
     }
     """
-    code = avr_example_program
-    sizes = get_program_size(code, platform='avr')
-    assert sizes['program'] >= 1000, sizes
+    code = example_program
+    sizes = get_program_size(code, platform=platform, mcu=mcu)
+    assert sizes.get('program') >= 100, sizes
 

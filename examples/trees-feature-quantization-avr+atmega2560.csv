@@ -1,0 +1,6 @@
+platform,cpu,dtype,program,ram
+avr,atmega2560,float,6830,240
+avr,atmega2560,int32_t,5808,240
+avr,atmega2560,int16_t,3924,120
+avr,atmega2560,int8_t,2466,60
+avr,atmega2560,uint8_t,2444,60

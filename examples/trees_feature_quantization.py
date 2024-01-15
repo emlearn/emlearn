@@ -10,7 +10,6 @@ This example illustrates how this can impact model size.
 """
 
 import os.path
-import shutil
 
 import emlearn
 import numpy
@@ -69,9 +68,9 @@ model = train_model(data)
 # We are testing here on the AVR8 platform, which has no floating point unit (FPU)
 # Other platforms may show different results.
 
-from emlearn.evaluate.size import get_program_size
+from emlearn.evaluate.size import get_program_size, check_build_tools
 
-def check_program_size(dtype, model):
+def check_program_size(dtype, model, platform, mcu):
 
     model_name = 'sizecheck'
     features_length = model.estimators_[0].n_features_in_
@@ -79,16 +78,14 @@ def check_program_size(dtype, model):
 
     if model_enabled:
         # Quantize with the specified dtype
-        c_model = emlearn.convert(model, dtype=dtype)
+        c_model = emlearn.convert(model, dtype=dtype, method='inline')
         model_code = c_model.save(name=model_name, inference=['inline'])
     else:
         model_code = ""
 
     test_program = \
     f"""
-    #include <stdbool.h>
-    #include <avr/io.h>
-    #include <util/delay.h>
+    #include <stdint.h>
 
     #if {model_enabled}
     {model_code}
@@ -97,44 +94,57 @@ def check_program_size(dtype, model):
 
     int main()
     {{
-        // set PINB0 to output in DDRB
-        DDRB |= 0b00000001;
-
+        uint8_t pred = 0;
         #if {model_enabled}
-        const uint8_t out = {model_name}_predict(features, {features_length});
-        #else
-        const uint8_t out = 0;
+        pred = {model_name}_predict(features, {features_length});
         #endif
-
-        // set output
-        PORTB = out;
-        _delay_ms(50);
+        int out = pred;
+        return out;
     }}
     """
-    data = get_program_size(test_program, platform='avr')
+    data = get_program_size(test_program, platform=platform, mcu=mcu)
 
     return pandas.Series(data)
     
 
-results_file = os.path.join(here, 'trees-feature-quantization-avr8.csv')
-# check if AVR build tools are present. If not, just load results from a file
-have_avr_buildtools = shutil.which('avr-size')
-if have_avr_buildtools:
-    experiments = pandas.DataFrame({
-        'dtype': ('no-model', 'float', 'int32_t', 'int16_t', 'int8_t', 'uint8_t'),
-    })
-    results = experiments['dtype'].apply(check_program_size, model=model)
-    results = pandas.merge(experiments, results, left_index=True, right_index=True)
-    results = results.set_index('dtype')
-    # subtract overall program size to get only model size
-    results = (results - results.loc['no-model'])
-    results = results.drop(index='no-model')
-    results.to_csv(results_file)
-    print("Ran experiments. Results written to", results_file)
-else:
-    print("WARNING: AVR GCC toolchain not found. Loading cached results")
-    results = pandas.read_csv(results_file)
+def run_experiment(model, platform, mcu):
 
+    results_file = os.path.join(here, f'trees-feature-quantization-{platform}+{mcu}.csv')
+    # check if AVR build tools are present. If not, just load results from a file
+    missing_tools = check_build_tools(platform)
+
+    if missing_tools:
+        print(f"WARNING: Compiler toolchain for platform '{platform}' not found. Loading cached results")
+        results = pandas.read_csv(results_file)
+    else:
+        experiments = pandas.DataFrame({
+            'dtype': ('no-model', 'float', 'int32_t', 'int16_t', 'int8_t', 'uint8_t'),
+        })
+        results = experiments['dtype'].apply(check_program_size, model=model, platform=platform, mcu=mcu)
+        results = pandas.merge(experiments, results, left_index=True, right_index=True)
+        results = results.set_index('dtype')
+        # subtract overall program size to get only model size
+        results = (results - results.loc['no-model'])
+        results = results.drop(index='no-model')
+
+        # add identifying information
+        results['platform'] = platform
+        results['cpu'] = mcu
+        results = results.reset_index().set_index(['platform', 'cpu', 'dtype'])
+
+        results.to_csv(results_file)
+        print("Ran experiments. Results written to", results_file)
+
+    return results
+
+
+platforms = pandas.DataFrame.from_records([
+    ('avr', 'atmega2560'),
+    ('arm', 'Cortex-M0'),
+    ('arm', 'Cortex-M4F'),
+], columns=['platform', 'cpu'])
+
+results = pandas.concat([run_experiment(model, platform=row.platform, mcu=row.cpu) for idx, row in platforms.iterrows()])
 print(results)
 
 
@@ -146,15 +156,19 @@ print(results)
 # by picking a suitable datatype for the platform.
 
 def plot_results(results):
+    results = results.reset_index()
+    results['name'] = results.platform + '/' + results.cpu
 
-    fig, ax1 = plt.subplots(1, figsize=(6, 6))
-
-    seaborn.barplot(ax=ax1,
-        data=results.reset_index(),
+    g = seaborn.catplot(data=results,
+        kind='bar',
         y='program',
         x='dtype',
+        row='name',
+        height=6,
+        aspect=2,
     )
-    fig.suptitle("Model size vs feature datatype (platform=AVR8)")
+    fig = g.figure
+    fig.suptitle("Model size vs feature datatype")
 
     return fig
 
