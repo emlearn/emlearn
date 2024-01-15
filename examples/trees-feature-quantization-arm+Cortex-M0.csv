@@ -1,6 +1,6 @@
 platform,cpu,dtype,program,ram
-arm,Cortex-M0,float,4136,0
-arm,Cortex-M0,int32_t,2360,0
-arm,Cortex-M0,int16_t,2720,0
-arm,Cortex-M0,int8_t,2552,0
-arm,Cortex-M0,uint8_t,2168,0
+arm,Cortex-M0,float,4640,0
+arm,Cortex-M0,int32_t,2540,0
+arm,Cortex-M0,int16_t,2960,0
+arm,Cortex-M0,int8_t,2780,0
+arm,Cortex-M0,uint8_t,2416,0

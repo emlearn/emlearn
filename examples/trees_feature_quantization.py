@@ -32,7 +32,7 @@ except NameError:
 # Key thing is to transform the data into integers that fit the
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.preprocessing import MinMaxScaler
-from sklearn.model_selection import cross_val_score
+from sklearn.model_selection import cross_val_score, StratifiedKFold
 
 def train_model(data):
 
@@ -46,10 +46,11 @@ def train_model(data):
     # it may be needed to adapt to larger ones, such as uint16
     X = (MinMaxScaler().fit_transform(X) * 127).astype(int)
 
-    model = RandomForestClassifier(n_estimators=10)
+    model = RandomForestClassifier(n_estimators=10, max_depth=10, random_state=1)
 
     # sanity check performance
-    scores = cross_val_score(model, X, Y)
+    cv = StratifiedKFold(5, random_state=None, shuffle=False)
+    scores = cross_val_score(model, X, Y, cv=cv)
     assert numpy.mean(scores) >= 0.60, numpy.mean(scores)
 
     model.fit(X, Y)
@@ -164,7 +165,7 @@ def plot_results(results):
         y='program',
         x='dtype',
         row='name',
-        height=6,
+        height=4,
         aspect=2,
     )
     fig = g.figure
