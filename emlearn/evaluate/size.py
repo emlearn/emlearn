@@ -7,6 +7,7 @@ import os
 import re
 import tempfile
 import subprocess
+import shutil
 from typing import Dict
 from pathlib import Path
 
@@ -23,6 +24,15 @@ ARM_CORTEX_CFLAGS = {
     'Cortex-M3': '-mthumb -mcpu=cortex-m3',
     'Cortex-M4F': '-mthumb -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard',
 }
+
+def check_programs(programs):
+    needed = set(programs)
+    have = set([ p for p in needed if shutil.which(p) ])
+    missing = needed - have
+    if missing == set():
+        return None
+
+    return f"Missing programs: {', '.join(missing)}"
 
 
 def parse_binutils_size_a_output(stdout : str) -> Dict[str, int]:
@@ -51,7 +61,7 @@ def parse_binutils_size_a_output(stdout : str) -> Dict[str, int]:
         out[field.lower()] = int(value)
 
     # It can happen that there is no RAM/stack usage
-    if '.data' not in out:
+    if '.data' not in out.keys():
         out['.data'] = 0
 
     assert '.text' in out.keys(), out.keys()
@@ -148,23 +158,33 @@ def build_arm_cortex_code(code, work_dir : Path,
 
     return elf_path
 
+# TODO: support also ESP32 Xtensa
+# FIXME: also support "host"
 PLATFORM_BUILDERS = {
     'avr': build_avr8_code,
-    'arm-cortex': build_arm_cortex_code,
+    'arm': build_arm_cortex_code,
 }
 PLATFORM_SIZE_COMMAND = {
     'avr': 'avr-size',
-    'arm-cortex': 'arm-none-eabi-size',
+    'arm': 'arm-none-eabi-size',
+}
+PLATFORM_COMPILER_COMMAND = {
+    'avr': 'avr-gcc',
+    'arm': 'arm-none-eabi-gcc',
 }
 
-def get_program_size(code : str, platform : str, include_dirs=None):
+def assert_valid_platform(platform : str):
 
     supported_platforms = set(PLATFORM_BUILDERS.keys())
     if platform not in supported_platforms:
-        # FIXME: also support "host"
-        # TODO: support also ARM Cortex M0+M4F
-        # TODO: support also ESP32 Xtensa
         raise ValueError("Unsupported build platform '{platform}'. Supported: {','.join(supported_platforms)}")
+
+def get_program_size(code : str, platform : str, mcu : str, include_dirs=None) -> (int, int):
+    """
+    Determine program size when program is compiled for a particular platform
+    """
+
+    assert_valid_platform(platform)
 
     build_function = PLATFORM_BUILDERS[platform]
     size_bin = PLATFORM_SIZE_COMMAND[platform]
@@ -180,7 +200,7 @@ def get_program_size(code : str, platform : str, include_dirs=None):
 
         # build program
         try:
-            elf_path = build_function(code, work_dir=temp_dir, extra_cflags=cflags)
+            elf_path = build_function(code, mcu=mcu, work_dir=temp_dir, extra_cflags=cflags)
         except subprocess.CalledProcessError as e:
             print('STDOUT', e.stdout)
             raise e
@@ -188,4 +208,21 @@ def get_program_size(code : str, platform : str, include_dirs=None):
         sizes = run_binutils_size(elf_path, binary=size_bin)
 
     return sizes
+
+def check_build_tools(platform : str):
+    """
+
+    Returns the set of tools that are missing (if any)
+    """
+
+    assert_valid_platform(platform)
+
+    common = [ 'make', ]
+    compiler = PLATFORM_COMPILER_COMMAND[platform]
+    size = PLATFORM_SIZE_COMMAND[platform]
+
+    needed = common + [ compiler, size ]
+    missing = check_programs(needed)
+
+    return missing
 

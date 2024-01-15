@@ -1,24 +1,27 @@
 
 import pytest
 import shutil
-from emlearn.evaluate.size import get_program_size
+from emlearn.evaluate.size import get_program_size, check_build_tools
 
-def check_programs(programs):
-    needed = set(programs)
-    have = set([ p for p in needed if shutil.which(p) ])
-    missing = needed - have
-    if missing == set():
-        return None
+PLATFORM_CPUS = [
+    'avr/atmega328',
+    'avr/atmega2560',
+    'arm/Cortex-M0',
+    'arm/Cortex-M0+',
+    'arm/Cortex-M3',
+    #'arm/Cortex-M4F',
+]
 
-    return f"Missing programs: {', '.join(missing)}"
+@pytest.mark.parametrize('platform_mcu', PLATFORM_CPUS)
+def test_model_size(platform_mcu):
 
-missing_avr_buildtools = check_programs(['avr-size', 'avr-gcc', 'make',])
+    platform, mcu = platform_mcu.split('/')
+    missing_buildtools = check_build_tools(platform)
 
-# TODO: test all supported platforms. Different ARM Cortex M etc
-# FIXME: move the dependency checks into size.py
-@pytest.mark.skipif(bool(missing_avr_buildtools), reason=str(missing_avr_buildtools))
-def test_model_size_avr8():
+    if missing_buildtools:
+        pytest.skip(str(missing_buildtools))
 
+    # Just a simple portable program that does some computations, including floatin point
     example_program = \
     """
     #include <stdint.h>
@@ -32,12 +35,13 @@ def test_model_size_avr8():
 
     int main()
     {
-        volatile bool input; 
+        volatile bool input;
+        input = true;
         const int out = function1(input);
         return out;
     }
     """
     code = example_program
-    sizes = get_program_size(code, platform='avr')
+    sizes = get_program_size(code, platform=platform, mcu=mcu)
     assert sizes.get('program') >= 100, sizes
 
