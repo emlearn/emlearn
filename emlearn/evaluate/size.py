@@ -61,8 +61,12 @@ def parse_binutils_size_a_output(stdout : str) -> Dict[str, int]:
         out[field.lower()] = int(value)
 
     # It can happen that there is no RAM/stack usage
-    if '.data' not in out.keys():
-        out['.data'] = 0
+    mandatory_sections = [
+        '.rodata', '.data', '.bss'
+    ]
+    for section in mandatory_sections:
+        if not section in out:
+            out[section] = 0
 
     assert '.text' in out.keys(), out.keys()
     assert '.data' in out.keys(), out.keys()
@@ -84,8 +88,8 @@ def run_binutils_size(elf_file : Path, binary : str) -> Dict[str, int]:
     parsed = parse_binutils_size_a_output(out.decode('utf-8'))
 
     converted = {
-        'program': parsed['.text'],
-        'ram': parsed['.data'],
+        'flash': parsed['.text'] + parsed['.data'] + parsed['.rodata'],
+        'ram': parsed['.data'] + parsed['.bss'],
     }
 
     return converted

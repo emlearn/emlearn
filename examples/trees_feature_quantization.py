@@ -162,7 +162,7 @@ def plot_results(results):
 
     g = seaborn.catplot(data=results,
         kind='bar',
-        y='program',
+        y='flash',
         x='dtype',
         row='name',
         height=4,

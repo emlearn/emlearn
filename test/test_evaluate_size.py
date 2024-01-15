@@ -43,5 +43,5 @@ def test_model_size(platform_mcu):
     """
     code = example_program
     sizes = get_program_size(code, platform=platform, mcu=mcu)
-    assert sizes.get('program') >= 100, sizes
+    assert sizes.get('flash') >= 100, sizes
 
