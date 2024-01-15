@@ -16,7 +16,7 @@ ${BIN}.hex: ${BIN}.elf
 	${OBJCOPY} -O ihex -R .eeprom $< $@
 
 ${BIN}.elf: ${OBJS}
-	${CC} --specs=nosys.specs -o $@ $^
+	${CC} --specs=nosys.specs ${ARM_CORTEX_CFLAGS} -o $@ $^
 
 clean:
 	rm -f ${BIN}.elf ${BIN}.hex ${OBJS}

@@ -113,7 +113,7 @@ def run_experiment(model, platform, mcu):
     # check if AVR build tools are present. If not, just load results from a file
     missing_tools = check_build_tools(platform)
 
-    if missing_tools or True:
+    if missing_tools:
         print(f"WARNING: Compiler toolchain for platform '{platform}' not found. Loading cached results")
         results = pandas.read_csv(results_file)
     else:
@@ -141,10 +141,9 @@ def run_experiment(model, platform, mcu):
 platforms = pandas.DataFrame.from_records([
     ('avr', 'atmega2560'),
     ('arm', 'Cortex-M0'),
-    #('arm', 'Cortex-M4F'),
+    ('arm', 'Cortex-M4F'),
 ], columns=['platform', 'cpu'])
-print(platforms)
-#results = platforms.apply(print, axis=1)
+
 results = pandas.concat([run_experiment(model, platform=row.platform, mcu=row.cpu) for idx, row in platforms.iterrows()])
 print(results)
 

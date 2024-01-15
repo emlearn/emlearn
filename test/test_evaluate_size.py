@@ -9,7 +9,7 @@ PLATFORM_CPUS = [
     'arm/Cortex-M0',
     'arm/Cortex-M0+',
     'arm/Cortex-M3',
-    #'arm/Cortex-M4F',
+    'arm/Cortex-M4F',
 ]
 
 @pytest.mark.parametrize('platform_mcu', PLATFORM_CPUS)
