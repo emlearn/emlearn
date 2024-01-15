@@ -323,7 +323,7 @@ def forest_to_dot(forest, name='trees', indent="  "):
     return dot
 
 
-def generate_c_nodes(flat, name, dtype='float'):
+def generate_c_nodes(flat, name, dtype='float', modifiers='static const'):
     child_value_max = 2**15
     child_value_min = -2**15
 
@@ -357,7 +357,7 @@ def generate_c_nodes(flat, name, dtype='float'):
     nodes_structs = ',\n  '.join(make_node(i, n) for i, n in enumerate(flat))
     nodes_name = name
     nodes_length = len(flat)
-    nodes = "EmlTreesNode {nodes_name}[{nodes_length}] = {{\n  {nodes_structs} \n}};".format(**locals());
+    nodes = "{modifiers} EmlTreesNode {nodes_name}[{nodes_length}] = {{\n  {nodes_structs} \n}};".format(**locals());
 
     out = nodes
 
@@ -489,35 +489,39 @@ def generate_c_inlined(forest, name, n_features, n_classes=0, leaf_bits=0, dtype
     return '\n\n'.join(tree_funcs + [forest_func])
 
 
-def generate_c_loadable(forest, name, n_features, dtype='float', classifier=True, n_classes=0, leaf_bits=0):
+def generate_c_loadable(forest, name, n_features,
+        weight_modifiers='static const', dtype='float',
+        classifier=True, n_classes=0, leaf_bits=0):
+
     nodes, roots, leaves = forest
 
     cgen.assert_valid_identifier(name)
 
     nodes_name = name+'_nodes'
     nodes_length = len(nodes)
-    nodes_c = generate_c_nodes(nodes, nodes_name, dtype=dtype)
+    nodes_c = generate_c_nodes(nodes, nodes_name, dtype=dtype, modifiers=weight_modifiers)
 
     tree_roots_length = len(roots)
     tree_roots_name = name+'_tree_roots';
     tree_roots_values = ', '.join(str(t) for t in roots)
-    tree_roots = 'int32_t {tree_roots_name}[{tree_roots_length}] = {{ {tree_roots_values} }};'.format(**locals())
+    tree_roots = '{weight_modifiers} int32_t {tree_roots_name}[{tree_roots_length}] = {{ {tree_roots_values} }};'.format(**locals())
 
+    leaves_dtype = 'uint8_t'
     leaves_array = leaves_to_bytelist(leaves, leaf_bits=leaf_bits)
     leaves_length = len(leaves_array)
     leaves_name = name+'_leaves';
     leaves = cgen.array_declare(leaves_name, leaves_length,
-            modifiers='static const', dtype='uint8_t', values=leaves_array)
+            modifiers=weight_modifiers, dtype=leaves_dtype, values=leaves_array)
 
     tree_leaf_bits = leaf_bits
 
     forest_struct = """EmlTrees {name} = {{
         {nodes_length},
-        {nodes_name},	  
+        (EmlTreesNode *)({nodes_name}),	  
         {tree_roots_length},
-        {tree_roots_name},
+        (int32_t *)({tree_roots_name}),
         {leaves_length},
-        {leaves_name},
+        ({leaves_dtype} *)({leaves_name}),
         {tree_leaf_bits},
         {n_features},
         {n_classes},
