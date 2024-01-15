@@ -34,7 +34,11 @@ The best measurements will be by running the model on the target hardware.
 However, having the hardware in the loop makes it slow to evaluate a large set of models.
 Therefore this is often done at the last stage, only for verification.
 
-The simplest alternative is to use the properties of the model.
+For verifying code size and RAM usage, one can compile for the target platform.
+emlearn provide some tools for making this easy, in the Python module :py:mod:`emlearn.evaluate.size`.
+An example demonstrating this is :ref:`sphx_glr_auto_examples_trees_feature_quantization.py`.
 
-Slightly better is to run the generated model on the target hardware.
-One can also compile for the target platform, and inspect the code size and RAM size in that way.
+Execution time is hard to evalute without hardware.
+An emulator such as QEMU can be used, but will only be able to give a rough indicator
+of the relative performance between different sizes of same model type.
+Furthermore limitations in the emulator can sometimes give misleading results.  

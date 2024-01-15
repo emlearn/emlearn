@@ -182,6 +182,8 @@ def assert_valid_platform(platform : str):
 def get_program_size(code : str, platform : str, mcu : str, include_dirs=None) -> (int, int):
     """
     Determine program size when program is compiled for a particular platform
+
+    Returns the FLASH and RAM sizes
     """
 
     assert_valid_platform(platform)
@@ -211,6 +213,7 @@ def get_program_size(code : str, platform : str, mcu : str, include_dirs=None) -
 
 def check_build_tools(platform : str):
     """
+    Check whether the build tools for specified platform is available
 
     Returns the set of tools that are missing (if any)
     """

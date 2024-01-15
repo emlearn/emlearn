@@ -7,4 +7,6 @@
 ..  automodule:: emlearn.evaluate.trees
     :members:
 
+..  automodule:: emlearn.evaluate.size
+    :members:
 
