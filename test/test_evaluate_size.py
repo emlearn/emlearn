@@ -14,34 +14,30 @@ def check_programs(programs):
 
 missing_avr_buildtools = check_programs(['avr-size', 'avr-gcc', 'make',])
 
+# TODO: test all supported platforms. Different ARM Cortex M etc
+# FIXME: move the dependency checks into size.py
 @pytest.mark.skipif(bool(missing_avr_buildtools), reason=str(missing_avr_buildtools))
 def test_model_size_avr8():
 
-    avr_example_program = \
+    example_program = \
     """
+    #include <stdint.h>
     #include <stdbool.h>
-    #include <avr/io.h>
-    #include <util/delay.h>
+
+    int function1(int a) {
+        const float f = 2.0f + (a*3.3f / 7.4f);
+        const int out = f < 1.5;
+        return out;
+    }
 
     int main()
     {
-        // set PINB0 to output in DDRB
-        DDRB |= 0b00000001;
-
-        // Set input
-        DDRB &= ~(1 << PINB4);
-
-        const bool pin_state = (PINB & (1 << PINB4)) >> PINB4;
-
-        const float f = 2.0+ (pin_state*3.3 / 7.4);
-        const int out = f < 1.5;     
-
-        // set PINB0 low
-        PORTB &= 0b11111110 + out;
-        _delay_ms(500);
+        volatile bool input; 
+        const int out = function1(input);
+        return out;
     }
     """
-    code = avr_example_program
+    code = example_program
     sizes = get_program_size(code, platform='avr')
-    assert sizes['program'] >= 1000, sizes
+    assert sizes.get('program') >= 100, sizes
 
