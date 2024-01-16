@@ -72,7 +72,7 @@ def build_run_regressor(model, name, ax=None, feature_columns=None, color=None):
         os.makedirs(out_dir)
 
     model_filename = os.path.join(out_dir, f'{name}_model.h')
-    cmodel = emlearn.convert(model)
+    cmodel = emlearn.convert(model, method='loadable')
     code = cmodel.save(file=model_filename, name='model')
     
     test_pred = cmodel.predict(test[feature_columns])
