@@ -4,11 +4,15 @@ import os
 import sklearn
 import numpy
 import numpy.testing
-import joblib
+import pandas
+
 from sklearn import datasets
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.ensemble import ExtraTreesClassifier, ExtraTreesRegressor
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
+import sklearn.model_selection
+import sklearn.metrics
+import scipy.stats
 
 import emlearn
 from emlearn.evaluate.trees import model_size_nodes
@@ -80,6 +84,103 @@ def test_trees_sklearn_regressor_predict(data, model, method):
     pred_c = cmodel.predict(X[:5])
 
     numpy.testing.assert_allclose(pred_c, pred_original, rtol=1e-3, atol=2)
+
+
+
+@pytest.mark.parametrize("model", CLASSIFICATION_MODELS.keys())
+@pytest.mark.parametrize("data", CLASSIFICATION_DATASETS.keys())
+def test_trees_evaluate_scoring(model, data):
+    """
+    Test that the emlearn.evaluate.tree functions for cost metrics can be used with scikit-learn
+    """
+    estimator = CLASSIFICATION_MODELS[model]
+    X, y = CLASSIFICATION_DATASETS[data]
+
+    from emlearn.evaluate.trees import \
+        model_size_nodes, model_size_bytes, \
+        tree_depth_average, tree_depth_difference, \
+        count_trees, compute_cost_estimate \
+
+    hyperparameters = {
+        #'max_depth': scipy.stats.randint(1, 10),
+        'min_samples_leaf': scipy.stats.loguniform(0.01, 0.33),
+    }
+    if 'DTC' not in model:
+        hyperparameters.update({
+            'n_estimators': scipy.stats.randint(5, 100),
+        })
+
+    # custom emlearn metrics for the model costs
+    custom_metrics = {
+        'bytes': model_size_bytes,
+        'nodes': model_size_nodes,
+        'compute': compute_cost_estimate,
+        'depth_avg': model_size_nodes,
+        'depth_diff': tree_depth_difference,
+        'trees': count_trees,
+    }
+    # standard metrics
+    metrics = {
+        'accuracy': sklearn.metrics.make_scorer(sklearn.metrics.accuracy_score),
+    }
+    metrics.update(custom_metrics)
+
+    search = sklearn.model_selection.RandomizedSearchCV(
+        estimator,
+        param_distributions=hyperparameters,
+        scoring=metrics,
+        refit='accuracy',
+        n_iter=4,
+        cv=2,
+        return_train_score=True,
+        n_jobs=4,
+    )
+    model = search.fit(X, y)
+    results = pandas.DataFrame(model.cv_results_)
+
+    result_keys = [ f'mean_test_{m}' for m in custom_metrics ]
+    missing_columns = set(result_keys) - set(results.columns)
+    assert missing_columns == set(), missing_columns
+
+    values = results[result_keys]
+    rows_with_nan = values[values.isna().any(axis=1)]
+    assert len(rows_with_nan) == 0, rows_with_nan
+
+
+def test_trees_single_leaf_tree():
+    """
+    Test ensemble that includes tree with a single node/leaf (edge case)
+    """
+    estimator = CLASSIFICATION_MODELS['RFC']
+    # FIXME: fails more often for 5way dataset. Maybe to do with how tree predictions are combined
+    X, y = CLASSIFICATION_DATASETS['binary']
+
+    # force there to be a chance of getting single leaf in a tree
+    estimator.set_params(min_samples_leaf=0.33, n_estimators=3)
+
+    model = estimator.fit(X, y)
+
+    # Check that we were able to trigger the edge case
+    depths = [ e.tree_.max_depth for e in estimator.estimators_ ]
+    leaf_only_trees = [ e.tree_ for e in estimator.estimators_ if e.tree_.max_depth == 0 ]
+    assert leaf_only_trees, depths
+
+    for t in leaf_only_trees:
+        assert t.children_right == [-1]
+        assert t.children_left == [-1]
+
+    # Check that model can be converted
+    cmodel = emlearn.convert(estimator, method='inline')
+    nodes = pandas.DataFrame(cmodel.forest_[0], columns=['feature', 'treshold', 'left', 'right'])
+    roots = pandas.DataFrame(cmodel.forest_[1], columns=['index'])
+    leaves = pandas.DataFrame(cmodel.forest_[2], columns=['data']) 
+    #print('roots\n', roots)
+    #print('nodes\n', nodes)
+    #print('leaves\n', leaves)
+
+    pred_original = estimator.predict(X)
+    pred_c = cmodel.predict(X)
+    numpy.testing.assert_equal(pred_c, pred_original)
 
 @pytest.fixture(scope='module')
 def huge_trees_model():

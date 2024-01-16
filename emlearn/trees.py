@@ -84,11 +84,27 @@ def flatten_tree(tree, leaf='argmax', leaf_bits=8):
         else:
             return idx # will be corrected later
 
+    def add_decision_node(node):
+        out_idx = len(decision_nodes)
+        decision_nodes.append(node)
+        decision_node_mapping[node_no] = out_idx
 
     decision_node_mapping = {}
     leaves_seen = 0
-    zipped = zip(tree.children_left, tree.children_right, tree.feature, tree.threshold, tree.value)
+    zipped = list(zip(tree.children_left, tree.children_right, tree.feature, tree.threshold, tree.value))
     for node_no, (left, right, feature, th, value) in enumerate(zipped):
+
+        if len(zipped) == 1:
+            # single node tree - must be a leaf
+            # this can happen in some edge cases, like min_samples_leaf is very high
+            assert left == -1
+            assert right == -1
+            assert node_no == 0
+            # add a dummy decision node, where both sides go to the leaf
+            leaf_idx = add_leaf(0)
+            add_decision_node([0, 0, leaf_idx, leaf_idx])
+            break
+
         if left == -1 and right == -1:
             # is a leaf. Is handled via its parent
             leaves_seen += 1
@@ -99,9 +115,7 @@ def flatten_tree(tree, leaf='argmax', leaf_bits=8):
             right = process_child(right)
 
             node = [ feature, th, left, right ]
-            out_idx = len(decision_nodes)
-            decision_nodes.append(node)
-            decision_node_mapping[node_no] = out_idx
+            add_decision_node(node)
        
     # Update child decision node references to reflect smaller output nodes array
     for node in decision_nodes:
@@ -112,7 +126,12 @@ def flatten_tree(tree, leaf='argmax', leaf_bits=8):
 
 
     total_nodes = len(decision_nodes) + len(leaf_nodes)
-    assert total_nodes == tree.node_count, (total_nodes, tree.node_count)
+    if len(zipped) == 1:
+        assert total_nodes == 2
+        assert len(decision_nodes) == 1
+        assert len(leaf_nodes) == 1
+    else:
+        assert total_nodes == tree.node_count, (total_nodes, tree.node_count)
 
     #print_tree((decision_nodes, leaf_nodes))
 
