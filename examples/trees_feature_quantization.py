@@ -76,7 +76,11 @@ def check_program_size(dtype, model, platform, mcu):
     model_name = 'sizecheck'
     features_length = model.estimators_[0].n_features_in_
     model_enabled = 0 if dtype == 'no-model' else 1
-    method = 'inline'
+    if dtype == 'loadable':
+        dtype = 'float'
+        method = 'loadable'
+    else:
+        method = 'inline'
 
     if model_enabled:
         # Quantize with the specified dtype
@@ -90,8 +94,6 @@ def check_program_size(dtype, model, platform, mcu):
             int {model_name}_predict(const {dtype} *f, int l) {{
                 return eml_trees_predict(&{model_name}, (float *)f, l);
             }}"""
-
-
     else:
         model_code = ""
 
@@ -101,7 +103,8 @@ def check_program_size(dtype, model, platform, mcu):
 
     #if {model_enabled}
     {model_code}
-    const {dtype} features[{features_length}] = {{0, }};
+
+    static {dtype} features[{features_length}] = {{0, }};
     #endif
 
     int main()
@@ -130,7 +133,7 @@ def run_experiment(model, platform, mcu):
         results = pandas.read_csv(results_file)
     else:
         experiments = pandas.DataFrame({
-            'dtype': ('no-model', 'float', 'int32_t', 'int16_t', 'int8_t', 'uint8_t'),
+            'dtype': ('no-model', 'loadable', 'float', 'int32_t', 'int16_t', 'int8_t', 'uint8_t'),
         })
         results = experiments['dtype'].apply(check_program_size, model=model, platform=platform, mcu=mcu)
         results = pandas.merge(experiments, results, left_index=True, right_index=True)

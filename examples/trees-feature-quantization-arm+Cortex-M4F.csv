@@ -1,6 +1,7 @@
-platform,cpu,dtype,program,ram
-arm,Cortex-M4F,float,4648,0
-arm,Cortex-M4F,int32_t,2004,0
-arm,Cortex-M4F,int16_t,2196,0
-arm,Cortex-M4F,int8_t,2196,0
-arm,Cortex-M4F,uint8_t,2016,0
+platform,cpu,dtype,flash,ram
+arm,Cortex-M4F,loadable,3544,264
+arm,Cortex-M4F,float,4444,240
+arm,Cortex-M4F,int32_t,1880,240
+arm,Cortex-M4F,int16_t,2080,120
+arm,Cortex-M4F,int8_t,2080,60
+arm,Cortex-M4F,uint8_t,1892,60
