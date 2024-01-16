@@ -9,6 +9,7 @@ import sys
 import subprocess
 import platform
 from distutils.ccompiler import new_compiler
+from sklearn.utils import check_array
 
 import numpy
 
@@ -152,11 +153,15 @@ class CompiledClassifier():
         self.n_classes = n_classes
 
     def predict(self, X):
+        X = check_array(X)
+
         out = run_classifier(self.bin_path, X, out_dtype=self._out_dtype)
         assert len(out) == len(X), out
         return out
 
     def predict_proba(self, X):
+        X = check_array(X)
+
         if self.proba_bin_path is None:
             raise ValueError('predict_proba() not supported')
 
@@ -173,6 +178,8 @@ class CompiledClassifier():
         return out
 
     def regress(self, X):
+        X = check_array(X)
+
         return self.predict(X)
 
 
