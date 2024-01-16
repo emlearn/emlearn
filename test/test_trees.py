@@ -147,6 +147,41 @@ def test_trees_evaluate_scoring(model, data):
     assert len(rows_with_nan) == 0, rows_with_nan
 
 
+def test_trees_single_leaf_tree():
+    """
+    Test ensemble that includes tree with a single node/leaf (edge case)
+    """
+    estimator = CLASSIFICATION_MODELS['RFC']
+    # FIXME: fails more often for 5way dataset. Maybe to do with how tree predictions are combined
+    X, y = CLASSIFICATION_DATASETS['binary']
+
+    # force there to be a chance of getting single leaf in a tree
+    estimator.set_params(min_samples_leaf=0.33, n_estimators=3)
+
+    model = estimator.fit(X, y)
+
+    # Check that we were able to trigger the edge case
+    depths = [ e.tree_.max_depth for e in estimator.estimators_ ]
+    leaf_only_trees = [ e.tree_ for e in estimator.estimators_ if e.tree_.max_depth == 0 ]
+    assert leaf_only_trees, depths
+
+    for t in leaf_only_trees:
+        assert t.children_right == [-1]
+        assert t.children_left == [-1]
+
+    # Check that model can be converted
+    cmodel = emlearn.convert(estimator, method='inline')
+    nodes = pandas.DataFrame(cmodel.forest_[0], columns=['feature', 'treshold', 'left', 'right'])
+    roots = pandas.DataFrame(cmodel.forest_[1], columns=['index'])
+    leaves = pandas.DataFrame(cmodel.forest_[2], columns=['data']) 
+    #print('roots\n', roots)
+    #print('nodes\n', nodes)
+    #print('leaves\n', leaves)
+
+    pred_original = estimator.predict(X)
+    pred_c = cmodel.predict(X)
+    numpy.testing.assert_equal(pred_c, pred_original)
+
 @pytest.fixture(scope='module')
 def huge_trees_model():
     store_classifier_path = os.path.join(here, 'out/test_trees_huge.model.pickle')
