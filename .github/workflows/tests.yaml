@@ -67,7 +67,7 @@ jobs:
 
       - name: Install OS dependencies
         run: |
-          sudo apt-get install -yqq libsndfile1 libsndfile1-dev
+          sudo apt-get install -yqq libsndfile1 libsndfile1-dev doxygen
       - name: Install Python dependencies
         run: |
           python -m pip install -U 'pip<20'
@@ -81,6 +81,7 @@ jobs:
         working-directory: ./docs
         env:
           PYTHONPATH: ../:../build/lib.linux-x86_64-3.8
+          READTHEDOCS: True
         run: |
             make html
 
