@@ -81,7 +81,7 @@ jobs:
         working-directory: ./docs
         env:
           PYTHONPATH: ../:../build/lib.linux-x86_64-3.8
-          READTHEDOCS: True
+          READTHEDOCS: 'True'
         run: |
             make html
 
