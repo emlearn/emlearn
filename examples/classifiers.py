@@ -45,7 +45,7 @@ dataset = load_dataset()
 #
 # Compare predictions made by converted emlearn C model
 # with those of the trained Python model
-def check_correctness(out_dir, model_filename, test_data, test_predictions, feature_columns):
+def check_correctness(out_dir, name, model_filename, test_data, test_predictions, feature_columns):
     test_res = numpy.array(test_predictions).flatten()
 
     test_dataset = "\n".join([
@@ -155,15 +155,15 @@ def build_run_classifier(ax, model, name):
         os.makedirs(out_dir)
 
     model_filename = os.path.join(out_dir, f'{name}_model.h')
-    cmodel = emlearn.convert(model)
+    cmodel = emlearn.convert(model, method='loadable')
     code = cmodel.save(file=model_filename, name='model')
-    
+
     test_pred = cmodel.predict(test[feature_columns])
 
     # Generate a test dataet
     test_data = numpy.array(test[feature_columns]).flatten()
 
-    errors = check_correctness(out_dir, model_filename, test_data, test_pred, feature_columns)
+    errors = check_correctness(out_dir, name, model_filename, test_data, test_pred, feature_columns)
     print(f"Tested {name}: {errors} errors")
 
     plot_results(ax, model, test[feature_columns], test[target_column])
@@ -193,21 +193,23 @@ classifiers = {
 # Run all classifiers
 # --------------------------------
 #
-# 
-fig, axs = plt.subplots(
-        ncols=1,
-        nrows=len(classifiers),
-        figsize=(4, 4*len(classifiers)),
-        sharex=True, sharey=True,
-)
+#
+def main(): 
+    fig, axs = plt.subplots(
+            ncols=1,
+            nrows=len(classifiers),
+            figsize=(4, 4*len(classifiers)),
+            sharex=True, sharey=True,
+    )
 
-for ax, (name, cls) in zip(axs, classifiers.items()):
-    build_run_classifier(ax, cls, name)
-    ax.set_title(name)
+    for ax, (name, cls) in zip(axs, classifiers.items()):
+        build_run_classifier(ax, cls, name)
+        ax.set_title(name)
 
-    if ax != axs[-1]:
-        ax.set_xlabel('')
+        if ax != axs[-1]:
+            ax.set_xlabel('')
 
-plt.show()
+    plt.show()
 
+main()
 
