@@ -1,0 +1,5 @@
+# Zephyr module definition
+name: emlearn
+build:
+  cmake: ./zephyr
+  kconfig: ./zephyr/Kconfig

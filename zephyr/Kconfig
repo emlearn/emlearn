@@ -1,0 +1,12 @@
+# Copyright (c) 2024 emlearn authors
+# SPDX-License-Identifier: MIT
+
+config ZEPHYR_EMLEARN_MODULE
+	bool
+
+config EMLEARN
+	bool "emlearn support"
+	help
+	  This option enables the emlearn Machine Learning library.
+
+
