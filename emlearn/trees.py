@@ -444,10 +444,6 @@ def generate_c_loadable(forest, name, n_features,
 
     nodes, roots, leaves = forest
 
-    print('nodex', len(nodes))
-    print('trees', len(roots))
-    print('leaves', len(leaves))
-
     cgen.assert_valid_identifier(name)
 
     nodes_name = name+'_nodes'
