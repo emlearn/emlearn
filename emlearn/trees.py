@@ -494,11 +494,11 @@ class Wrapper:
         kind = type(estimator).__name__
         leaf = 'argmax'
         self.is_classifier = True
-        out_dtype = "int"
+        self.out_dtype = "int"
         if 'Regressor' in kind:
             leaf = 'value'
             self.is_classifier = False
-            out_dtype = "float"
+            self.out_dtype = "float"
 
         if leaf_bits is None:
             if self.is_classifier:
@@ -522,8 +522,18 @@ class Wrapper:
         self.n_classes = 0
         if self.is_classifier:
             self.n_classes = estimators[0].n_classes_
+        self.method = classifier
+        if self.method not in ('loadable', 'inline'):
+            raise ValueError("Unsupported classifier method '{}'".format(classifier))
 
-        if classifier == 'loadable':
+        self._classifier = None # lazy-initialized by _build_classifier
+
+    def _build_classifier(self):
+        if self._classifier is not None:
+            return None
+
+        method = self.method
+        if method == 'loadable':
             name = 'mytree'
             proba_func = 'eml_trees_predict_proba(&{}, values, length, outputs, N_CLASSES)'\
                 .format(name, self.n_classes)
@@ -534,8 +544,8 @@ class Wrapper:
                 func = 'eml_trees_regress1(&{}, values, length)'.format(name)
             code = self.save(name=name)
             self.classifier_ = common.CompiledClassifier(code, name=name,
-                call=func, proba_call=proba_func, out_dtype=out_dtype, n_classes=self.n_classes)
-        elif classifier == 'inline':
+                call=func, proba_call=proba_func, out_dtype=self.out_dtype, n_classes=self.n_classes)
+        elif method == 'inline':
             name = 'myinlinetree'
             # TODO: actually implement inline predict_proba, instead of just using loadable
             proba_func = 'eml_trees_predict_proba(&{}, values, length, outputs, N_CLASSES)'\
@@ -543,11 +553,14 @@ class Wrapper:
             func = '{}_predict(values, length)'.format(name)
             code = self.save(name=name)
             self.classifier_ = common.CompiledClassifier(code, name=name,
-                call=func, proba_call=proba_func, out_dtype=out_dtype, n_classes=self.n_classes)
+                call=func, proba_call=proba_func, out_dtype=self.out_dtype, n_classes=self.n_classes)
         else:
-            raise ValueError("Unsupported classifier method '{}'".format(classifier))
+            assert False, 'should not happen, constructor should enforce'
+
 
     def predict(self, X):
+        self._build_classifier()
+
         if self.is_classifier:
             predictions = self.classifier_.predict(X)
         else:
@@ -556,6 +569,8 @@ class Wrapper:
         return predictions
 
     def predict_proba(self, X):
+        self._build_classifier()
+
         if not self.is_classifier:
             raise ValueError(f"Cannot call predict_proba on a Regressor")
         
