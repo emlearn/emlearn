@@ -67,8 +67,19 @@ Copy model files into Arduino
 =============================
 
 Copy the ``xor_model.h`` file into your **sketch** folder.
-Also copy the ``emlearn`` include directory into **Arduino libraries folder**.
-You can find the include directory by running `python -c "import emlearn; print(emlearn.includedir)"`.
+
+Install emlearn as Arduino library
+=============================
+
+Run the following code to install the ``emlearn`` library
+into the Arduino library folder.
+
+.. code-block:: console
+
+    python -m emlearn.arduino.install
+
+It should output something like "Installed emlearn to C:\\Users\me\Documents\Arduino\libraries\emlearn".
+Note that the exact path will vary based on your username and operating system.
 
 
 Build and upload the code
