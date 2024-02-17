@@ -6,6 +6,7 @@ Test that library works when used with Arduino IDE
 import os
 import shutil
 import re
+import subprocess
 
 from emlearn.arduino.install import install_arduino_library
 from emlearn.common import get_include_dir
@@ -29,8 +30,6 @@ def remove_ansi_escapes(text):
 
 
 def arduino_build(sketch_dir, library_dir, board='arduino:avr:uno'):
-
-    import subprocess
 
     args = [
         'arduino-cli',
@@ -58,8 +57,9 @@ def test_arduino_helloworld():
     out_dir = os.path.join(here, 'out/arduino_helloworld/helloworld_xor')
     if os.path.exists(out_dir):
         shutil.rmtree(out_dir)
-    sketch_path = os.path.join(here, '../docs/helloworld_xor/helloworld_xor.ino')
-    model_path = os.path.join(here, '../docs/helloworld_xor/xor_model.h')
+    example_dir = os.path.join(here, '../docs/helloworld_xor/')
+    sketch_path = os.path.join(example_dir, 'helloworld_xor.ino')
+    train_path = os.path.abspath(os.path.join(example_dir, 'xor_train.py'))
     emlearn_dir = get_include_dir()
     ensure_dir(out_dir)
     library_dir = os.path.join(out_dir, 'libs')
@@ -68,9 +68,11 @@ def test_arduino_helloworld():
     # using a custom path to avoid messing with peoples files
     install_arduino_library(emlearn_dir, arduino_library_dir=library_dir)
 
+    # build the model
+    subprocess.check_output(['python', train_path], cwd=out_dir)
+
     # copy sketch into clean directory
     shutil.copy(sketch_path, out_dir)
-    shutil.copy(model_path, out_dir)
 
     # build sketch
     out = arduino_build(out_dir, library_dir=os.path.join(library_dir, 'emlearn'))
