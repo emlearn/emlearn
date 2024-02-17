@@ -1,0 +1,7 @@
+[manifest]
+path = helloworld_xor
+file = west.yml
+
+[zephyr]
+base = zephyr
+

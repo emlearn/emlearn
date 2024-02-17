@@ -1,0 +1,22 @@
+# Copyright (c) 2021 Nordic Semiconductor ASA
+# SPDX-License-Identifier: Apache-2.0
+
+manifest:
+  remotes:
+    - name: zephyrproject-rtos
+      url-base: https://github.com/zephyrproject-rtos
+
+  projects:
+    - name: zephyr
+      remote: zephyrproject-rtos
+      revision: v3.5.0
+      import:
+        # By using name-allowlist we can clone only the modules that are strictly needed
+        name-allowlist:
+          - cmsis      # required by the ARM port
+          - hal_nordic # required by the qemu cortex board (Nordic based)
+
+    - name: emlearn
+      url: https://github.com/emlearn/emlearn
+      revision: master
+
