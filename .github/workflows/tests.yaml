@@ -120,7 +120,7 @@ jobs:
           python setup.py build
       - name: Run Arduino tests
         env:
-          PYTHONPATH: ../:../build/lib.linux-x86_64-3.8
+          PYTHONPATH: ./:./build/lib.linux-x86_64-3.8
           EMLEARN_TEST_ARDUINO: 1
         run: |
             pytest -v test/ -k arduino
