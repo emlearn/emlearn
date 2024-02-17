@@ -170,8 +170,8 @@ jobs:
       - name: Install West
         run: |
             pip install west
-            git clone https://github.com/zephyrproject-rtos/zephyr.git zephyr
-            pip install -r zephyr/scripts/requirements.txt
+            git clone https://github.com/zephyrproject-rtos/zephyr.git zephyr-git
+            pip install -r zephyr-git/scripts/requirements.txt
 
       - name: Run Zephyr tests
         env:
