@@ -1,5 +1,5 @@
 [manifest]
-path = ./
+path = helloworld_xor
 file = west.yml
 
 [zephyr]

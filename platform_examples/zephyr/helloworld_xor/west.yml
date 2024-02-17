@@ -14,6 +14,7 @@ manifest:
         # By using name-allowlist we can clone only the modules that are strictly needed
         name-allowlist:
           - cmsis      # required by the ARM port
+          - hal_nordic # required by the qemu cortex board (Nordic based)
 
     - name: emlearn
       url: https://github.com/emlearn/emlearn
