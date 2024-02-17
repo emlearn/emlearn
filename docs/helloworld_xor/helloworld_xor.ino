@@ -36,7 +36,7 @@ void loop() {
 #endif
   const float features[] = { a, b };
 
-  const int32_t out = xor_predict(features, 2);
+  const int32_t out = xor_model_predict(features, 2);
 
   if (out < 0) {
     Serial.println("ERROR");
