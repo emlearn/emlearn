@@ -17,6 +17,10 @@ here = os.path.dirname(__file__)
 
 arduino_cli_bin = 'arduino-cli'
 have_arduino_cli = shutil.which(arduino_cli_bin) is not None
+# when this envvar is set, then we must run the test
+force_arduino_test = bool(int(os.environ.get('EMLEARN_TEST_ARDUINO', '0')))
+enable_arduino_tests = have_arduino_cli or force_arduino_test
+skip_reason = f'{arduino_cli_bin} not found'
 
 def remove_ansi_escapes(text):
     ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
@@ -44,8 +48,12 @@ def arduino_build(sketch_dir, library_dir, board='arduino:avr:uno'):
     cleaned = remove_ansi_escapes(out.decode('utf-8'))
     return cleaned
 
+@pytest.mark.skipif(not enable_arduino_tests, reason=skip_reason)
+def test_arduino_preconditions():
+    assert have_arduino_cli, ''
 
-@pytest.mark.skipif(not have_arduino_cli, reason=f'{arduino_cli_bin} not found')
+
+@pytest.mark.skipif(not enable_arduino_tests, reason=skip_reason)
 def test_arduino_helloworld():
     out_dir = os.path.join(here, 'out/arduino_helloworld/helloworld_xor')
     if os.path.exists(out_dir):
