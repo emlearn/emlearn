@@ -37,7 +37,7 @@ Save the sketch to a folder, for example ``emlearn_helloworld_xor``.
 
 Replace the sketch code in the Arduino IDE with the contents of the following.
 
-.. literalinclude:: helloworld_xor/xor_arduino.ino
+.. literalinclude:: helloworld_xor/helloworld_xor.ino
    :language: c
    :emphasize-lines: 1,18-19
    :linenos:
