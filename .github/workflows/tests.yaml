@@ -108,6 +108,7 @@ jobs:
       - name: Install Arduino CLI
         run: |
           curl -fsSL https://raw.githubusercontent.com/arduino/arduino-cli/master/install.sh | BINDIR=/usr/bin sudo sh
+          ./bin/arduino-cli core install arduino:avr
 
       - name: Install Python dependencies
         run: |
