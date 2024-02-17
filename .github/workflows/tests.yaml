@@ -85,7 +85,7 @@ jobs:
         run: |
             make html
 
-  build_arduino:
+  test_arduino:
 
     runs-on: ubuntu-latest
     strategy:
@@ -103,7 +103,12 @@ jobs:
 
       - name: Install OS dependencies
         run: |
-          sudo apt-get install -yqq libsndfile1 libsndfile1-dev arduino-cli
+          sudo apt-get install -yqq libsndfile1 libsndfile1-dev arduino arduino-core-avr
+
+      - name: Install Arduino CLI
+        run: |
+          curl -fsSL https://raw.githubusercontent.com/arduino/arduino-cli/master/install.sh | sh
+
       - name: Install Python dependencies
         run: |
           python -m pip install -U 'pip<20'
