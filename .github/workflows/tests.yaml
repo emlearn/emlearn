@@ -115,16 +115,15 @@ jobs:
           pip install flake8 pytest
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
           if [ -f requirements.dev.txt ]; then pip install -r requirements.dev.txt; fi
-      - name: Build package
+      - name: Install package
         run: |
           python setup.py build
+          pip install ./ -v
       - name: Run Arduino tests
         env:
-          PYTHONPATH: ./:./build/lib.linux-x86_64-3.8
           EMLEARN_TEST_ARDUINO: 1
         run: |
             pytest -v test/ -k arduino
-
 
   publish:
     runs-on: ubuntu-latest
