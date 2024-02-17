@@ -165,19 +165,19 @@ jobs:
             wget https://github.com/zephyrproject-rtos/sdk-ng/releases/download/v${ZEPHYR_SDK_VERSION}/${ZEPHYR_SDK_FILE}
             tar -xf ${ZEPHYR_SDK_FILE}
             cd zephyr-sdk-${ZEPHYR_SDK_VERSION}
-            sh setup.sh -c -h -t arm-zephyr-eabi
+            ./setup.sh -c -h -t arm-zephyr-eabi
 
       - name: Install West
         run: |
             pip install west
+            git clone https://github.com/zephyrproject-rtos/zephyr.git zephyr
+            pip install -r zephyr/scripts/requirements.txt
 
       - name: Run Zephyr tests
         env:
-          EMLEARN_TEST_ARDUINO: 1
+          EMLEARN_TEST_ZEPHYR: 1
         run: |
             pytest -v test/ -k zephyr
-
-
 
 
   publish:
