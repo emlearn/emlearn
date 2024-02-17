@@ -126,6 +126,60 @@ jobs:
         run: |
             PATH=/home/runner/work/emlearn/emlearn/bin:$PATH pytest -v test/ -k arduino
 
+  test_zephyr:
+
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.8]
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: true
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install OS dependencies
+        run: |
+          sudo apt-get install -yqq libsndfile1 libsndfile1-dev
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install -U 'pip<20'
+          pip install flake8 pytest
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          if [ -f requirements.dev.txt ]; then pip install -r requirements.dev.txt; fi
+      - name: Install package
+        run: |
+          python setup.py build
+          pip install ./ -v
+
+      - name: Install Zephyr SDK
+        env:
+            ZEPHYR_SDK_VERSION: 0.16.5
+            ZEPHYR_SDK_FILE: zephyr-sdk-0.16.5_linux-x86_64_minimal.tar.xz
+        run: |
+            wget https://github.com/zephyrproject-rtos/sdk-ng/releases/download/v${ZEPHYR_SDK_VERSION}/${ZEPHYR_SDK_FILE}
+            tar -xf ${ZEPHYR_SDK_FILE}
+            cd zephyr-sdk-${ZEPHYR_SDK_VERSION}
+            sh setup.sh -c -h -t arm-zephyr-eabi
+
+      - name: Install West
+        run: |
+            pip install west
+
+      - name: Run Zephyr tests
+        env:
+          EMLEARN_TEST_ARDUINO: 1
+        run: |
+            pytest -v test/ -k zephyr
+
+
+
+
   publish:
     runs-on: ubuntu-latest
     steps:
