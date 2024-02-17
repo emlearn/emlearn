@@ -4,6 +4,7 @@ Install emlearn as Arduino library
 """
 
 from ..common import get_include_dir
+from ..utils.fileutils import ensure_dir_single
 
 import sys
 import argparse
@@ -13,15 +14,6 @@ import glob
 
 class Error(ValueError):
     pass
-
-def ensure_dir_single(path):
-    """
-    Create directory if not existing already
-
-    Does not create parent directories
-    """
-    if not os.path.exists(path):
-        os.mkdir(path)
 
 
 def install_arduino_library(emlearn_include_dir, arduino_library_dir, update=False):
