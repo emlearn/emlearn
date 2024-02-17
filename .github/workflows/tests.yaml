@@ -85,6 +85,42 @@ jobs:
         run: |
             make html
 
+  build_arduino:
+
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.8]
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: true
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install OS dependencies
+        run: |
+          sudo apt-get install -yqq libsndfile1 libsndfile1-dev arduino-cli
+      - name: Install Python dependencies
+        run: |
+          python -m pip install -U 'pip<20'
+          pip install flake8 pytest
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          if [ -f requirements.dev.txt ]; then pip install -r requirements.dev.txt; fi
+      - name: Build package
+        run: |
+          python setup.py build
+      - name: Run Arduino tests
+        env:
+          PYTHONPATH: ../:../build/lib.linux-x86_64-3.8
+          EMLEARN_TEST_ARDUINO: 1
+        run: |
+            pytest -v test/ -k arduino
+
+
   publish:
     runs-on: ubuntu-latest
     steps:
