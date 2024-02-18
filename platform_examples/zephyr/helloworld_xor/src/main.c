@@ -3,12 +3,7 @@
  */
 
 #include <zephyr/kernel.h>
-#include <zephyr/drivers/sensor.h>
 
-#include <zephyr/logging/log.h>
-LOG_MODULE_REGISTER(main, CONFIG_APP_LOG_LEVEL);
-
-//#define EML_TREES_REGRESSION_ENABLE 0
 #include "xor_model.h"
 
 void xor_test(void)
@@ -31,6 +26,5 @@ void xor_test(void)
 int main(void)
 {
     xor_test();
-
-	return 0;
+    return 0;
 }
