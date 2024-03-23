@@ -271,76 +271,6 @@ def remove_duplicate_leaves(forest):
     assert_forest_valid(f)
     return f
 
-def traverse_dfs(nodes, idx, visitor):
-    if idx < 0:
-        # this is a leaf
-        return None
-    visitor(idx)
-    traverse_dfs(nodes, nodes[idx][2], visitor)
-    traverse_dfs(nodes, nodes[idx][3], visitor)
-
-def dot_node(name, **opts):
-    return '{name} [label={label}];'.format(name=name, label=opts['label'])
-def dot_edge(src, tgt, **opts):
-    return '{src} -> {tgt} [taillabel={label}, labelfontsize={f}];'.format(src=src,tgt=tgt,label=opts['label'], f=opts['labelfontsize'])
-def dot_cluster(name, nodes, indent='  '):
-    name = 'cluster_' + name
-    n = ('\n'+indent).join(nodes)
-    return 'subgraph {name} {{\n  {nodes}\n}}'.format(name=name, nodes=n)
-
-def forest_to_dot(forest, name='trees', indent="  "):
-    nodes, roots, leaf_nodes = forest
-
-    trees = [ [] for r in roots ]
-    for tree_idx, root in enumerate(roots):
-        collect = []
-        traverse_dfs(nodes, root, lambda i: collect.append(i))
-        trees[tree_idx] = set(collect).difference(leaf_nodes)
-
-    edges = []
-    leaves = []
-    clusters = []
-
-    # group trees using cluster
-    for tree_idx, trees in enumerate(trees):
-        decisions = []
-        for idx in trees:
-            node = nodes[idx]
-            n = dot_node(idx, label='"{}: feature[{}] < {}"'.format(idx, node[0], node[1]))
-            left = dot_edge(idx, node[2], label='"  1"', labelfontsize=8)
-            right = dot_edge(idx, node[3], label='"  0"', labelfontsize=8)
-            decisions += [ n ]
-            edges += [ left, right]
-
-        clusters.append(dot_cluster('_tree_{}'.format(tree_idx), decisions, indent=2*indent))
-
-    # leaves shared between trees
-    for idx, node in enumerate(leaf_nodes):
-        value = str(node)
-        leaves += [ dot_node(idx, label='"{}"'.format(value)) ]
-
-    dot_items = clusters + edges + leaves
-
-    graph_options = {
-        #'rankdir': 'LR',
-        #'ranksep': 0.07,
-    }
-
-    variables = {
-        'name': name,
-        'options': ('\n'+indent).join('{}={};'.format(k,v) for k,v in graph_options.items()),
-        'items': ('\n'+indent).join(dot_items),
-    }
-    dot = """digraph {name} {{
-      // Graph options
-      {options}
-
-      // Nodes/edges
-      {items}
-    }}""".format(**variables)
-
-    return dot
-
 
 def generate_c_nodes(flat, name, dtype='float', modifiers='static const'):
     child_value_max = 2**15
@@ -564,11 +494,11 @@ class Wrapper:
         kind = type(estimator).__name__
         leaf = 'argmax'
         self.is_classifier = True
-        out_dtype = "int"
+        self.out_dtype = "int"
         if 'Regressor' in kind:
             leaf = 'value'
             self.is_classifier = False
-            out_dtype = "float"
+            self.out_dtype = "float"
 
         if leaf_bits is None:
             if self.is_classifier:
@@ -592,24 +522,18 @@ class Wrapper:
         self.n_classes = 0
         if self.is_classifier:
             self.n_classes = estimators[0].n_classes_
+        self.method = classifier
+        if self.method not in ('loadable', 'inline'):
+            raise ValueError("Unsupported classifier method '{}'".format(classifier))
 
+        self._classifier = None # lazy-initialized by _build_classifier
 
-        if classifier == 'pymodule':
-            # FIXME: use Nodes,Roots directly, as Numpy Array
-            import eml_trees # import when required
-            nodes, roots, leaves = self.forest_
-            node_data = []
-            for node in nodes:
-                assert len(node) == 4
-                node_data += node
-            assert len(node_data) % 4 == 0
+    def _build_classifier(self):
+        if self._classifier is not None:
+            return None
 
-            assert type(roots) == list
-            leaf_bytes = leaves_to_bytelist(leaves, leaf_bits=self.leaf_bits)
-            self.classifier_ = eml_trees.Classifier(node_data, roots, leaf_bytes,
-                self.leaf_bits, self.n_classes, self.n_features)
-
-        elif classifier == 'loadable':
+        method = self.method
+        if method == 'loadable':
             name = 'mytree'
             proba_func = 'eml_trees_predict_proba(&{}, values, length, outputs, N_CLASSES)'\
                 .format(name, self.n_classes)
@@ -620,8 +544,8 @@ class Wrapper:
                 func = 'eml_trees_regress1(&{}, values, length)'.format(name)
             code = self.save(name=name)
             self.classifier_ = common.CompiledClassifier(code, name=name,
-                call=func, proba_call=proba_func, out_dtype=out_dtype, n_classes=self.n_classes)
-        elif classifier == 'inline':
+                call=func, proba_call=proba_func, out_dtype=self.out_dtype, n_classes=self.n_classes)
+        elif method == 'inline':
             name = 'myinlinetree'
             # TODO: actually implement inline predict_proba, instead of just using loadable
             proba_func = 'eml_trees_predict_proba(&{}, values, length, outputs, N_CLASSES)'\
@@ -629,11 +553,14 @@ class Wrapper:
             func = '{}_predict(values, length)'.format(name)
             code = self.save(name=name)
             self.classifier_ = common.CompiledClassifier(code, name=name,
-                call=func, proba_call=proba_func, out_dtype=out_dtype, n_classes=self.n_classes)
+                call=func, proba_call=proba_func, out_dtype=self.out_dtype, n_classes=self.n_classes)
         else:
-            raise ValueError("Unsupported classifier method '{}'".format(classifier))
+            assert False, 'should not happen, constructor should enforce'
+
 
     def predict(self, X):
+        self._build_classifier()
+
         if self.is_classifier:
             predictions = self.classifier_.predict(X)
         else:
@@ -642,6 +569,8 @@ class Wrapper:
         return predictions
 
     def predict_proba(self, X):
+        self._build_classifier()
+
         if not self.is_classifier:
             raise ValueError(f"Cannot call predict_proba on a Regressor")
         
@@ -689,8 +618,5 @@ class Wrapper:
                 f.write(code)
 
         return code
-
-    def to_dot(self, **kwargs):
-        return forest_to_dot(self.forest_, **kwargs)
 
 

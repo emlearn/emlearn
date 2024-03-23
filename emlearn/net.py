@@ -11,6 +11,15 @@ import numpy
 
 import os.path
 
+# corresponds to EmlNetActivationFunction in C
+ACTIVATION_FUNCTIONS = [
+    "identity",
+    "relu",
+    "logistic",
+    "softmax",
+    "tanh",
+]
+
 def argmax(sequence):
     max_idx = 0
     max_value = sequence[0]
@@ -38,10 +47,7 @@ class Wrapper:
         if self.use_fixedpoint and self.inference_type != 'inline':
             raise NotImplementedError("Fixed-point only implemented with 'inline' inference type")
 
-        if self.inference_type == 'pymodule' and return_type == 'classifier':
-            import eml_net # import when required
-            self.classifier = eml_net.Classifier(activations, weights, biases)
-        elif self.inference_type == 'loadable' and return_type == 'classifier':
+        if self.inference_type == 'loadable' and return_type == 'classifier':
             name = 'mynet'
             func = 'eml_net_predict(&{}, values, length)'.format(name)
             code = self.save(name=name)
@@ -122,6 +128,15 @@ def array_declare(name, fixedpoint : FixedPointFormat = None, **kwargs):
     return cgen.array_declare_fixedpoint(name, fixedpoint=fixedpoint, **kwargs)
 
 
+def c_activation_function(activation : str):
+    supported = set(ACTIVATION_FUNCTIONS)
+    if not activation in supported:
+        raise ValueError(f"Unsupported activation '{activation}'. Supported: {supported}")
+
+    name = 'EmlNetActivation'+activation.title()
+    return name
+
+
 def c_generate_layer_data(activations, weights, biases, prefix : str,
             include_constants=True,
             use_fixedpoint=False,
@@ -151,7 +166,7 @@ def c_generate_layer_data(activations, weights, biases, prefix : str,
         # activation
         if include_constants:
             activation_name = format_name(layer_no, 'activation')
-            activation_func = 'EmlNetActivation'+l_act.title()
+            activation_func = c_activation_function(l_act)
             add_declaration(cgen.constant_declare(activation_name, activation_func))
 
         # bias
@@ -264,7 +279,7 @@ def c_generate_net_loadable(activations, weights, biases, prefix):
         n_in, n_out = l_weights.shape
         layer = f'{prefix}_layer_{layer_no}'
 
-        activation_func = 'EmlNetActivation'+l_act.title()
+        activation_func = c_activation_function(l_act)
         l = init_layer(layer, n_out, n_in, f'{layer}_weights', f'{layer}_biases', activation_func)
         layers.append('\n'+l)
 
