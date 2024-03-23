@@ -68,13 +68,12 @@ def test_sklearn_predict(modelparams,params):
             cmodel = emlearn.convert(model)
 
             X_test = X_test[:3]
-            # FIXME: bring back predict_proba support
-            #cproba = cmodel.predict_proba(X_test)
-            #proba = model.predict_proba(X_test)
+            cproba = cmodel.predict_proba(X_test)
+            proba = model.predict_proba(X_test)
 
         assert_equivalent_sklearn(model, X_test, params['classes'], method='inline')
         assert_equivalent_sklearn(model, X_test, params['classes'], method='loadable')
-        #assert_almost_equal(proba, cproba, decimal=6)
+        assert_almost_equal(proba, cproba, decimal=6)
 
 @pytest.mark.xfail()
 @pytest.mark.parametrize('modelparams,params', SKLEARN_PARAMS)

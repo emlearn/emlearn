@@ -44,21 +44,24 @@ class Wrapper:
         self.inference_type = classifier
         self.use_fixedpoint = use_fixedpoint
 
+        n_outputs = self.weights[-1].shape[1]
+        if n_outputs == 1:
+            n_outputs = 2
+
         if self.use_fixedpoint and self.inference_type != 'inline':
             raise NotImplementedError("Fixed-point only implemented with 'inline' inference type")
 
+        name = 'mynet'
         if self.inference_type == 'loadable' and return_type == 'classifier':
-            name = 'mynet'
             func = 'eml_net_predict(&{}, values, length)'.format(name)
             code = self.save(name=name)
-            self.classifier = common.CompiledClassifier(code, name=name, call=func)
+            proba_func = 'eml_net_predict_proba(&{}, values, length, outputs, {})'.format(name, n_outputs)
+            self.classifier = common.CompiledClassifier(code, name=name, call=func, proba_call=proba_func, n_classes=n_outputs)
         elif self.inference_type == 'loadable' and return_type == 'regressor':
-            name = 'mynet'
             func = 'eml_net_regress1(&{}, values, length)'.format(name)
             code = self.save(name=name)
             self.classifier = common.CompiledClassifier(code, name=name, call=func, out_dtype='float')
         elif self.inference_type == 'inline' and return_type == 'classifier':
-            name = 'mynet'
             code = self.save(name=name)
 
             if self.use_fixedpoint:
