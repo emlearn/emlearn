@@ -602,9 +602,11 @@ class Wrapper:
                 raise ValueError("No code generated. Check that 'inference' specifies valid strategies")
 
         elif format == 'csv':
-            nodes, roots = self.forest_
+            nodes, roots, leaves = self.forest_
             nodes = nodes.copy()
             lines = []
+            for l in leaves:
+                lines.append(f'l,{l}')
             for r in roots:
                 lines.append(f'r,{r}')
             for n in nodes:

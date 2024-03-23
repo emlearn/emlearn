@@ -1,5 +1,6 @@
 
 import os
+import io
 
 import sklearn
 import numpy
@@ -52,6 +53,25 @@ REGRESSION_DATASETS = {
 
 METHODS = ['loadable', 'inline']
 
+def check_csv_export(cmodel):
+    """
+    Check that can be saved to CSV file on correct format
+    """
+
+    # check that CSV export is valid
+    csv = cmodel.save(format='csv', name='mymodelname22')
+    loaded = pandas.read_csv(io.StringIO(csv), header=None, engine='python', names=['item', '1', '2', '3', '4'])
+    csv_items = set(loaded.item.unique())
+    assert csv_items == set(['r', 'n', 'l'])
+
+    nodes = loaded[loaded.item == 'n']
+    leaves = loaded[loaded.item == 'l']
+    roots = loaded[loaded.item == 'r']
+
+    assert len(nodes) == len(cmodel.forest_[0])
+    assert len(roots) == len(cmodel.forest_[1])
+    assert len(leaves) == len(cmodel.forest_[2])
+
 @pytest.mark.parametrize("data", CLASSIFICATION_DATASETS.keys())
 @pytest.mark.parametrize("model", CLASSIFICATION_MODELS.keys())
 @pytest.mark.parametrize("method", METHODS)
@@ -70,6 +90,8 @@ def test_trees_sklearn_classifier_predict(data, model, method):
     proba_c = cmodel.predict_proba(X[:5])
     numpy.testing.assert_allclose(proba_c, proba_original, rtol=0.001)
 
+    check_csv_export(cmodel)
+
 @pytest.mark.parametrize("data", REGRESSION_DATASETS.keys())
 @pytest.mark.parametrize("model", REGRESSION_MODELS.keys())
 @pytest.mark.parametrize("method", METHODS)
@@ -85,7 +107,7 @@ def test_trees_sklearn_regressor_predict(data, model, method):
 
     numpy.testing.assert_allclose(pred_c, pred_original, rtol=1e-3, atol=2)
 
-
+    check_csv_export(cmodel)
 
 @pytest.mark.parametrize("model", CLASSIFICATION_MODELS.keys())
 @pytest.mark.parametrize("data", CLASSIFICATION_DATASETS.keys())
