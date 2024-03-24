@@ -610,7 +610,7 @@ class Wrapper:
             for r in roots:
                 lines.append(f'r,{r}')
             for n in nodes:
-                lines.append(f'n,{n[0]},{n[1]},{n[2]},{n[3]}')
+                lines.append(f'n,{n[0]},{n[1].round(6)},{n[2]},{n[3]}')
             code = '\r\n'.join(lines) 
         else:
             raise ValueError(f"Unsupported format: {format}")
