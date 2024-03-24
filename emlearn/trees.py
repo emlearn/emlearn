@@ -602,13 +602,15 @@ class Wrapper:
                 raise ValueError("No code generated. Check that 'inference' specifies valid strategies")
 
         elif format == 'csv':
-            nodes, roots = self.forest_
+            nodes, roots, leaves = self.forest_
             nodes = nodes.copy()
             lines = []
+            for l in leaves:
+                lines.append(f'l,{l}')
             for r in roots:
                 lines.append(f'r,{r}')
             for n in nodes:
-                lines.append(f'n,{n[0]},{n[1]},{n[2]},{n[3]}')
+                lines.append(f'n,{n[0]},{n[1].round(6)},{n[2]},{n[3]}')
             code = '\r\n'.join(lines) 
         else:
             raise ValueError(f"Unsupported format: {format}")
