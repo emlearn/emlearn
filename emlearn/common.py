@@ -9,9 +9,13 @@ import sys
 import subprocess
 import platform
 from distutils.ccompiler import new_compiler
-from sklearn.utils import check_array
 
 import numpy
+
+def check_array(arr):
+    # import dynamically to not need this at package build time
+    from sklearn.utils import check_array as check
+    return check(arr)
 
 def get_include_dir() -> str:
     """
