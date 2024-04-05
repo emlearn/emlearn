@@ -272,27 +272,25 @@ def remove_duplicate_leaves(forest):
     return f
 
 
+def assert_valid_child(value, child_max = 2**15, child_min = -2**15):
+    assert value >= child_min, value
+    assert value <= child_max, value
+
+def encode_child(index, child):
+    if child >= 0:
+        # decision node, use relative jump
+        assert child >= index
+        encoded = child - index
+        # must not become negative, would be confused with a leaf
+        assert encoded >= 0
+    else:
+        # leaf node, leave as-as
+        encoded = child
+
+    assert_valid_child(encoded)
+    return encoded
+
 def generate_c_nodes(flat, name, dtype='float', modifiers='static const'):
-    child_value_max = 2**15
-    child_value_min = -2**15
-
-    def assert_valid_child(value):
-        assert value >= child_value_min, value
-        assert value <= child_value_max, value
-
-    def encode_child(index, child):
-        if child >= 0:
-            # decision node, use relative jump
-            assert child >= index
-            encoded = child - index
-            # must not become negative, would be confused with a leaf
-            assert encoded >= 0
-        else:
-            # leaf node, leave as-as
-            encoded = child
-    
-        assert_valid_child(encoded)
-        return encoded
 
     def make_node(index, node):
         feature, value, left_child, right_child = node
@@ -605,14 +603,26 @@ class Wrapper:
             nodes, roots, leaves = self.forest_
             nodes = nodes.copy()
             lines = []
+
             lines.append(f'f,{self.n_features}')
             lines.append(f'c,{self.n_classes}')
             for l in leaves:
                 lines.append(f'l,{l}')
             for r in roots:
                 lines.append(f'r,{r}')
-            for n in nodes:
-                lines.append(f'n,{n[0]},{n[1].round(6)},{n[2]},{n[3]}')
+
+            def serialize_node(index, node):
+                feature, value, left_child, right_child = node
+
+                left = encode_child(index, left_child)
+                right = encode_child(index, right_child)
+
+                serialized = f'n,{feature},{value.round(6)},{left},{right}'
+                return serialized
+
+            for i, n in enumerate(nodes):
+                lines.append(serialize_node(i, n))
+
             code = '\r\n'.join(lines) 
         else:
             raise ValueError(f"Unsupported format: {format}")
