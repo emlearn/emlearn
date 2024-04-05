@@ -605,6 +605,8 @@ class Wrapper:
             nodes, roots, leaves = self.forest_
             nodes = nodes.copy()
             lines = []
+            lines.append(f'f,{self.n_features}')
+            lines.append(f'c,{self.n_classes}')
             for l in leaves:
                 lines.append(f'l,{l}')
             for r in roots:
