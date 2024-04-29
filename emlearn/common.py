@@ -43,11 +43,14 @@ def build_classifier(cmodel, name, temp_dir, include_dir, func=None, test_functi
     bin_path = os.path.join(temp_dir, output_filename)
     include_dirs = [temp_dir, include_dir]
     if sys.platform.startswith('win'): # Windows
-        libraries = None
-        cc_args = None
+        libraries = []
+        cc_args = []
     else : # MacOS and Linux should be the same
         libraries = ["m"] # math library / libm
         cc_args = ["-std=c99"]
+
+        # be strict about compile warning
+        cc_args += [ '-Wall', '-Werror', '-Wno-error=unused-variable' ]
 
     if n_classes is not None:
         code = """

@@ -524,6 +524,11 @@ class Wrapper:
         if self.method not in ('loadable', 'inline'):
             raise ValueError("Unsupported classifier method '{}'".format(classifier))
 
+        # TODO: support more features for inline. Like 255
+        max_features = 127 if self.method == 'loadable' else 10000
+        if self.n_features > max_features:
+            raise ValueError(f"Maximum features exceeded. features={self.n_features} max={max_features}")
+
         self._classifier = None # lazy-initialized by _build_classifier
 
     def _build_classifier(self):

@@ -58,7 +58,7 @@ const char * const eml_trees_errors[EmlTreesErrorLength+1] = {
 };
 
 #ifndef EMTREES_MAX_CLASSES
-#define EMTREES_MAX_CLASSES 10
+#define EMTREES_MAX_CLASSES 30
 #endif
 
 /*
