@@ -258,3 +258,19 @@ def test_trees_deep(method, deep_trees_model):
     pred_c = cmodel.predict(X)
     numpy.testing.assert_equal(pred_c, pred_original)
 
+
+
+@pytest.mark.parametrize("method", ['loadable', 'inline'])
+def test_trees_too_many_features(method, deep_trees_model):
+    """Should raise error during convert()"""
+
+    above_max = 200 if method == 'inlne' else 20000
+    X, Y = datasets.make_classification(n_classes=10, n_features=above_max,
+        n_informative=100, n_samples=1000, random_state=1)
+    estimator = RandomForestClassifier(n_estimators=5, random_state=1)
+    estimator.fit(X, Y)
+
+    with pytest.raises(ValueError, match='features'):
+        cmodel = emlearn.convert(estimator, method=method)
+
+
