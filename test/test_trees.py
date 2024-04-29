@@ -16,7 +16,7 @@ import sklearn.metrics
 import scipy.stats
 
 import emlearn
-from emlearn.evaluate.trees import model_size_nodes
+from emlearn.evaluate.trees import model_size_nodes, tree_depth_average
 import pytest
 
 here = os.path.dirname(__file__)
@@ -233,4 +233,28 @@ def test_trees_huge(method, huge_trees_model):
     pred_c = cmodel.predict(X)
     numpy.testing.assert_equal(pred_c, pred_original)
 
+
+@pytest.fixture(scope='module')
+def deep_trees_model():
+    store_classifier_path = os.path.join(here, 'out/test_trees_huge.model.pickle')
+    X, Y = datasets.make_classification(n_classes=30, n_features=120, n_informative=100, n_samples=10000, random_state=1)
+    est = RandomForestClassifier(n_estimators=2, random_state=1)
+    est.fit(X, Y)
+
+    depth = tree_depth_average(est)
+    n_nodes = model_size_nodes(est)
+    assert depth >= 40
+    assert n_nodes >= 8*1000
+
+    return X, Y, est
+
+@pytest.mark.parametrize("method", ['loadable', 'inline'])
+def test_trees_deep(method, deep_trees_model):
+    """Should work just the same as a smaller model"""
+    X, Y, estimator = deep_trees_model
+
+    cmodel = emlearn.convert(estimator, method=method)
+    pred_original = estimator.predict(X)
+    pred_c = cmodel.predict(X)
+    numpy.testing.assert_equal(pred_c, pred_original)
 
