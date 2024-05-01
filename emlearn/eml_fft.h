@@ -69,8 +69,8 @@ eml_fft_fill(EmlFFT table, size_t n) {
 
 	// Trignometric tables
 	for (size_t i = 0; i < (size_t)(n / 2); i++) {
-		table.cos[i] = (float)cos(2 * M_PI * i / n);
-		table.sin[i] = (float)sin(2 * M_PI * i / n);
+		table.cos[i] = (float)cosf(2 * M_PI * i / n);
+		table.sin[i] = (float)sinf(2 * M_PI * i / n);
 	}
     return EmlOk;
 }
