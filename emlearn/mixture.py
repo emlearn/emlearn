@@ -66,6 +66,15 @@ def generate_code(model, name='fss_mode'):
                                 values, values_length,
                                 probabilities, score);
         }}
+
+        int32_t
+        {name}_predict(const float values[], int32_t values_length, float *probabilities, float *score, float *resp)
+        {
+
+            return eml_mixture_predict(&{name}_model,
+                                values, values_length,
+                                probabilities, score, resp);
+        }
     '''
 
     model_init = f'EmlMixtureModel {name}_model = ' + cgen.struct_init(
