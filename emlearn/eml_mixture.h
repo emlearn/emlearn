@@ -287,6 +287,32 @@ eml_mixture_score(EmlMixtureModel *model,
     return EmlOk;
 }
 
+int32_t eml_mixture_predict(EmlMixtureModel *model,
+                    const float values[], int32_t values_length,
+                    float *probabilities,
+                    float *out_score, float *out_resp) {
+    EML_PRECONDITION(model, -EmlUninitialized);
+    EML_PRECONDITION(values, -EmlUninitialized);
+    EML_PRECONDITION(model->n_components > 0, -EmlUninitialized);
+
+    EmlError status = \
+        eml_mixture_score(model, values, values_length, probabilities, out_score);
+    if (status != EmlOk) {
+        return status;
+    }
+
+    float log_resp[model -> n_components]; // defined an array log responsibilities
+    for (int i=0; i < model -> n_components; i++) {
+        log_resp[i] = probabilities[i] - *out_score;
+    }
+    // Now take the exp() for each member of the array
+    for (int i=0; i < model -> n_components; i++) {
+        out_resp[i] = expf(log_resp[i]);
+    } 
+    return EmlOk;
+    
+}
+
 #ifdef __cplusplus
 }
 #endif
