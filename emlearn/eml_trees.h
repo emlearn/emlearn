@@ -2,6 +2,10 @@
 #ifndef EML_TREES_H
 #define EML_TREES_H
 
+#ifndef EML_TREES_TRACE
+#define EML_TREES_TRACE 0
+#endif
+
 #ifndef EML_TREES_REGRESSION_ENABLE
 #define EML_TREES_REGRESSION_ENABLE 1
 #endif
@@ -79,6 +83,12 @@ eml_trees_predict_tree(const EmlTrees *forest, int32_t tree_root,
         const int16_t point = forest->nodes[node_idx].value;
         //printf("node %d feature %d. %d < %d\n", node_idx, feature, value, point);
         const int16_t child = (value < point) ? forest->nodes[node_idx].left : forest->nodes[node_idx].right;
+    
+#if EML_TREES_TRACE
+        EML_LOG_PRINTF("predit-tree-iter node=%d feature=%d value=%d th=%d next=%d \n",
+            node_idx, feature, value, point, child);
+#endif
+
         if (child >= 0) {
             node_idx += child;
         } else {
@@ -87,6 +97,12 @@ eml_trees_predict_tree(const EmlTrees *forest, int32_t tree_root,
     }
 
     const int16_t leaf = -node_idx-1;
+
+    EML_LOG_BEGIN("eml-trees-predict-tree-end");
+    EML_LOG_ADD_INTEGER("node", node_idx);
+    EML_LOG_ADD_INTEGER("leaf", leaf);
+    EML_LOG_END();
+
     return leaf;
 }
 
