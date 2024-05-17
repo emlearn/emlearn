@@ -18,16 +18,18 @@ class Quantizer(BaseEstimator, TransformerMixin):
     """
 
     def __init__(self,
-            max_quantile=0.01,
+            max_quantile=0.0001,
             max_value=None,
+            out_max=None, # automatically from dtype
             dtype='int16'):
         self.max_quantile = max_quantile
         self.max_value = max_value
         self.dtype = numpy.dtype(dtype)
-        #self.out_max = out_max
+        self.out_max = out_max
 
     def _get_out_max(self):
-        #assert self.dtype == numpy.dtype('int16')
+        if self.out_max is not None:
+            return self.out_max
 
         info = None
         try:
@@ -55,17 +57,18 @@ class Quantizer(BaseEstimator, TransformerMixin):
         else:
             largest = self.max_value            
     
-        self.scale_ = out_max / largest 
+        self.scale_ = out_max / largest
+        #print('ss', self.scale_, out_max)
         return self
 
     def transform(self, X, y=None):
 
+        # scale
+        out = X * self.scale_
+
         # clip out-of-range values
         out_max = self._get_out_max()
-        out = numpy.clip(X, -out_max, out_max)
-
-        # scale
-        out = out * self.scale_
+        out = numpy.clip(out, -out_max, out_max)
 
         # quantize / convert dtype
         out = out.astype(self.dtype)
@@ -84,7 +87,12 @@ class Quantizer(BaseEstimator, TransformerMixin):
         # ensure workig with floats, not fixed-size integers
         out = X.astype(float)
 
-        out = X / self.scale_
+        # clip out-of-range values
+        out_max = self._get_out_max()
+        out = numpy.clip(out, -out_max, out_max)
+
+        # apply scale
+        out = out / self.scale_
 
         assert out.shape == X.shape
 
