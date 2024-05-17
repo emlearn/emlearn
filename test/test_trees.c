@@ -55,15 +55,18 @@ test_trees_xor_predict()
     for (int i=0; i<TEST_XOR_ROWS; i++) {
         const int16_t *data = test_data[i];
         const int16_t expect_class = data[2];   
+        const float expect_proba0 = (expect_class == 0) ? 1.0f : 0.0f;
+        const float expect_proba1 = (expect_class == 0) ? 0.0f : 1.0f;
 
         printf("test-xor case=%d in=[%d %d] expect=%d\n", i, data[0], data[1], expect_class);
 
         const EmlError err = eml_trees_predict_proba(model, data, TEST_XOR_FEATURES, out, 2);
         TEST_ASSERT_EQUAL(EmlOk, err);
-        // FIXME: check probabiltities;
+        TEST_ASSERT_FLOAT_WITHIN(0.01f, expect_proba0, out[0]);
+        TEST_ASSERT_FLOAT_WITHIN(0.01f, expect_proba1, out[1]);
 
         const int out = eml_trees_predict(model, data, TEST_XOR_FEATURES);
-        TEST_ASSERT_EQUAL(out, expect_class);        
+        TEST_ASSERT_EQUAL(out, expect_class);
     }
 }
 
