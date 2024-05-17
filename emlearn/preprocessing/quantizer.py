@@ -18,7 +18,7 @@ class Quantizer(BaseEstimator, TransformerMixin):
     """
 
     def __init__(self,
-            max_quantile=0.01,
+            max_quantile=0.0001,
             max_value=None,
             out_max=None, # automatically from dtype
             dtype='int16'):
