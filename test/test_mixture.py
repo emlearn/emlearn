@@ -68,6 +68,10 @@ def test_gaussian_mixture_equals_sklearn(data, model, method):
     estimator.fit(X, y)
   
     numpy.testing.assert_equal(pred_c, pred_original)
+    if model != 'EllipticEnvelope':
+        resp_original = estimator.predict_proba(X)
+        resp_c = cmodel.predict_resp(X)
+        numpy.testing.assert_allclose(resp_c, resp_original, atol=1e-5)
 
     # check that code can be generated
     out_dir = os.path.join(here, 'out', 'gaussian_mixture', f'{data}_{model}_{method}.c')
