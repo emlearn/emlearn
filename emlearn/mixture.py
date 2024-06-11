@@ -69,12 +69,12 @@ def generate_code(model, name='fss_mode'):
 
         int32_t
         {name}_predict(const float values[], int32_t values_length, float *probabilities, float *score, float *resp)
-        {
+        {{
 
             return eml_mixture_predict(&{name}_model,
                                 values, values_length,
                                 probabilities, score, resp);
-        }
+        }}
     '''
 
     model_init = f'EmlMixtureModel {name}_model = ' + cgen.struct_init(
@@ -142,17 +142,42 @@ def build_executable(wrapper, out_dir, output_type, name='gmm'):
     output_code = None
 
     if output_type == 'score':
-        output_code = """
-            printf("%f", score);
+        output_code = f"""
+        float score;
+        const EmlError out = {name}_score(features, n_features, output, &score);
+        if (out != EmlOk) {{
+            return -out; // error
+        }}
+        printf("%f", score);
         """
     elif output_type == 'proba':
-        output_code = """
+        output_code = f"""
+        float score;
+        const EmlError out = {name}_score(features, n_features, output, &score);
+        if (out != EmlOk) {{
+            return -out; // error
+        }}
         for (int i=0; i<n_components; i++) {{
             printf("%.6f", output[i]);
             if (i != (n_components-1)) {{
                 printf(",");
             }}
         }}
+        """
+    elif output_type == 'resp':
+        output_code = f"""
+        float score;
+        float* resp = (float*)malloc(n_components * sizeof(float));
+        const EmlError out_resp = {name}_predict(features, n_features, output, &score, resp);
+        if (out_resp != EmlOk) {{
+            return -out_resp; // error
+        }}
+        for (int i=0; i<n_components; i++) {{
+                printf("%.6f", resp[i]);
+                if (i != (n_components-1)) {{
+                    printf(",");
+                }}
+            }}
         """
     else:
         raise ValueError(f"Unknown output type {output_type}")
@@ -175,13 +200,7 @@ def build_executable(wrapper, out_dir, output_type, name='gmm'):
         for (int i=1; i<argc; i++) {{
             features[i-1] = strtod(argv[i], NULL);
         }}
-
-        float score;
-        const EmlError out = {name}_score(features, n_features, output, &score);
-        if (out != EmlOk) {{
-            return -out; // error
-        }}
-
+        
         {output_code}
 
         return 0;
@@ -311,6 +330,15 @@ class Wrapper:
             c_predictions = predict(bin_path, X, verbose=self.verbose)
 
         # XXX: note, this is actually log probabilities
+        return c_predictions
+    def predict_resp(self, X):
+
+        with tempfile.TemporaryDirectory() as out_dir:
+
+            bin_path = build_executable(self, out_dir=out_dir, output_type='resp')
+            c_predictions = predict(bin_path, X, verbose=self.verbose)
+
+        # Note: this is actually components' densities
         return c_predictions
 
     def predict(self, X):
