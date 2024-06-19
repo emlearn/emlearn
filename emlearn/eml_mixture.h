@@ -300,13 +300,12 @@ int32_t eml_mixture_predict(EmlMixtureModel *model,
     if (status != EmlOk) {
         return status;
     }
-    float* log_resp = (float*)malloc(model -> n_components * sizeof(float)); // defined an array log responsibilities 'dynamically
     for (int i=0; i < model -> n_components; i++) {
-        log_resp[i] = probabilities[i] - *out_score;
+        out_resp[i] = probabilities[i] - *out_score;
     }
     // Now take the exp() for each member of the array
     for (int i=0; i < model -> n_components; i++) {
-        out_resp[i] = expf(log_resp[i]);
+        out_resp[i] = expf(out_resp[i]); // compute their exponential values in-place.
     } 
     return EmlOk;
     
