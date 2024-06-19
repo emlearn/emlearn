@@ -160,7 +160,7 @@ print_array(const float *array, int n) {
 * \return EmlOk on success, or error on failure
 */
 int32_t
-eml_mixture_log_proba(EmlMixtureModel *model,
+eml_mixture_predict_log_proba(EmlMixtureModel *model,
                         const float values[], int32_t values_length,
                         float *probabilities)
 {
@@ -271,7 +271,7 @@ eml_mixture_score(EmlMixtureModel *model,
 
 
     EmlError status = \
-        eml_mixture_log_proba(model, values, values_length, probabilities);
+        eml_mixture_predict_log_proba(model, values, values_length, probabilities);
     if (status != EmlOk) {
         return status;
     }
@@ -287,7 +287,7 @@ eml_mixture_score(EmlMixtureModel *model,
     return EmlOk;
 }
 
-int32_t eml_mixture_predict(EmlMixtureModel *model,
+int32_t eml_mixture_predict_proba(EmlMixtureModel *model,
                     const float values[], int32_t values_length,
                     float *probabilities,
                     float *out_score, float *out_resp) {

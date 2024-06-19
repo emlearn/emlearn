@@ -49,10 +49,10 @@ def generate_code(model, name='fss_mode'):
 
     predict_func = f'''
         int32_t
-        {name}_log_proba(const float values[], int32_t values_length, float *out)
+        {name}_predict_log_proba(const float values[], int32_t values_length, float *out)
         {{
 
-            return eml_mixture_log_proba(&{name}_model,
+            return eml_mixture_predict_log_proba(&{name}_model,
                                 values, values_length,
                                 out);
         }}
@@ -68,10 +68,10 @@ def generate_code(model, name='fss_mode'):
         }}
 
         int32_t
-        {name}_predict(const float values[], int32_t values_length, float *probabilities, float *score, float *resp)
+        {name}_predict_proba(const float values[], int32_t values_length, float *probabilities, float *score, float *resp)
         {{
 
-            return eml_mixture_predict(&{name}_model,
+            return eml_mixture_predict_proba(&{name}_model,
                                 values, values_length,
                                 probabilities, score, resp);
         }}
@@ -150,7 +150,7 @@ def build_executable(wrapper, out_dir, output_type, name='gmm'):
         }}
         printf("%f", score);
         """
-    elif output_type == 'proba':
+    elif output_type == 'predict_log_proba':
         output_code = f"""
         float score;
         const EmlError out = {name}_score(features, n_features, output, &score);
@@ -164,11 +164,11 @@ def build_executable(wrapper, out_dir, output_type, name='gmm'):
             }}
         }}
         """
-    elif output_type == 'resp':
+    elif output_type == 'predict_proba':
         output_code = f"""
         float score;
         float* resp = (float*)malloc(n_components * sizeof(float));
-        const EmlError out_resp = {name}_predict(features, n_features, output, &score, resp);
+        const EmlError out_resp = {name}_predict_proba(features, n_features, output, &score, resp);
         if (out_resp != EmlOk) {{
             return -out_resp; // error
         }}
@@ -178,6 +178,7 @@ def build_executable(wrapper, out_dir, output_type, name='gmm'):
                     printf(",");
                 }}
             }}
+        free(resp);
         """
     else:
         raise ValueError(f"Unknown output type {output_type}")
@@ -322,20 +323,20 @@ class Wrapper:
         self._log_weights = get_log_weights(estimator)
 
 
-    def predict_proba(self, X):
+    def predict_log_proba(self, X):
 
         with tempfile.TemporaryDirectory() as out_dir:
 
-            bin_path = build_executable(self, out_dir=out_dir, output_type='proba')
+            bin_path = build_executable(self, out_dir=out_dir, output_type='predict_log_proba')
             c_predictions = predict(bin_path, X, verbose=self.verbose)
 
         # XXX: note, this is actually log probabilities
         return c_predictions
-    def predict_resp(self, X):
+    def predict_proba(self, X):
 
         with tempfile.TemporaryDirectory() as out_dir:
 
-            bin_path = build_executable(self, out_dir=out_dir, output_type='resp')
+            bin_path = build_executable(self, out_dir=out_dir, output_type='predict_proba')
             c_predictions = predict(bin_path, X, verbose=self.verbose)
 
         # Note: this is actually components' densities
