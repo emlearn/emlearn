@@ -11,9 +11,12 @@ main(int argc, const char *argv[])
         return -1;
     }
 
+    // Input is espected to be 0.0-255.0
     const float a = strtod(argv[1], NULL);
     const float b = strtod(argv[2], NULL);
-    const float features[] = { a, b };
+
+    // Convert to integers
+    const int16_t features[] = { a, b };
 
     const int out = xor_predict(features, 2);
     if (out < 0) {

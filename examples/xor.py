@@ -43,7 +43,7 @@ def make_noisy_xor(seed=42):
     flip = rng.randint(300, size=15)
     y[flip] = ~y[flip]
 
-    df = pandas.DataFrame(X)
+    df = pandas.DataFrame((X * 255).astype(numpy.int16))
     df['label'] = y
 
     return df
