@@ -217,6 +217,7 @@ def test_trees_single_leaf_tree():
 def huge_trees_model():
     store_classifier_path = os.path.join(here, 'out/test_trees_huge.model.pickle')
     X, Y = datasets.make_classification(n_classes=2, n_samples=1000, random_state=1)
+    X = Quantizer().fit_transform(X)
     est = RandomForestClassifier(n_estimators=1000, max_depth=20, random_state=1)
     est.fit(X, Y)
 
@@ -241,6 +242,7 @@ def test_trees_huge(method, huge_trees_model):
 def deep_trees_model():
     store_classifier_path = os.path.join(here, 'out/test_trees_huge.model.pickle')
     X, Y = datasets.make_classification(n_classes=30, n_features=120, n_informative=100, n_samples=10000, random_state=1)
+    X = Quantizer().fit_transform(X)
     est = RandomForestClassifier(n_estimators=2, random_state=1)
     est.fit(X, Y)
 
