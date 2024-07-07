@@ -68,6 +68,7 @@ SUPPORTED_PARAMS = {
     'default': dict(),
     'metric=euclidean': dict(metric='euclidean'),
     'NN1': dict(n_neighbors=1),
+    'NN5': dict(n_neighbors=5),
 }
 
 @pytest.mark.parametrize('params', SUPPORTED_PARAMS)
