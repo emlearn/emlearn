@@ -49,10 +49,10 @@ def generate_code(model, name='fss_mode'):
 
     predict_func = f'''
         int32_t
-        {name}_log_proba(const float values[], int32_t values_length, float *out)
+        {name}_predict_log_proba(const float values[], int32_t values_length, float *out)
         {{
 
-            return eml_mixture_log_proba(&{name}_model,
+            return eml_mixture_predict_log_proba(&{name}_model,
                                 values, values_length,
                                 out);
         }}
@@ -65,6 +65,15 @@ def generate_code(model, name='fss_mode'):
             return eml_mixture_score(&{name}_model,
                                 values, values_length,
                                 probabilities, score);
+        }}
+
+        int32_t
+        {name}_predict_proba(const float values[], int32_t values_length, float *probabilities, float *score, float *resp)
+        {{
+
+            return eml_mixture_predict_proba(&{name}_model,
+                                values, values_length,
+                                probabilities, score, resp);
         }}
     '''
 
@@ -133,17 +142,43 @@ def build_executable(wrapper, out_dir, output_type, name='gmm'):
     output_code = None
 
     if output_type == 'score':
-        output_code = """
-            printf("%f", score);
+        output_code = f"""
+        float score;
+        const EmlError out = {name}_score(features, n_features, output, &score);
+        if (out != EmlOk) {{
+            return -out; // error
+        }}
+        printf("%f", score);
         """
-    elif output_type == 'proba':
-        output_code = """
+    elif output_type == 'predict_log_proba':
+        output_code = f"""
+        float score;
+        const EmlError out = {name}_score(features, n_features, output, &score);
+        if (out != EmlOk) {{
+            return -out; // error
+        }}
         for (int i=0; i<n_components; i++) {{
             printf("%.6f", output[i]);
             if (i != (n_components-1)) {{
                 printf(",");
             }}
         }}
+        """
+    elif output_type == 'predict_proba':
+        output_code = f"""
+        float score;
+        float* resp = (float*)malloc(n_components * sizeof(float));
+        const EmlError out_resp = {name}_predict_proba(features, n_features, output, &score, resp);
+        if (out_resp != EmlOk) {{
+            return -out_resp; // error
+        }}
+        for (int i=0; i<n_components; i++) {{
+                printf("%.6f", resp[i]);
+                if (i != (n_components-1)) {{
+                    printf(",");
+                }}
+            }}
+        free(resp);
         """
     else:
         raise ValueError(f"Unknown output type {output_type}")
@@ -166,13 +201,7 @@ def build_executable(wrapper, out_dir, output_type, name='gmm'):
         for (int i=1; i<argc; i++) {{
             features[i-1] = strtod(argv[i], NULL);
         }}
-
-        float score;
-        const EmlError out = {name}_score(features, n_features, output, &score);
-        if (out != EmlOk) {{
-            return -out; // error
-        }}
-
+        
         {output_code}
 
         return 0;
@@ -294,14 +323,23 @@ class Wrapper:
         self._log_weights = get_log_weights(estimator)
 
 
+    def predict_log_proba(self, X):
+
+        with tempfile.TemporaryDirectory() as out_dir:
+
+            bin_path = build_executable(self, out_dir=out_dir, output_type='predict_log_proba')
+            c_predictions = predict(bin_path, X, verbose=self.verbose)
+
+        # XXX: note, this is actually log probabilities
+        return c_predictions
     def predict_proba(self, X):
 
         with tempfile.TemporaryDirectory() as out_dir:
 
-            bin_path = build_executable(self, out_dir=out_dir, output_type='proba')
+            bin_path = build_executable(self, out_dir=out_dir, output_type='predict_proba')
             c_predictions = predict(bin_path, X, verbose=self.verbose)
 
-        # XXX: note, this is actually log probabilities
+        # Note: this is actually components' densities
         return c_predictions
 
     def predict(self, X):

@@ -160,7 +160,7 @@ print_array(const float *array, int n) {
 * \return EmlOk on success, or error on failure
 */
 int32_t
-eml_mixture_log_proba(EmlMixtureModel *model,
+eml_mixture_predict_log_proba(EmlMixtureModel *model,
                         const float values[], int32_t values_length,
                         float *probabilities)
 {
@@ -271,7 +271,7 @@ eml_mixture_score(EmlMixtureModel *model,
 
 
     EmlError status = \
-        eml_mixture_log_proba(model, values, values_length, probabilities);
+        eml_mixture_predict_log_proba(model, values, values_length, probabilities);
     if (status != EmlOk) {
         return status;
     }
@@ -285,6 +285,30 @@ eml_mixture_score(EmlMixtureModel *model,
     *out_score = score;
 
     return EmlOk;
+}
+
+int32_t eml_mixture_predict_proba(EmlMixtureModel *model,
+                    const float values[], int32_t values_length,
+                    float *probabilities,
+                    float *out_score, float *out_resp) {
+    EML_PRECONDITION(model, -EmlUninitialized);
+    EML_PRECONDITION(values, -EmlUninitialized);
+    EML_PRECONDITION(model->n_components > 0, -EmlUninitialized);
+
+    EmlError status = \
+        eml_mixture_score(model, values, values_length, probabilities, out_score);
+    if (status != EmlOk) {
+        return status;
+    }
+    for (int i=0; i < model -> n_components; i++) {
+        out_resp[i] = probabilities[i] - *out_score;
+    }
+    // Now take the exp() for each member of the array
+    for (int i=0; i < model -> n_components; i++) {
+        out_resp[i] = expf(out_resp[i]); // compute their exponential values in-place.
+    } 
+    return EmlOk;
+    
 }
 
 #ifdef __cplusplus
