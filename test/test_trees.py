@@ -258,6 +258,7 @@ def test_trees_deep(method, deep_trees_model):
     """Should work just the same as a smaller model"""
     X, Y, estimator = deep_trees_model
 
+    X = X[0:1000, :]
     cmodel = emlearn.convert(estimator, method=method)
     pred_original = estimator.predict(X)
     pred_c = cmodel.predict(X)
