@@ -488,6 +488,8 @@ class Wrapper:
     def __init__(self, estimator, classifier, dtype='int16_t', leaf_bits=None):
 
         self.dtype = dtype
+        if self.dtype is None:
+            self.dtype = 'int16_t'
 
         kind = type(estimator).__name__
         leaf = 'argmax'
