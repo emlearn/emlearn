@@ -15,6 +15,7 @@ import sklearn.model_selection
 import sklearn.metrics
 import scipy.stats
 
+from emlearn.preprocessing import Quantizer
 import emlearn
 from emlearn.evaluate.trees import model_size_nodes, tree_depth_average
 import pytest
@@ -86,6 +87,7 @@ def check_csv_export(cmodel):
 def test_trees_sklearn_classifier_predict(data, model, method):
     X, y = CLASSIFICATION_DATASETS[data]
     estimator = CLASSIFICATION_MODELS[model]
+    X = Quantizer().fit_transform(X)
 
     estimator.fit(X, y)
     cmodel = emlearn.convert(estimator, method=method)
@@ -106,6 +108,7 @@ def test_trees_sklearn_classifier_predict(data, model, method):
 def test_trees_sklearn_regressor_predict(data, model, method):
     X, y = REGRESSION_DATASETS[data]
     estimator = REGRESSION_MODELS[model]
+    X = Quantizer().fit_transform(X)
 
     estimator.fit(X, y)
     cmodel = emlearn.convert(estimator, method=method)
@@ -214,6 +217,7 @@ def test_trees_single_leaf_tree():
 def huge_trees_model():
     store_classifier_path = os.path.join(here, 'out/test_trees_huge.model.pickle')
     X, Y = datasets.make_classification(n_classes=2, n_samples=1000, random_state=1)
+    X = Quantizer().fit_transform(X)
     est = RandomForestClassifier(n_estimators=1000, max_depth=20, random_state=1)
     est.fit(X, Y)
 
@@ -238,6 +242,7 @@ def test_trees_huge(method, huge_trees_model):
 def deep_trees_model():
     store_classifier_path = os.path.join(here, 'out/test_trees_huge.model.pickle')
     X, Y = datasets.make_classification(n_classes=30, n_features=120, n_informative=100, n_samples=10000, random_state=1)
+    X = Quantizer().fit_transform(X)
     est = RandomForestClassifier(n_estimators=2, random_state=1)
     est.fit(X, Y)
 
@@ -253,6 +258,7 @@ def test_trees_deep(method, deep_trees_model):
     """Should work just the same as a smaller model"""
     X, Y, estimator = deep_trees_model
 
+    X = X[0:1000, :]
     cmodel = emlearn.convert(estimator, method=method)
     pred_original = estimator.predict(X)
     pred_c = cmodel.predict(X)

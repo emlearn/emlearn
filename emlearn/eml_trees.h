@@ -2,6 +2,10 @@
 #ifndef EML_TREES_H
 #define EML_TREES_H
 
+#ifndef EML_TREES_TRACE
+#define EML_TREES_TRACE 0
+#endif
+
 #ifndef EML_TREES_REGRESSION_ENABLE
 #define EML_TREES_REGRESSION_ENABLE 1
 #endif
@@ -16,7 +20,7 @@ extern "C" {
 
 typedef struct _EmlTreesNode {
     int8_t feature;
-    float value;
+    int16_t value;
     int16_t left;
     int16_t right;
 } EmlTreesNode;
@@ -68,17 +72,23 @@ Returns an offset into the leaves structure
 */
 static int32_t
 eml_trees_predict_tree(const EmlTrees *forest, int32_t tree_root,
-                    const float *features, int8_t features_length)
+                        const int16_t *features, int8_t features_length)
 {
     int32_t node_idx = tree_root;
 
     // TODO: see if using a pointer node instead of indirect adressing using node_idx improves perf
     while (node_idx >= 0) {
         const int8_t feature = forest->nodes[node_idx].feature;
-        const float value = features[feature];
-        const float point = forest->nodes[node_idx].value;
+        const int16_t value = features[feature];
+        const int16_t point = forest->nodes[node_idx].value;
         //printf("node %d feature %d. %d < %d\n", node_idx, feature, value, point);
         const int16_t child = (value < point) ? forest->nodes[node_idx].left : forest->nodes[node_idx].right;
+    
+#if EML_TREES_TRACE
+        EML_LOG_PRINTF("predit-tree-iter node=%d feature=%d value=%d th=%d next=%d \n",
+            node_idx, feature, value, point, child);
+#endif
+
         if (child >= 0) {
             node_idx += child;
         } else {
@@ -87,6 +97,12 @@ eml_trees_predict_tree(const EmlTrees *forest, int32_t tree_root,
     }
 
     const int16_t leaf = -node_idx-1;
+
+    EML_LOG_BEGIN("eml-trees-predict-tree-end");
+    EML_LOG_ADD_INTEGER("node", node_idx);
+    EML_LOG_ADD_INTEGER("leaf", leaf);
+    EML_LOG_END();
+
     return leaf;
 }
 
@@ -100,7 +116,7 @@ eml_trees_outputs_proba(const EmlTrees *self)
 
 EmlError
 eml_trees_predict_proba(const EmlTrees *self,
-            const float *features, int8_t features_length,
+            const int16_t *features, int8_t features_length,
             float *out, int32_t out_length)
 {
     EML_PRECONDITION(features, EmlUninitialized);
@@ -174,7 +190,7 @@ eml_trees_predict_proba(const EmlTrees *self,
 * \return The class number, or -EmlTreesError on failure
 */
 int32_t
-eml_trees_predict(const EmlTrees *forest, const float *features, int8_t features_length)
+eml_trees_predict(const EmlTrees *forest, const int16_t *features, int8_t features_length)
 {
     EML_LOG_BEGIN("eml-trees-predict-start");
     EML_LOG_ADD_INTEGER("classes", forest->n_classes);
@@ -233,7 +249,7 @@ eml_trees_predict(const EmlTrees *forest, const float *features, int8_t features
 */
 EmlError
 eml_trees_regress(const EmlTrees *forest,
-        const float *features, int8_t features_length,
+        const int16_t *features, int8_t features_length,
         float *out, int8_t out_length)
 {
 
@@ -283,7 +299,7 @@ eml_trees_regress(const EmlTrees *forest,
 */
 float
 eml_trees_regress1(const EmlTrees *forest,
-        const float *features, int8_t features_length)
+        const int16_t *features, int8_t features_length)
 {
     float out[1];
     EmlError err = eml_trees_regress(forest,

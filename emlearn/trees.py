@@ -485,9 +485,11 @@ def generate_c_loadable(forest, name, n_features,
 
 
 class Wrapper:
-    def __init__(self, estimator, classifier, dtype='float', leaf_bits=None):
+    def __init__(self, estimator, classifier, dtype='int16_t', leaf_bits=None):
 
         self.dtype = dtype
+        if self.dtype is None:
+            self.dtype = 'int16_t'
 
         kind = type(estimator).__name__
         leaf = 'argmax'
@@ -535,30 +537,104 @@ class Wrapper:
         if self._classifier is not None:
             return None
 
-        method = self.method
-        if method == 'loadable':
-            name = 'mytree'
-            proba_func = 'eml_trees_predict_proba(&{}, values, length, outputs, N_CLASSES)'\
-                .format(name, self.n_classes)
+        name = 'mytree'
+        n_features = self.n_features
+        n_classes = self.n_classes
+        feature_dtype = self.dtype
 
-            if self.is_classifier:
-                func = 'eml_trees_predict(&{}, values, length)'.format(name)
-            else:
-                func = 'eml_trees_regress1(&{}, values, length)'.format(name)
-            code = self.save(name=name)
-            self.classifier_ = common.CompiledClassifier(code, name=name,
-                call=func, proba_call=proba_func, out_dtype=self.out_dtype, n_classes=self.n_classes)
-        elif method == 'inline':
-            name = 'myinlinetree'
-            # TODO: actually implement inline predict_proba, instead of just using loadable
-            proba_func = 'eml_trees_predict_proba(&{}, values, length, outputs, N_CLASSES)'\
-                .format(name, self.n_classes)
-            func = '{}_predict(values, length)'.format(name)
-            code = self.save(name=name)
-            self.classifier_ = common.CompiledClassifier(code, name=name,
-                call=func, proba_call=proba_func, out_dtype=self.out_dtype, n_classes=self.n_classes)
+        model_init = self.save(name=name)
+
+        code = '\n'.join([
+            model_init,
+
+            # Floating point wrappers for loadable, that is compatible with CompilerClassifier
+            f"""
+            int32_t
+            predict_loadable(const float *values, int length) {{
+                 // Convert to integer
+                int16_t features[{n_features}];
+                for (int i=0; i<length; i++) {{
+                    features[i] = (int16_t)values[i];
+                }}
+                const int out = eml_trees_predict(&{name}, features, length);
+                if (out < 0) {{
+                    return -out;
+                }}
+                return out;
+            }}
+            """,
+            # Floating point wrappers for inline, that is compatible with CompilerClassifier
+            f"""
+            int32_t
+            predict_inline(const float *values, int length) {{
+                // Convert to whatever is needed for inline
+                {feature_dtype} features[{n_features}];
+                for (int i=0; i<length; i++) {{
+                    features[i] = ({feature_dtype})values[i];
+                }}
+                const int out = {name}_predict(features, length);
+                if (out < 0) {{
+                    return -out;
+                }}
+                return out;
+            }}
+            """,
+            # Floating point wrappers for proba, that is compatible with CompilerClassifier
+            f"""
+            EmlError
+            predict_proba(const float *values, int length, float *outputs, int n_outputs) {{
+                // Convert to integer
+                int16_t features[{n_features}];
+                for (int i=0; i<length; i++) {{
+                    features[i] = (int16_t)values[i];
+                }}
+
+                
+                const EmlError err = \
+                    eml_trees_predict_proba(&{name}, features, length, outputs, n_outputs);
+
+                return err;
+            }}
+            """,
+            # Floating point wrappers for regress, that is compatible with CompilerClassifier
+            f"""
+            int32_t
+            regress_func(const float *values, int length) {{
+                // Convert to integer
+                int16_t features[{n_features}];
+                for (int i=0; i<length; i++) {{
+                    features[i] = (int16_t)values[i];
+                }}
+                const float out = eml_trees_regress1(&{name}, features, length);
+                return out;
+            }}
+            """
+        ])
+
+        #with open('treegen.h', 'w') as f:
+        #    f.write(code)
+
+        # TODO: actually implement inline predict_proba, instead of just using loadable
+        proba_func = 'predict_proba(values, length, outputs, N_CLASSES)'
+        regress_func = 'regress_func(values, length)'
+
+        if self.method == 'loadable':
+            predict_func = 'predict_loadable(values, length)'
+        elif self.method == 'inline':
+            predict_func = 'predict_inline(values, length)'
         else:
             assert False, 'should not happen, constructor should enforce'
+
+        if self.is_classifier:
+            call_func = predict_func
+        else:
+            call_func = regress_func
+            proba_func = None
+
+        self.classifier_ = common.CompiledClassifier(code, name=name,
+            call=call_func, proba_call=proba_func,
+            out_dtype=self.out_dtype, n_classes=self.n_classes,
+        )
 
 
     def predict(self, X):

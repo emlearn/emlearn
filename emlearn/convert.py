@@ -47,7 +47,7 @@ class Model():
 def convert(estimator, 
         kind : str = None,
         method: str = 'loadable',
-        dtype: str ='float',
+        dtype: str = None,
         return_type: str = 'classifier',
         **kwargs,
         ) -> Model:
@@ -68,8 +68,12 @@ def convert(estimator,
         # return_type is intentionally not passed through - the Wrapper will guess based on Class name
         return trees.Wrapper(estimator, method, dtype=dtype, **kwargs)
     elif kind in ['EllipticEnvelope']:
+        if dtype is None:
+            dtype = 'float'
         return distance.Wrapper(estimator, method, dtype=dtype)
     elif kind in ['GaussianMixture', 'BayesianGaussianMixture']:
+        if dtype is None:
+            dtype = 'float'
         return mixture.Wrapper(estimator, method, dtype=dtype)
     elif kind in ('MLPClassifier', 'MLPRegressor'):
         return net.convert_sklearn_mlp(estimator, method, return_type=return_type, **kwargs)
