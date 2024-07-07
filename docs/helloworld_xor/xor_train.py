@@ -8,6 +8,8 @@ def make_xor(lower=0.0, upper=1.0, threshold=0.5, samples=100, seed=42):
     rng = numpy.random.RandomState(seed)
     X = rng.uniform(lower, upper, size=(samples, 2))
     y = numpy.logical_xor(X[:, 0] > threshold, X[:, 1] > threshold)
+    # convert to int16 with a 8 bit range. [0.0-1.0] -> [0-255]
+    X = (X * 255).astype(numpy.int16)
     return X, y
 
 X, y = make_xor()

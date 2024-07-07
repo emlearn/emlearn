@@ -14,12 +14,12 @@ void setup() {
   pinMode(digitalPinB, INPUT_PULLUP); 
 }
 
-// Read values into range 0.0-1.0
-float readAnalog(const int pin) {
-    return analogRead(pin) / 1023.0;
+// Read values into range 0-255
+uint8_t readAnalog(const int pin) {
+    return analogRead(pin) / (1023/255);
 }
-float readDigital(const int pin) {
-    return digitalRead(pin) ? 1.0 : 0.0;
+uint8_t readDigital(const int pin) {
+    return digitalRead(pin) ? 255 : 0;
 }
 
 
@@ -27,14 +27,14 @@ void loop() {
 
 #if 1
   // use digital pins
-  const float a = readDigital(digitalPinA);
-  const float b = readDigital(digitalPinB);
+  const uint8_t a = readDigital(digitalPinA);
+  const uint8_t b = readDigital(digitalPinB);
 #else
   // use analog pins
-  const float a = readAnalog(analogPinA);
-  const float b = readAnalog(analogPinB);
+  const uint8_t a = readAnalog(analogPinA);
+  const uint8_t b = readAnalog(analogPinB);
 #endif
-  const float features[] = { a, b };
+  const int16_t features[] = { a, b };
 
   const int32_t out = xor_model_predict(features, 2);
 

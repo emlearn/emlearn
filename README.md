@@ -101,7 +101,7 @@ cmodel.save(file='sonar.h', name='sonar')
 #include "sonar.h"
 
 const int32_t length = 60;
-float values[length] = { ... };
+int16_t values[length] = { ... };
 
 // using generated "inline" code for the decision forest
 const int32_t predicted_class = sonar_predict(values, length):
