@@ -46,6 +46,18 @@ int64_t eml_benchmark_micros() {
 }
 #endif
 
+#ifdef __ZEPHYR__
+#include <zephyr/kernel.h>
+
+int64_t eml_benchmark_micros() {
+
+    //int64_t cycles =
+    int64_t ticks = k_uptime_ticks();
+    int64_t micros = k_ticks_to_us_ceil64(ticks);
+    return micros;
+}
+#endif
+
 // https://en.wikipedia.org/wiki/Lehmer_random_number_generator#Parameters_in_common_use
 static uint32_t
 eml_lcg_parkmiller(uint32_t *state) {
