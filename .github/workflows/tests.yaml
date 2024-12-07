@@ -37,7 +37,7 @@ jobs:
           #flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
       - name: Test in-tree code with pytest
         env:
-          PYTHONPATH: ./:./build/lib.linux-x86_64-3.10
+          PYTHONPATH: ./:./build/lib.linux-x86_64-cpython-310
         run: |
           python setup.py build
           pytest -v --cov=emlearn --cov-report html --cov-report term-missing --cov-branch test/
@@ -82,7 +82,7 @@ jobs:
       - name: Build documentation using Sphinx
         working-directory: ./docs
         env:
-          PYTHONPATH: ../:../build/lib.linux-x86_64-3.10
+          PYTHONPATH: ../:../build/lib.linux-x86_64-cpython-310
           READTHEDOCS: 'True'
         run: |
             make html
