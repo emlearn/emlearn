@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.8]
+        python-version: ['3.10']
 
     steps:
       - uses: actions/checkout@v2
@@ -37,7 +37,7 @@ jobs:
           #flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
       - name: Test in-tree code with pytest
         env:
-          PYTHONPATH: ./:./build/lib.linux-x86_64-3.8
+          PYTHONPATH: ./:./build/lib.linux-x86_64-3.10
         run: |
           python setup.py build
           pytest -v --cov=emlearn --cov-report html --cov-report term-missing --cov-branch test/
@@ -55,7 +55,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.8]
+        python-version: ['3.10']
 
     steps:
       - uses: actions/checkout@v2
@@ -82,7 +82,7 @@ jobs:
       - name: Build documentation using Sphinx
         working-directory: ./docs
         env:
-          PYTHONPATH: ../:../build/lib.linux-x86_64-3.8
+          PYTHONPATH: ../:../build/lib.linux-x86_64-3.10
           READTHEDOCS: 'True'
         run: |
             make html
@@ -92,7 +92,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.8]
+        python-version: ['3.10']
 
     steps:
       - uses: actions/checkout@v2
@@ -134,7 +134,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.8]
+        python-version: ['3.10']
 
     steps:
       - uses: actions/checkout@v2
