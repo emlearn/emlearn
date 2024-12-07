@@ -179,6 +179,16 @@ If you are using emlearn, let us know!
 You can for example submit a pull request for inclusion in this README,
 or create an issue on Github.
 
+- [TinyML Anomaly Detection for Industrial Machines with Periodic Duty Cycles](https://www.researchgate.net/profile/Luciano-Sebastian-Martinez-Rau/publication/383364466_TinyML_Anomaly_Detection_for_Industrial_Machines_with_Periodic_Duty_Cycles) by Luciano Sebastián Martinez Rau et. al. from Mid Sweden University.
+Designed a system that identifies improper duty cycles of industrial processes, developed for a conveyor belt in mining.
+A classifier was used to detect system states, and to form a sequence of states.
+This could then be categorized into normal or abnormal states.
+Testes several classifiers on nRF52840 and RP2040 microcontrollers, and found MLP and Random Forest to perform the best.
+- [Concise Paper: Towards On-board Radiometric Fingerprinting Fully Integrated on an Embedded System](https://ewsn.org/file-repository/ewsn2024/ewsn24-final125.pdf)
+by Wenqing Yan from Uppsala University.
+Radiometric fingerprinting systems leverage the unique physical-layer signal characteristics originating from individual hardware imperfections to identify transmitter devices.
+The authors demonstrated a system running on a nRF52833. They tested to detect one out of 32 tranmitting devices, and achieved 92% average
+accuracy. Used a Random Forest classifier, and found that 10 trees reached very close to same performance as 40 trees.
 - [IoT Next Generation Smart Grid Meter (NGSM) for On-Edge Household Appliances Detection Based on Deep Learning and Embedded Linux](https://www.researchgate.net/publication/375226746_IoT_Next_Generation_Smart_Grid_Meter_NGSM_for_On-Edge_Household_Appliances_Detection_Based_on_Deep_Learning_and_Embedded_Linux) by Noor El-Deen M. Mohamed et. al at Helwan University in Cairo, Egypt.
 Developed a smart grid meter for households that can detect when different appliances are running.
 This is done using a Energy Disaggregation / Non-Intrusive Load Monitoring (NILM) model,
