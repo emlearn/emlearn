@@ -199,6 +199,12 @@ If you are using emlearn, let us know!
 You can for example submit a pull request for inclusion in this README,
 or create an issue on Github.
 
+- [Automatic toothbrush timer](https://github.com/jonnor/toothbrush/).
+Tracks how much time is actively spent brushing, using accelerometer.
+Designed as a simple demo application for emlearn-micropython, in the area of Human Activity Recognition.
+- [Machine Learning in the Linux Kernel for CPU Idle state selection](https://github.com/mrkajetanp/ml-idle) by Kajetan Puchalski.
+Ran a Random Forest inside the Linux kernel to predict what would be good CPU idle state to use, in order to reduce power consumption.
+Some post-processing was done on the exported header files to fit into kernel C.
 - [TinyML Anomaly Detection for Industrial Machines with Periodic Duty Cycles](https://www.researchgate.net/profile/Luciano-Sebastian-Martinez-Rau/publication/383364466_TinyML_Anomaly_Detection_for_Industrial_Machines_with_Periodic_Duty_Cycles) by Luciano Sebastián Martinez Rau et. al. from Mid Sweden University.
 Designed a system that identifies improper duty cycles of industrial processes, developed for a conveyor belt in mining.
 A classifier was used to detect system states, and to form a sequence of states.
