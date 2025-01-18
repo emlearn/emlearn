@@ -220,3 +220,16 @@ read_the_docs_build = os.environ.get('READTHEDOCS', None) == 'True'
 if read_the_docs_build:
      subprocess.call('cd ./doxygen; doxygen', shell=True)
 
+
+# --- intersphinx for referencing other documentation
+
+intersphinx_mapping = {
+    "emlearn-micropython": ("https://emlearn-micropython.readthedocs.io/en/latest/", None),
+}
+
+# Sphinx defaults to automatically resolve *unresolved* labels using all your Intersphinx mappings.
+# This behavior has unintended side-effects, namely that documentations local references can
+# suddenly resolve to an external location. See also:
+# https://www.sphinx-doc.org/en/master/usage/extensions/intersphinx.html#confval-intersphinx_disabled_reftypes
+intersphinx_disabled_reftypes = ["*"]
+
