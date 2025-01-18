@@ -37,7 +37,7 @@ and it is commonly performed on sensor data using embedded systems.
     ============    ==============================================      ============
 
 
-Classification models
+Regression models
 ===========================
 
 .. table:: Supported regression models
