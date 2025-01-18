@@ -178,7 +178,7 @@ jobs:
       - name: Install West
         run: |
             pip install west
-            git clone https://github.com/zephyrproject-rtos/zephyr.git zephyr-git
+            git clone https://github.com/zephyrproject-rtos/zephyr.git --branch v4.0.0 zephyr-git
             pip install -r zephyr-git/scripts/requirements.txt
 
       - name: Run Zephyr tests
