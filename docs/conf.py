@@ -50,6 +50,7 @@ extensions = [
     #'sphinx.ext.autosectionlabel',
     'sphinx_gallery.gen_gallery',
     'myst_parser',
+    "sphinx.ext.intersphinx",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
