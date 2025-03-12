@@ -190,6 +190,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
+      - name: Install requirements
+        run: |
+            pip install 'packaging>=24.2'
       - uses: casperdcl/deploy-pypi@v2
         with:
           password: ${{ secrets.PYPI_TOKEN }}
