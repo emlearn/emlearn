@@ -25,7 +25,6 @@ jobs:
           sudo apt-get install -yqq libsndfile1 libsndfile1-dev
       - name: Install Python dependencies
         run: |
-          python -m pip install -U 'pip<20'
           pip install flake8 pytest
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
           if [ -f requirements.dev.txt ]; then pip install -r requirements.dev.txt; fi
@@ -72,7 +71,6 @@ jobs:
           sudo apt-get install -yqq libsndfile1 libsndfile1-dev doxygen
       - name: Install Python dependencies
         run: |
-          python -m pip install -U 'pip<20'
           pip install flake8 pytest
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
           if [ -f requirements.dev.txt ]; then pip install -r requirements.dev.txt; fi
@@ -115,7 +113,6 @@ jobs:
 
       - name: Install Python dependencies
         run: |
-          python -m pip install -U 'pip<20'
           pip install flake8 pytest
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
           if [ -f requirements.dev.txt ]; then pip install -r requirements.dev.txt; fi
