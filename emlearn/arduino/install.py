@@ -53,7 +53,7 @@ def find_arduino_library_dir():
     default_platform = '*NIX'
 
     sketchbook_paths = {
-        'win32': '~\Documents\Arduino',
+        'win32': r'~\Documents\Arduino',
         'darwin': f'~/Documents/Arduino',
         'linux': '~/Arduino',
         '*NIX': '~/Arduino',
