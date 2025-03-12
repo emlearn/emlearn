@@ -8,7 +8,10 @@ import os
 import sys
 import subprocess
 import platform
-from distutils.ccompiler import new_compiler
+try:
+    import distutils
+except ImportError:
+    from setuptools import distutils
 
 import numpy
 
@@ -33,7 +36,7 @@ def build_classifier(cmodel, name, temp_dir, include_dir, func=None, test_functi
 
     # create a new compiler object
     # force re-compilation even if object files exist (required)
-    cc = new_compiler(force=1)
+    cc = distutils.ccompiler.new_compiler(force=1)
 
     tree_name = name
     def_file_name = name+'.h'
@@ -210,7 +213,7 @@ def compile_executable(code_file : str,
     :return: Path to executable
     """
 
-    cc = new_compiler(force=1)
+    cc = distutils.ccompiler.new_compiler(force=1)
 
     output_filename = cc.executable_filename(name)
     bin_path = os.path.join(out_dir, output_filename)
