@@ -100,7 +100,8 @@ eml_npy_reader_init(EmlNpyReader *self)
 EmlError
 eml_npy_reader_read_header(EmlNpyReader *self)
 {
-
+    // TODO: parse the header
+    // set dtype, shape and data_start
 
 }
 
@@ -121,8 +122,17 @@ eml_npy_writer_init(EmlNpyWriter *self)
 }
 
 EmlError
-eml_npy_writer_write_header(EmlNpyWriter *self)
+eml_npy_writer_write_header(EmlNpyWriter *self, EmlNpyDtype dtype, size_t *shape, size_t dims)
 {
+    // FIXME, check EML_NPY_MAX_DIMS
+
+    // Copy header information
+    self->dtype = dtype;
+    self->dims = dims;
+    for (int i=0; i<dims; i++) {
+        self->shape[i] = shape[i];
+    }
+
     // keep track of length, since it needs to be padded
     int length = 0;
 
@@ -140,8 +150,8 @@ eml_npy_writer_write_header(EmlNpyWriter *self)
 
     // First write everything before shape
     const char endianness = '<';
-    const char dtype = eml_npy_dtype_to_descr(self->dtype);
-    size_t out = sprintf(buffer, "{'descr': '%s', 'fortran_order': False, 'shape': (", dtype);
+    const char dtype_str = eml_npy_dtype_to_descr(self->dtype);
+    size_t out = sprintf(buffer, "{'descr': '%s', 'fortran_order': False, 'shape': (", dtype_str);
     self->write(self->user_data, buffer, out );
 
     // Write shape
@@ -174,29 +184,95 @@ EmlError
 eml_npy_writer_write_data(EmlNpyWriter *self, int items,
         void *buffer_data, size_t buffer_length)
 {
+    // FIXME: check buffer_length wrt expected based on items
+    
 
+}
 
+int
+eml_npy_dtype_size(EmlNpyDtype dtype)
+{
+    switch(dtype)
+    {
+    case EML_NPY_F32:
+        return 4;
+    case EML_NPY_F64:
+        return 8;
+    case EML_NPY_I8:
+        return 1;
+    case EML_NPY_I16:
+        return 2;
+    case EML_NPY_I32:
+        return 4;
+    case EML_NPY_I64:
+        return 8;
+    case EML_NPY_U8:
+        return 1;
+    case EML_NPY_U16:
+        return 2;
+    case EML_NPY_U32:
+        return 4;
+    case EML_NPY_U64:
+        return 8;
+    case EML_NPY_UNSUPPORTED:
+        return 0;
+    }
+    return 0;
+}
+
+int
+eml_npy_compute_size(size_t *shape, size_t dims, EmlNpyDtype dtype)
+{
+    int items = 1;
+    for (int i=0; i<dims; i++) {
+        items *= shape[i];
+    }
+
+    const int item_size = eml_npy_dtype_size();
+    const int bytes = item_size * items;
+    return bytes;
 }
 
 #if 0
 
-int npy_stdio_write(void *context, const uint8_t *buffer, size_t size)
+int eml_npy_stdio_write(void *context, const uint8_t *buffer, size_t size)
 {
     FILE* fptr = context;
     return fwrite(fptr, buffer, size);
 }
 
-int npy_stdio_read(void *context, const uint8_t *buffer, size_t size)
+int eml_npy_stdio_read(void *context, const uint8_t *buffer, size_t size)
 {
     FILE* fptr = context;
     return fread(fptr, buffer, size);
 }
 
+int
+generate_arange(void *buffer, size_t buffer_length, size_t shape, size_t dims, EmlNpyDtype dtype)
+{
+    const int expect_bytes = eml_npy_compute_size(shape, dims, dtype);    
+
+    // return actual length written
+    return out_length;
+}
+
 int test_file_roundtrip() {
+
+    EmlNpyWriter _writer;
+    EmlNpyWriter *writer = &_writer;
+
+    EmlNpyReader _reader;
+    EmlNpyReader *reader = &_reader;
 
     // write some data
     const char *generate_path = "generated.npy";
     FILE* generate_file = fopen(stream_write_path, "wb");
+
+#define GENERATE_DATA_MAXLENGTH
+    generate_data(
+
+    eml_npy_writer_write_header(writer);
+
 
     // TODO: implement
 
