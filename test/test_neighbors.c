@@ -70,6 +70,7 @@ test_neighbors_simple()
     TEST_ASSERT_EQUAL(EmlOk, err);
     TEST_ASSERT_EQUAL(class2_label, out_label);
 }
+#undef N_FEATURES
 
 void
 test_eml_neighbors()
