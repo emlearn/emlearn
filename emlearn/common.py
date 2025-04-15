@@ -97,7 +97,7 @@ def build_classifier(cmodel, name, temp_dir,
         #include <eml_test.h>
 
         static void classify(const float *values, int length, int row) {{
-            printf("%d,%f\\n", row, (float){func});
+            printf("%d,%f\\n", row, (double){func});
         }}
         int main() {{
             {test_function}(stdin, classify);
