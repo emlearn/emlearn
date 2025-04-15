@@ -598,7 +598,7 @@ class Wrapper:
             """,
             # Floating point wrappers for regress, that is compatible with CompilerClassifier
             f"""
-            int32_t
+            float
             regress_func(const float *values, int length) {{
                 // Convert to integer
                 int16_t features[{n_features}];
