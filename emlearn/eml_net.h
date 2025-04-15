@@ -315,7 +315,7 @@ eml_net_predict_proba(EmlNet *model, const float *features, int32_t features_len
         }
     }
 
-    EML_POSTCONDITION(fabs(proba_sum - 1.0) < 0.001, EmlPostconditionFailed);
+    EML_POSTCONDITION(fabsf(proba_sum - 1.0f) < 0.001f, EmlPostconditionFailed);
 
     return EmlOk;
 }

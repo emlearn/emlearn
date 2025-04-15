@@ -59,7 +59,7 @@ typedef struct _EmlEllipticEnvelope {
 * \param out_dist Return location for the continious outlier score (Mahalanobis distance)
 * \return 1 for outlier, 0 for inlier
 */
-float
+int
 eml_elliptic_envelope_predict(const EmlEllipticEnvelope *self,
                             const float *features, int n_features,
                             float *out_dist)

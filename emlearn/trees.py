@@ -367,7 +367,7 @@ def generate_c_inlined(forest, name, n_features, n_classes=0, leaf_bits=0, dtype
 
 
     def tree_func(name, root, return_type='int32_t'):
-        return """static inline int32_t {function_name}(const {ctype} *features, int32_t features_length) {{
+        return """static inline {return_type} {function_name}(const {ctype} *features, int32_t features_length) {{
         {code}
         }}
         """.format(**{
@@ -544,6 +544,8 @@ class Wrapper:
 
         model_init = self.save(name=name)
 
+        return_type = 'int32_t' if self.is_classifier else 'float'
+
         code = '\n'.join([
             model_init,
 
@@ -565,14 +567,14 @@ class Wrapper:
             """,
             # Floating point wrappers for inline, that is compatible with CompilerClassifier
             f"""
-            int32_t
+            {return_type}
             predict_inline(const float *values, int length) {{
                 // Convert to whatever is needed for inline
                 {feature_dtype} features[{n_features}];
                 for (int i=0; i<length; i++) {{
                     features[i] = ({feature_dtype})values[i];
                 }}
-                const int out = {name}_predict(features, length);
+                const {return_type} out = {name}_predict(features, length);
                 if (out < 0) {{
                     return -out;
                 }}
@@ -598,7 +600,7 @@ class Wrapper:
             """,
             # Floating point wrappers for regress, that is compatible with CompilerClassifier
             f"""
-            int32_t
+            float
             regress_func(const float *values, int length) {{
                 // Convert to integer
                 int16_t features[{n_features}];

@@ -138,7 +138,7 @@ eml_trees_predict_proba(const EmlTrees *self,
             const int32_t leaf_number = eml_trees_predict_tree(self, self->tree_roots[i], features, features_length);
             const uint8_t *leaf_data = self->leaves + leaf_number;
             const int32_t class_no = *leaf_data;
-            out[class_no] += 1.0;
+            out[class_no] += 1.0f;
         }
 
 
@@ -216,7 +216,7 @@ eml_trees_predict(const EmlTrees *forest, const int16_t *features, int8_t featur
     }
 
     int32_t most_voted_class = -1;
-    float most_voted_value = 0.0;
+    float most_voted_value = 0.0f;
     for (int32_t i=0; i<n_classes; i++) {
         //printf("votes[%d]: %d\n", i, votes[i]);
         if (votes[i] > most_voted_value) {
