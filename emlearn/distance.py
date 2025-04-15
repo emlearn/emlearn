@@ -73,7 +73,7 @@ def generate_code(means, precision, offset, name='my_elliptic', modifiers='stati
     // Data definitions
     {modifiers} EmlEllipticEnvelope {classifier_name} = {{
         {n_features},
-        {decision_boundary},
+        {decision_boundary}f,
         {means_name},
         {precisions_name}
     }};
