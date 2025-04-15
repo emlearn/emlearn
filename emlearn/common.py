@@ -12,6 +12,16 @@ from distutils.ccompiler import new_compiler
 
 import numpy
 
+default_warn_flags = [
+    '-Wall',
+    '-Wextra',
+    '-Wpointer-arith',
+    '-Wdouble-promotion',
+    '-Wfloat-conversion',
+    '-Wno-unused-parameter',
+    '-Wno-unused-variable',
+]
+
 def check_array(arr):
     # import dynamically to not need this at package build time
     from sklearn.utils import check_array as check
@@ -24,12 +34,19 @@ def get_include_dir() -> str:
     return os.path.join(os.path.dirname(__file__))
 
 
-def build_classifier(cmodel, name, temp_dir, include_dir, func=None, test_function=None, n_classes=None):
+def build_classifier(cmodel, name, temp_dir,
+        include_dir, func=None, test_function=None, n_classes=None,
+        warn_flags=None,
+        warn_error=True,
+        ):
     if not os.path.exists(temp_dir):
         os.makedirs(temp_dir)
 
     if test_function is None:
         test_function = 'eml_test_read_csv'
+
+    if warn_flags is None:
+        warn_flags = default_warn_flags
 
     # create a new compiler object
     # force re-compilation even if object files exist (required)
@@ -50,7 +67,9 @@ def build_classifier(cmodel, name, temp_dir, include_dir, func=None, test_functi
         cc_args = ["-std=c99"]
 
         # be strict about compile warning
-        cc_args += [ '-Wall', '-Werror', '-Wno-error=unused-variable' ]
+        cc_args += warn_flags
+        if warn_error:
+            cc_args += ['-Werror']
 
     if n_classes:
         code = """
@@ -64,7 +83,7 @@ def build_classifier(cmodel, name, temp_dir, include_dir, func=None, test_functi
             {func}; // TODO: handle error
             for (int class_no=0; class_no<N_CLASSES; class_no++) {{
                 const float prob = outputs[class_no];
-                printf("%d,%d,%f\\n", row, class_no, prob);
+                printf("%d,%d,%f\\n", row, class_no, (double)prob);
             }}
         }}
         int main() {{
