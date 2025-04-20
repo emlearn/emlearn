@@ -20,6 +20,7 @@ default_warn_flags = [
     '-Wfloat-conversion',
     '-Wno-unused-parameter',
     '-Wno-unused-variable',
+    '-Wno-unused-function',
 ]
 
 def check_array(arr):
