@@ -20,12 +20,13 @@ def test_bench_melspec():
     print(prog)
     include_dirs=["emlearn"]
 
+    # XXX: should use emlearn.common compiler tools instead of re-creating here
     if sys.platform.startswith('win'): # Windows
         # disable warnings: C5045-QSpectre, C4996-unsafe function/var
         cc_args = ["/Ox","/Oy-","/Wall","/WX","/wd5045","wd4996"]
         libraries = None
     else : # MacOS and Linux should be the same
-        cc_args = ["-O3","-fno-omit-frame-pointer","-Wall","-Werror"]
+        cc_args = ["-O3","-fno-omit-frame-pointer","-Wall","-Werror", '-Wno-unused-function']
         libraries = ["m"] # math library / libm
 
     objects = cc.compile(sources=[code], include_dirs=include_dirs,
