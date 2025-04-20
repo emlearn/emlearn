@@ -27,7 +27,7 @@ typedef enum _EmlError {
     EmlErrors,
 } EmlError;
 
-const char * const
+static const char * const
 eml_error_strs[EmlErrors] = {
     "OK",
     "SizeMismatch",
@@ -37,7 +37,7 @@ eml_error_strs[EmlErrors] = {
     "Unknown error",
 };
 
-bool
+static bool
 eml_error_valid(EmlError e) {
     return (e >= EmlOk && e < EmlErrors);
 }
@@ -45,7 +45,7 @@ eml_error_valid(EmlError e) {
 /**
 * \brief Get error description string
 */
-const char *
+static const char *
 eml_error_str(EmlError e) {
     if (eml_error_valid(e)) {
         return eml_error_strs[e];
