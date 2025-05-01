@@ -10,6 +10,8 @@ with open(os.path.join(here, 'emlearn/VERSION.txt')) as version_file:
 
 project_dir = os.path.abspath(os.path.dirname(__file__))
 
+enable_extensions = bool(int(os.environ.get('EMLEARN_BUILD_EXTENSIONS', '0')))
+
 class get_pybind_include(object):
     """Helper class to determine the pybind11 include path
     The purpose of this class is to postpone importing pybind11
@@ -133,13 +135,13 @@ setup(
             'eml-mel-filterbank = emlearn.tools.mel_filterbank:main',
         ],
     },
-    ext_modules=ext_modules,
+    ext_modules=ext_modules if enable_extensions else [],
     include_package_data=True,
     package_data = {
         '': ['*.h', '*.ino'],
     },
     install_requires=read_requirements(),
     setup_requires=['pybind11>=2.2'], # pybind11 needed at pip install time
-    cmdclass={'build_ext': BuildExt},
+    cmdclass={'build_ext': BuildExt} if enable_extensions else {},
     zip_safe=False,
 )
