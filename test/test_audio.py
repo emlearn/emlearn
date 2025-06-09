@@ -13,7 +13,13 @@ import librosa.display
 import pandas
 
 import emlearn
-import eml_audio
+
+# TODO: replace with C programs compiled at runtime
+skip_eml_audio = None
+try:
+    import eml_audio
+except ImportError as e:
+    skip_eml_audio = "eml_audio extension not built"
 
 FFT_SIZES = [
     64,
@@ -23,6 +29,7 @@ FFT_SIZES = [
     1024,
 ]
 @pytest.mark.parametrize('n_fft', FFT_SIZES)
+@pytest.mark.skipif(bool(skip_eml_audio), reason=skip_eml_audio)
 def test_rfft_simple(n_fft):
     signal = numpy.arange(0, n_fft)
 
@@ -32,6 +39,7 @@ def test_rfft_simple(n_fft):
 
     numpy.testing.assert_allclose(out, ref, rtol=1e-4)
 
+@pytest.mark.skipif(bool(skip_eml_audio), reason=skip_eml_audio)
 def test_rfft_not_power2_length():
     with pytest.raises(Exception) as e:
         eml_audio.rfft(numpy.array([0,1,3,4,5]))
@@ -141,6 +149,7 @@ def melfilter_ref(pow_frames, sr, n_mels, n_fft):
     filtered = numpy.dot(pow_frames, fbank.T)
     return filtered
 
+@pytest.mark.skipif(bool(skip_eml_audio), reason=skip_eml_audio)
 def test_melfilter_basic():
     n_mels = 16
     n_fft = 512
@@ -171,6 +180,7 @@ def test_melfilter_basic():
     numpy.testing.assert_allclose(out, ref, rtol=1e-3)
 
 
+@pytest.mark.skipif(bool(skip_eml_audio), reason=skip_eml_audio)
 def test_melfilter_librosa():
     filename = librosa.util.example("vibeace", hq=True)
     y, sr = librosa.load(filename, offset=1.0, duration=0.3)
@@ -263,6 +273,7 @@ def test_sparse_filterbank_ref():
     assert coeffs[-1] == pytest.approx(2.8125530662e-05)
 
 
+@pytest.mark.skipif(bool(skip_eml_audio), reason=skip_eml_audio)
 def test_sparse_filterbank_apply():
     n_fft = 1024
     n_mels = 30

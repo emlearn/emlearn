@@ -5,7 +5,12 @@ import pandas
 
 import pytest
 
-import eml_signal
+# TODO: replace with C programs compiled at runtime
+skip_eml_signal = None
+try:
+    import eml_signal
+except ImportError as e:
+    skip_eml_signal = "eml_signal extension not built"
 
 
 def plot_freq_response(noise, a, b, fs=44100):
@@ -43,6 +48,7 @@ FILTERS = {
 }
 
 
+@pytest.mark.skipif(bool(skip_eml_signal), reason=skip_eml_signal)
 @pytest.mark.parametrize('filtername', FILTERS.keys())
 def test_iir_filter(filtername):
     sos = FILTERS[filtername]
