@@ -37,6 +37,8 @@ jobs:
       - name: Test in-tree code with pytest
         env:
           PYTHONPATH: ./:./build/lib.linux-x86_64-cpython-310
+          EMLEARN_BUILD_EXTENSIONS: 1
+
         run: |
           python setup.py build
           pytest -v --cov=emlearn --cov-report html --cov-report term-missing --cov-branch test/
