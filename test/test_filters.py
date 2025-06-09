@@ -48,7 +48,7 @@ FILTERS = {
 }
 
 
-@pytest.mark.skipif(bool(skip_eml_signal), reason=skip_eml_signal)
+@pytest.mark.skipif(bool(skip_eml_signal), reason=str(skip_eml_signal))
 @pytest.mark.parametrize('filtername', FILTERS.keys())
 def test_iir_filter(filtername):
     sos = FILTERS[filtername]
