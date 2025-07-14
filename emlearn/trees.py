@@ -578,9 +578,7 @@ class Wrapper:
 
         return_type = 'int32_t' if self.is_classifier else 'float'
 
-        code = '\n'.join([
-            model_init,
-
+        classifier_functions = [
             # Floating point wrappers for loadable, that is compatible with CompilerClassifier
             f"""
             int32_t
@@ -646,6 +644,9 @@ class Wrapper:
                 return err;
             }}
             """,
+        ]
+
+        regression_functions = [
             # Floating point wrappers for regress loadable, that is compatible with CompilerClassifier
             f"""
             float
@@ -672,7 +673,15 @@ class Wrapper:
                 return out;
             }}
             """,
-        ])
+        ]
+
+        sections = [model_init]
+        if self.is_classifier:
+            sections += classifier_functions
+        else:
+            sections += regression_functions
+
+        code = '\n'.join(sections)
 
         with open('treegen.h', 'w') as f:
             f.write(code)
