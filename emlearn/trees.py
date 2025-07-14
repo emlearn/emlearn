@@ -484,8 +484,6 @@ def generate_c_loadable(forest, name, n_features,
 
     cgen.assert_valid_identifier(name)
 
-    # NOTE: include_proba has no effect, we always include support for it
-
     nodes_name = name+'_nodes'
     nodes_length = len(nodes)
     nodes_c = generate_c_nodes(nodes, nodes_name, dtype=dtype, modifiers=weight_modifiers)
@@ -516,13 +514,64 @@ def generate_c_loadable(forest, name, n_features,
         {n_classes},
     }};""".format(**locals())
 
+
+    # Provide convenience wrapper functions, to not have to deal with the underlying structs etc
+    ctype = dtype
+
+    forest_regressor_func = """float {function_name}(const {ctype} *features, int32_t features_length) {{
+
+        const float out = eml_trees_regress1(&{model_name}, features, features_length);
+        return out;
+    }}
+    """.format(**{
+      'model_name': name,
+      'function_name': name+"_predict",
+      'n_trees': len(roots),
+      'ctype': ctype,
+    })
+
+    forest_classifier_func = """int32_t {function_name}(const {ctype} *features, int32_t features_length) {{
+
+        const int out = eml_trees_predict(&{model_name}, features, features_length);
+        return out;
+
+    }}
+    """.format(**{
+      'model_name': name,
+      'function_name': name+"_predict",
+      'ctype': ctype,
+    })
+
+
+    forest_proba_func = """int {function_name}(const {ctype} *features, int32_t features_length, float *out, int out_length) {{
+
+        const EmlError err = \
+            eml_trees_predict_proba(&{model_name}, features, features_length, out, out_length);
+        return err;
+
+    }}
+    """.format(**{
+      'model_name': name,
+      'function_name': name+"_predict_proba",
+      'ctype': ctype,
+    })
+
+    forest_funcs = [forest_classifier_func]
+    if include_proba:
+        forest_funcs += [forest_proba_func]
+
+    if not classifier:
+        return_type = 'float'
+        forest_funcs = [ forest_regressor_func ]
+
+
     head = """
     // !!! This file is generated using emlearn !!!
 
     #include <eml_trees.h>
     """
 
-    code = '\n\n'.join([head, nodes_c, tree_roots, leaves, forest_struct])
+    code = '\n\n'.join([head, nodes_c, tree_roots, leaves, forest_struct] + forest_funcs)
     return code
 
 
@@ -595,43 +644,10 @@ class Wrapper:
         return_type = 'int32_t' if self.is_classifier else 'float'
 
         # Floating point wrappers that are compatible with CompilerClassifier
-        classifier_loadable = [
-            f"""
-            int32_t
-            predict_loadable(const float *values, int length) {{
-                 // Convert to integer
-                int16_t features[{n_features}];
-                for (int i=0; i<length; i++) {{
-                    features[i] = (int16_t)values[i];
-                }}
-                const int out = eml_trees_predict(&{name}, features, length);
-                if (out < 0) {{
-                    return -out;
-                }}
-                return out;
-            }}
-            """,
-            f"""
-            EmlError
-            predict_proba_loadable(const float *values, int length, float *outputs, int n_outputs) {{
-                // Convert to integer
-                int16_t features[{n_features}];
-                for (int i=0; i<length; i++) {{
-                    features[i] = (int16_t)values[i];
-                }}
-
-                
-                const EmlError err = \
-                    eml_trees_predict_proba(&{name}, features, length, outputs, n_outputs);
-
-                return err;
-            }}
-            """,
-        ]
-        classifier_inline = [
+        classifier_functions = [
             f"""
             {return_type}
-            predict_inline(const float *values, int length) {{
+            predict_wrapper(const float *values, int length) {{
                 // Convert to whatever is needed for inline
                 {feature_dtype} features[{n_features}];
                 for (int i=0; i<length; i++) {{
@@ -645,7 +661,7 @@ class Wrapper:
             }}""",
             f"""
             int
-            predict_proba_inline(const float *values, int length, float *outputs, int n_outputs) {{
+            predict_proba_wrapper(const float *values, int length, float *outputs, int n_outputs) {{
                 // Convert to whatever is needed for inline
                 {feature_dtype} features[{n_features}];
                 for (int i=0; i<length; i++) {{
@@ -660,24 +676,10 @@ class Wrapper:
             """,
         ]
 
-        regression_loadable = [
-            f"""
-            float
-            regress_loadable(const float *values, int length) {{
-                // Convert to integer
-                int16_t features[{n_features}];
-                for (int i=0; i<length; i++) {{
-                    features[i] = (int16_t)values[i];
-                }}
-                const float out = eml_trees_regress1(&{name}, features, length);
-                return out;
-            }}
-            """,
-        ]
-        regression_inline = [
+        regression_functions = [
             f"""
             {return_type}
-            regress_inline(const float *values, int length) {{
+            regress_wrapper(const float *values, int length) {{
                 // Convert to whatever is needed for inline
                 {feature_dtype} features[{n_features}];
                 for (int i=0; i<length; i++) {{
@@ -689,9 +691,6 @@ class Wrapper:
             """,
         ]
 
-        classifier_functions = classifier_loadable if self.method == 'loadable' else classifier_inline
-        regression_functions = regression_loadable if self.method == 'loadable' else regression_inline
-
         sections = [model_init]
         if self.is_classifier:
             sections += classifier_functions
@@ -700,20 +699,9 @@ class Wrapper:
 
         code = '\n'.join(sections)
 
-        with open('treegen.h', 'w') as f:
-            f.write(code)
-
-        if self.method == 'loadable':
-            predict_func = 'predict_loadable(values, length)'
-            proba_func = 'predict_proba_loadable(values, length, outputs, N_CLASSES)'
-            regress_func = 'regress_loadable(values, length)'
-
-        elif self.method == 'inline':
-            predict_func = 'predict_inline(values, length)'
-            regress_func = 'regress_inline(values, length)'
-            proba_func = 'predict_proba_inline(values, length, outputs, N_CLASSES)'
-        else:
-            assert False, 'should not happen, constructor should enforce'
+        predict_func = 'predict_wrapper(values, length)'
+        regress_func = 'regress_wrapper(values, length)'
+        proba_func = 'predict_proba_wrapper(values, length, outputs, N_CLASSES)'
 
         if self.is_classifier:
             call_func = predict_func
