@@ -380,6 +380,10 @@ def generate_c_inlined(forest, name, n_features, n_classes=0, leaf_bits=0, dtype
     def tree_vote_classifier(name):
         return '_class = {}(features, features_length); votes[_class] += 1;'.format(name)
 
+    def tree_vote_proba(name):
+        return '_class = {}(features, features_length); out[_class] += 1.0f;'.format(name)
+
+
     def tree_vote_regressor(name):
         return 'avg += {}(features, features_length); '.format(name)
 
@@ -424,16 +428,41 @@ def generate_c_inlined(forest, name, n_features, n_classes=0, leaf_bits=0, dtype
       'ctype': ctype,
     })
 
+
+    forest_proba_func = """EmlError {function_name}(const {ctype} *features, int32_t features_length, float *out, int out_length) {{
+
+        int32_t _class = -1;
+
+        for (int i=0; i<out_length; i++) {{
+            out[i] = 0.0f;
+        }}
+
+        {tree_predictions}
+    
+        // compute mean
+        for (int i=0; i<out_length; i++) {{
+            out[i] = out[i] / {n_trees};
+        }}
+        return EmlOk;
+    }}
+    """.format(**{
+      'function_name': name+"_predict_proba",
+      'n_classes': n_classes,
+      'tree_predictions': '\n    '.join([ tree_vote_proba(n) for n in tree_names ]),
+      'n_trees': len(tree_names),
+      'ctype': ctype,
+    })
+
     return_type = 'int32_t'
-    forest_func = forest_classifier_func
+    forest_funcs = [forest_classifier_func, forest_proba_func]
     
     if not classifier:
         return_type = 'float'
-        forest_func = forest_regressor_func
+        forest_funcs = [ forest_regressor_func ]
 
     tree_funcs = [tree_func(n, r, return_type=return_type) for n,r in zip(tree_names, roots)]
 
-    return '\n\n'.join(tree_funcs + [forest_func])
+    return '\n\n'.join(tree_funcs + forest_funcs)
 
 
 def generate_c_loadable(forest, name, n_features,
@@ -584,7 +613,7 @@ class Wrapper:
                 return out;
             }}
             """,
-            # Floating point wrappers for proba, that is compatible with CompilerClassifier
+            # Floating point wrappers for loadable proba, that is compatible with CompilerClassifier
             f"""
             EmlError
             predict_proba_loadable(const float *values, int length, float *outputs, int n_outputs) {{
@@ -597,6 +626,22 @@ class Wrapper:
                 
                 const EmlError err = \
                     eml_trees_predict_proba(&{name}, features, length, outputs, n_outputs);
+
+                return err;
+            }}
+            """,
+            # Floating point wrappers for inline proba, that is compatible with CompilerClassifier
+            f"""
+            EmlError
+            predict_proba_inline(const float *values, int length, float *outputs, int n_outputs) {{
+                // Convert to whatever is needed for inline
+                {feature_dtype} features[{n_features}];
+                for (int i=0; i<length; i++) {{
+                    features[i] = ({feature_dtype})values[i];
+                }}
+
+                const EmlError err = \
+                    {name}_predict_proba(features, length, outputs, n_outputs);
 
                 return err;
             }}
@@ -640,8 +685,7 @@ class Wrapper:
         elif self.method == 'inline':
             predict_func = 'predict_inline(values, length)'
             regress_func = 'regress_inline(values, length)'
-            # TODO: actually implement inline predict_proba, instead of just using loadable
-            proba_func = 'predict_proba_loadable(values, length, outputs, N_CLASSES)'
+            proba_func = 'predict_proba_inline(values, length, outputs, N_CLASSES)'
         else:
             assert False, 'should not happen, constructor should enforce'
 
