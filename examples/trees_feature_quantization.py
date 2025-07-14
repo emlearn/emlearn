@@ -73,26 +73,27 @@ from emlearn.evaluate.size import get_program_size, check_build_tools
 
 def check_program_size(dtype, model, platform, mcu):
 
-    model_name = 'sizecheck'
     features_length = model.estimators_[0].n_features_in_
     model_enabled = 0 if dtype == 'no-model' else 1
     if dtype == 'loadable':
-        dtype = 'float'
+        dtype = 'int16_t'
         method = 'loadable'
     else:
         method = 'inline'
 
+    model_name = f'sizecheck_{method}_{dtype}'
+
+    print(model_name)
     if model_enabled:
         # Quantize with the specified dtype
-        c_model = emlearn.convert(model, dtype=dtype, method='loadable')
+        c_model = emlearn.convert(model, dtype=dtype, method=method)
         model_code = c_model.save(name=model_name, inference=[method])
 
         if method == 'loadable':
-            # XXX: the cast to float is wrong. Will crash horribly during execution
             # Only works for size estimation
             model_code += f"""
             int {model_name}_predict(const {dtype} *f, int l) {{
-                return eml_trees_predict(&{model_name}, (float *)f, l);
+                return eml_trees_predict(&{model_name}, ({dtype} *)f, l);
             }}"""
     else:
         model_code = ""

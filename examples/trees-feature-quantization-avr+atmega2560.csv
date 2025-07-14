@@ -1,7 +1,7 @@
 platform,cpu,dtype,flash,ram
-avr,atmega2560,loadable,4934,2472
-avr,atmega2560,float,6944,240
-avr,atmega2560,int32_t,6000,240
-avr,atmega2560,int16_t,4496,120
-avr,atmega2560,int8_t,2480,60
-avr,atmega2560,uint8_t,2466,60
+avr,atmega2560,loadable,4496,1764
+avr,atmega2560,float,6684,240
+avr,atmega2560,int32_t,5838,240
+avr,atmega2560,int16_t,4122,120
+avr,atmega2560,int8_t,2490,60
+avr,atmega2560,uint8_t,2484,60
