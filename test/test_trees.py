@@ -120,6 +120,61 @@ def test_trees_sklearn_regressor_predict(data, model, method):
 
     check_csv_export(cmodel)
 
+
+SUPPORTED_FEATURE_DTYPES = [
+    'float',
+    'int32_t',
+    'int16_t',
+    'int8_t',
+    #'uint8_t',
+]
+@pytest.mark.parametrize("data", CLASSIFICATION_DATASETS.keys())
+@pytest.mark.parametrize("model", CLASSIFICATION_MODELS.keys())
+@pytest.mark.parametrize("dtype", SUPPORTED_FEATURE_DTYPES)
+def test_trees_sklearn_classifier_inline_dtype(data, model, dtype):
+    """
+    The inline method supports specifying the input datatype
+    """
+    X, y = CLASSIFICATION_DATASETS[data]
+    estimator = CLASSIFICATION_MODELS[model]
+
+    # Convert the data to the dtype (and range)
+    python_dtype = dtype.removesuffix('_t')
+    if dtype != 'float':
+        X = Quantizer(dtype=python_dtype).fit_transform(X)
+    assert X.dtype == python_dtype
+
+    estimator.fit(X, y)
+    cmodel = emlearn.convert(estimator, method='inline', dtype=dtype)
+
+    pred_original = estimator.predict(X[:5])
+    pred_c = cmodel.predict(X[:5])
+    numpy.testing.assert_equal(pred_c, pred_original)
+
+    proba_original = estimator.predict_proba(X[:5])
+    proba_c = cmodel.predict_proba(X[:5])
+    numpy.testing.assert_allclose(proba_c, proba_original, atol=0.1, rtol=0.001)
+
+
+@pytest.mark.parametrize("data", REGRESSION_DATASETS.keys())
+@pytest.mark.parametrize("model", REGRESSION_MODELS.keys())
+@pytest.mark.parametrize("dtype", SUPPORTED_FEATURE_DTYPES)
+def test_trees_sklearn_regressor_inline_dtype(data, model, dtype):
+    X, y = REGRESSION_DATASETS[data]
+    estimator = REGRESSION_MODELS[model]
+    X = Quantizer().fit_transform(X)
+
+    estimator.fit(X, y)
+    cmodel = emlearn.convert(estimator, method='inline')
+
+    pred_original = estimator.predict(X[:5])
+    pred_c = cmodel.predict(X[:5])
+
+    numpy.testing.assert_allclose(pred_c, pred_original, rtol=1e-3, atol=2)
+
+    check_csv_export(cmodel)
+
+
 @pytest.mark.parametrize("model", CLASSIFICATION_MODELS.keys())
 @pytest.mark.parametrize("data", CLASSIFICATION_DATASETS.keys())
 def test_trees_evaluate_scoring(model, data):
