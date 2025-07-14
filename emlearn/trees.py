@@ -587,7 +587,7 @@ class Wrapper:
             # Floating point wrappers for proba, that is compatible with CompilerClassifier
             f"""
             EmlError
-            predict_proba(const float *values, int length, float *outputs, int n_outputs) {{
+            predict_proba_loadable(const float *values, int length, float *outputs, int n_outputs) {{
                 // Convert to integer
                 int16_t features[{n_features}];
                 for (int i=0; i<length; i++) {{
@@ -601,10 +601,10 @@ class Wrapper:
                 return err;
             }}
             """,
-            # Floating point wrappers for regress, that is compatible with CompilerClassifier
+            # Floating point wrappers for regress loadable, that is compatible with CompilerClassifier
             f"""
             float
-            regress_func(const float *values, int length) {{
+            regress_loadable(const float *values, int length) {{
                 // Convert to integer
                 int16_t features[{n_features}];
                 for (int i=0; i<length; i++) {{
@@ -613,20 +613,35 @@ class Wrapper:
                 const float out = eml_trees_regress1(&{name}, features, length);
                 return out;
             }}
-            """
+            """,
+            # Floating point wrappers for regress inline, that is compatible with CompilerClassifier
+            f"""
+            {return_type}
+            regress_inline(const float *values, int length) {{
+                // Convert to whatever is needed for inline
+                {feature_dtype} features[{n_features}];
+                for (int i=0; i<length; i++) {{
+                    features[i] = ({feature_dtype})values[i];
+                }}
+                const {return_type} out = {name}_predict(features, length);
+                return out;
+            }}
+            """,
         ])
 
-        #with open('treegen.h', 'w') as f:
-        #    f.write(code)
-
-        # TODO: actually implement inline predict_proba, instead of just using loadable
-        proba_func = 'predict_proba(values, length, outputs, N_CLASSES)'
-        regress_func = 'regress_func(values, length)'
+        with open('treegen.h', 'w') as f:
+            f.write(code)
 
         if self.method == 'loadable':
             predict_func = 'predict_loadable(values, length)'
+            proba_func = 'predict_proba_loadable(values, length, outputs, N_CLASSES)'
+            regress_func = 'regress_loadable(values, length)'
+
         elif self.method == 'inline':
             predict_func = 'predict_inline(values, length)'
+            regress_func = 'regress_inline(values, length)'
+            # TODO: actually implement inline predict_proba, instead of just using loadable
+            proba_func = 'predict_proba_loadable(values, length, outputs, N_CLASSES)'
         else:
             assert False, 'should not happen, constructor should enforce'
 
