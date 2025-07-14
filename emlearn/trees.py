@@ -431,7 +431,7 @@ def generate_c_inlined(forest, name, n_features, n_classes=0, leaf_bits=0, dtype
     })
 
 
-    forest_proba_func = """EmlError {function_name}(const {ctype} *features, int32_t features_length, float *out, int out_length) {{
+    forest_proba_func = """int {function_name}(const {ctype} *features, int32_t features_length, float *out, int out_length) {{
 
         int32_t _class = -1;
 
@@ -445,7 +445,7 @@ def generate_c_inlined(forest, name, n_features, n_classes=0, leaf_bits=0, dtype
         for (int i=0; i<out_length; i++) {{
             out[i] = out[i] / {n_trees};
         }}
-        return EmlOk;
+        return 0;
     }}
     """.format(**{
       'function_name': name+"_predict_proba",
@@ -470,7 +470,7 @@ def generate_c_inlined(forest, name, n_features, n_classes=0, leaf_bits=0, dtype
     head = """
     // !!! This file is generated using emlearn !!!
 
-    #include <eml_trees.h>
+    #include <stdint.h>
     """
 
     return '\n\n'.join([head] + tree_funcs + forest_funcs)
@@ -641,7 +641,7 @@ class Wrapper:
                 return out;
             }}""",
             f"""
-            EmlError
+            int
             predict_proba_inline(const float *values, int length, float *outputs, int n_outputs) {{
                 // Convert to whatever is needed for inline
                 {feature_dtype} features[{n_features}];
@@ -649,7 +649,7 @@ class Wrapper:
                     features[i] = ({feature_dtype})values[i];
                 }}
 
-                const EmlError err = \
+                const int err = \
                     {name}_predict_proba(features, length, outputs, n_outputs);
 
                 return err;
