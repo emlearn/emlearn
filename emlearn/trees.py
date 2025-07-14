@@ -329,7 +329,7 @@ def leaves_to_bytelist(leaves, leaf_bits):
         # FIxME: support class proportions, with up to 8 bits
         raise ValueError('Only 0 or 32 supported for leaf_bits')
 
-def generate_c_inlined(forest, name, n_features, n_classes=0, leaf_bits=0, dtype='float', classifier=True):
+def generate_c_inlined(forest, name, n_features, n_classes=0, leaf_bits=0, dtype='float', classifier=True, include_proba=True):
     nodes, roots, leaves = forest
 
     cgen.assert_valid_identifier(name)
@@ -456,8 +456,10 @@ def generate_c_inlined(forest, name, n_features, n_classes=0, leaf_bits=0, dtype
     })
 
     return_type = 'int32_t'
-    forest_funcs = [forest_classifier_func, forest_proba_func]
-    
+    forest_funcs = [forest_classifier_func]
+    if include_proba:
+        forest_funcs += [forest_proba_func]
+
     if not classifier:
         return_type = 'float'
         forest_funcs = [ forest_regressor_func ]
@@ -476,11 +478,13 @@ def generate_c_inlined(forest, name, n_features, n_classes=0, leaf_bits=0, dtype
 
 def generate_c_loadable(forest, name, n_features,
         weight_modifiers='static const', dtype='float',
-        classifier=True, n_classes=0, leaf_bits=0):
+        classifier=True, n_classes=0, leaf_bits=0, include_proba=True):
 
     nodes, roots, leaves = forest
 
     cgen.assert_valid_identifier(name)
+
+    # NOTE: include_proba has no effect, we always include support for it
 
     nodes_name = name+'_nodes'
     nodes_length = len(nodes)
@@ -583,7 +587,7 @@ class Wrapper:
         n_classes = self.n_classes
         feature_dtype = self.dtype
 
-        model_init = self.save(name=name)
+        model_init = self.save(name=name, include_proba=True)
 
         return_type = 'int32_t' if self.is_classifier else 'float'
 
@@ -739,7 +743,7 @@ class Wrapper:
         probabilities = self.classifier_.predict_proba(X)
         return probabilities
 
-    def save(self, name=None, file=None, format='c', inference=None):
+    def save(self, name=None, file=None, format='c', inference=None, include_proba=True):
 
         if inference is None:
             inference = [self.method]
@@ -766,6 +770,7 @@ class Wrapper:
                 leaf_bits=self.leaf_bits,
                 n_classes=self.n_classes,
                 n_features=self.n_features,
+                include_proba=include_proba,
             )
             if 'loadable' in inference:
                 code += '\n\n' + generate_c_loadable(**generate_args)

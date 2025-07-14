@@ -87,7 +87,7 @@ def check_program_size(dtype, model, platform, mcu):
     if model_enabled:
         # Quantize with the specified dtype
         c_model = emlearn.convert(model, dtype=dtype, method=method)
-        model_code = c_model.save(name=model_name, inference=[method])
+        model_code = c_model.save(name=model_name, include_proba=False)
 
         if method == 'loadable':
             # Only works for size estimation
@@ -100,6 +100,9 @@ def check_program_size(dtype, model, platform, mcu):
 
     test_program = \
     f"""
+    // Disable unused features
+    #define EML_TREES_REGRESSION_ENABLE 0
+
     #include <stdint.h>
 
     #if {model_enabled}
