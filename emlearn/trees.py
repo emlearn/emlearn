@@ -332,7 +332,8 @@ def generate_c_inlined(forest, name, n_features, n_classes=0, leaf_bits=0, dtype
     nodes, roots, leaves = forest
 
     cgen.assert_valid_identifier(name)
-    #assert leaf_bits == 0, 'class proportions not supported for inline yet'
+    if classifier and leaf_bits != 0:
+        raise ValueError('Class proportions not supported for inline yet. Must use leaf_bits=0')
 
     tree_names = [ name + '_tree_{}'.format(i) for i,_ in enumerate(roots) ]
 
