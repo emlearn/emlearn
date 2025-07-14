@@ -461,9 +461,16 @@ def generate_c_inlined(forest, name, n_features, n_classes=0, leaf_bits=0, dtype
         return_type = 'float'
         forest_funcs = [ forest_regressor_func ]
 
+
     tree_funcs = [tree_func(n, r, return_type=return_type) for n,r in zip(tree_names, roots)]
 
-    return '\n\n'.join(tree_funcs + forest_funcs)
+    head = """
+    // !!! This file is generated using emlearn !!!
+
+    #include <eml_trees.h>
+    """
+
+    return '\n\n'.join([head] + tree_funcs + forest_funcs)
 
 
 def generate_c_loadable(forest, name, n_features,
@@ -579,8 +586,8 @@ class Wrapper:
 
         return_type = 'int32_t' if self.is_classifier else 'float'
 
-        classifier_functions = [
-            # Floating point wrappers for loadable, that is compatible with CompilerClassifier
+        # Floating point wrappers that are compatible with CompilerClassifier
+        classifier_loadable = [
             f"""
             int32_t
             predict_loadable(const float *values, int length) {{
@@ -596,23 +603,6 @@ class Wrapper:
                 return out;
             }}
             """,
-            # Floating point wrappers for inline, that is compatible with CompilerClassifier
-            f"""
-            {return_type}
-            predict_inline(const float *values, int length) {{
-                // Convert to whatever is needed for inline
-                {feature_dtype} features[{n_features}];
-                for (int i=0; i<length; i++) {{
-                    features[i] = ({feature_dtype})values[i];
-                }}
-                const {return_type} out = {name}_predict(features, length);
-                if (out < 0) {{
-                    return -out;
-                }}
-                return out;
-            }}
-            """,
-            # Floating point wrappers for loadable proba, that is compatible with CompilerClassifier
             f"""
             EmlError
             predict_proba_loadable(const float *values, int length, float *outputs, int n_outputs) {{
@@ -629,7 +619,22 @@ class Wrapper:
                 return err;
             }}
             """,
-            # Floating point wrappers for inline proba, that is compatible with CompilerClassifier
+        ]
+        classifier_inline = [
+            f"""
+            {return_type}
+            predict_inline(const float *values, int length) {{
+                // Convert to whatever is needed for inline
+                {feature_dtype} features[{n_features}];
+                for (int i=0; i<length; i++) {{
+                    features[i] = ({feature_dtype})values[i];
+                }}
+                const {return_type} out = {name}_predict(features, length);
+                if (out < 0) {{
+                    return -out;
+                }}
+                return out;
+            }}""",
             f"""
             EmlError
             predict_proba_inline(const float *values, int length, float *outputs, int n_outputs) {{
@@ -647,8 +652,7 @@ class Wrapper:
             """,
         ]
 
-        regression_functions = [
-            # Floating point wrappers for regress loadable, that is compatible with CompilerClassifier
+        regression_loadable = [
             f"""
             float
             regress_loadable(const float *values, int length) {{
@@ -661,7 +665,8 @@ class Wrapper:
                 return out;
             }}
             """,
-            # Floating point wrappers for regress inline, that is compatible with CompilerClassifier
+        ]
+        regression_inline = [
             f"""
             {return_type}
             regress_inline(const float *values, int length) {{
@@ -675,6 +680,9 @@ class Wrapper:
             }}
             """,
         ]
+
+        classifier_functions = classifier_loadable if self.method == 'loadable' else classifier_inline
+        regression_functions = regression_loadable if self.method == 'loadable' else regression_inline
 
         sections = [model_init]
         if self.is_classifier:
@@ -733,7 +741,7 @@ class Wrapper:
     def save(self, name=None, file=None, format='c', inference=None):
 
         if inference is None:
-            inference = ['inline', 'loadable']
+            inference = [self.method]
 
         if name is None:
             if file is None:
