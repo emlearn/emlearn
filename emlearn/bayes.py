@@ -106,6 +106,9 @@ class Wrapper(object):
                 model[class_n,feature_n] = (mean, std, std_log2)
         self.model = model
 
+        if method is None:
+            method = 'loadable'
+
         if method == 'loadable':
             name = 'mybayes'
             func = 'eml_bayes_predict(&{}_model, values, length)'.format(name)
@@ -114,7 +117,7 @@ class Wrapper(object):
         elif method == 'inline':
             raise NotImplementedError('NaiveBayes does not support inline C code generation')
         else:
-            raise ValueError("Unsupported classifier method '{}'".format(classifier))
+            raise ValueError(f"Unsupported inference method '{method}'")
 
 
     def predict(self, X):

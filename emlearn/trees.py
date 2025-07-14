@@ -527,7 +527,10 @@ def generate_c_loadable(forest, name, n_features,
 
 
 class Wrapper:
-    def __init__(self, estimator, classifier, dtype='int16_t', leaf_bits=None):
+    def __init__(self, estimator, method, dtype='int16_t', leaf_bits=None):
+
+        if method is None:
+            method = 'inline'
 
         self.dtype = dtype
         if self.dtype is None:
@@ -564,9 +567,9 @@ class Wrapper:
         self.n_classes = 0
         if self.is_classifier:
             self.n_classes = estimators[0].n_classes_
-        self.method = classifier
+        self.method = method
         if self.method not in ('loadable', 'inline'):
-            raise ValueError("Unsupported inference method '{}'".format(classifier))
+            raise ValueError("Unsupported inference method '{}'".format(self.method))
 
         if self.method == 'loadable' and self.dtype != 'int16_t':
             raise ValueError("Inference method='loadable' only supports dtype='int16_t'. Use method='inline' for others")

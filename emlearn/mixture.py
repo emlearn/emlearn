@@ -302,6 +302,9 @@ class Wrapper:
         self.dtype = dtype
         self.verbose = verbose
 
+        if classifier is None:
+            classifier = 'loadable'
+    
         n_components, n_features = estimator.means_.shape
         covariance_type = estimator.covariance_type
         precisions_chol = estimator.precisions_cholesky_

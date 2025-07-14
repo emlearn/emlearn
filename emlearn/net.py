@@ -36,6 +36,9 @@ class Wrapper:
             use_fixedpoint=False,
         ):
 
+        if classifier is None:
+            classifier = 'loadable'
+
         self.activations = activations
         self.weights = weights
         self.biases = biases
