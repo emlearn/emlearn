@@ -6,6 +6,7 @@ Tree-based models
 
 import os.path
 import os
+import warnings
 
 import numpy
 
@@ -742,6 +743,13 @@ class Wrapper:
 
         if inference is None:
             inference = [self.method]
+        else:
+            if len(inference) != 1:
+                raise ValueError('Only support specifying on inference type on save')
+            warnings.warn("The 'inference' argument is deprecated. It will be removed in a future version. Use method= in constructor instead.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
 
         if name is None:
             if file is None:
