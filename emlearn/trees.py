@@ -524,7 +524,10 @@ class Wrapper:
             self.n_classes = estimators[0].n_classes_
         self.method = classifier
         if self.method not in ('loadable', 'inline'):
-            raise ValueError("Unsupported classifier method '{}'".format(classifier))
+            raise ValueError("Unsupported inference method '{}'".format(classifier))
+
+        if self.method == 'loadable' and self.dtype != 'int16_t':
+            raise ValueError("Inference method='loadable' only supports dtype='int16_t'. Use method='inline' for others")
 
         # TODO: support more features for inline. Like 255
         max_features = 127 if self.method == 'loadable' else 10000
@@ -658,7 +661,11 @@ class Wrapper:
         probabilities = self.classifier_.predict_proba(X)
         return probabilities
 
-    def save(self, name=None, file=None, format='c', inference=['inline', 'loadable']):
+    def save(self, name=None, file=None, format='c', inference=None):
+
+        if inference is None:
+            inference = ['inline', 'loadable']
+
         if name is None:
             if file is None:
                 raise ValueError('Either name or file must be provided')

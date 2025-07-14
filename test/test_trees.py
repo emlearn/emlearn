@@ -279,4 +279,17 @@ def test_trees_too_many_features(method, deep_trees_model):
     with pytest.raises(ValueError, match='features'):
         cmodel = emlearn.convert(estimator, method=method)
 
+LOADABLE_UNSUPPORTED_FEATURE_DTYPES=['float', 'int8_t', 'uint8_t', 'int32_t']
+@pytest.mark.parametrize("dtype", LOADABLE_UNSUPPORTED_FEATURE_DTYPES)
+def test_trees_loadable_unsupported_dtype(dtype):
+    """Should raise error during convert()"""
+
+    X, Y = datasets.make_classification(n_classes=10, n_features=10,
+        n_informative=8, n_samples=100, random_state=1)
+    estimator = RandomForestClassifier(n_estimators=5, random_state=1)
+    estimator.fit(X, Y)
+
+    with pytest.raises(ValueError, match='loadable'):
+        cmodel = emlearn.convert(estimator, method='loadable', dtype=dtype)
+
 
