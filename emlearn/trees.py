@@ -24,19 +24,21 @@ SUPPORTED_ESTIMATORS=[
 
 
 def quantize_probabilities_into_byte(p, bits=8):
-    assert bits <= 8
-    assert bits >= 1
+    assert bits <= 8, bits
+    assert bits >= 1, bits
     max = numpy.max(p)
     min = numpy.min(p)
     assert max <= 1.0, max
     assert min >= 0.0, min
     steps = (2**bits)-1
 
-    quantized = (p * steps).round(0).astype(numpy.uint8)
+    # Quantize to n_bits levels
+    quantized = numpy.round(p * (steps - 1))
     out_max = numpy.max(quantized)
     assert out_max <= (2**bits)-1, (out_max, (2**bits)-1)
-    # TODO: ? scale to fill out uint8, even when bits is smaller
-    return quantized
+    # Scale back to full uint8 range [0, 255]
+    scaled = (quantized / (steps - 1) * 255).astype(numpy.uint8)
+    return scaled
 
 # Tree representation as 2 arrays
 # array of decision nodes:
@@ -515,8 +517,9 @@ def generate_c_loadable(forest, name, n_features,
     leaves_name = name+'_leaves';
     leaves = cgen.array_declare(leaves_name, leaves_length,
             modifiers=weight_modifiers, dtype=leaves_dtype, values=leaves_array)
-
-    tree_leaf_bits = leaf_bits
+   
+    # The inference strategy uses either 0, 32 or 8 (for quantizations 1-7)
+    tree_leaf_bits = leaf_bits if leaf_bits == 0 or leaf_bits == 32 else 8
 
     forest_struct = """EmlTrees {name} = {{
         {nodes_length},
