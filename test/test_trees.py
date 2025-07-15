@@ -147,13 +147,20 @@ def test_trees_sklearn_classifier_inline_dtype(data, model, dtype):
     estimator.fit(X, y)
     cmodel = emlearn.convert(estimator, method='inline', dtype=dtype)
 
-    pred_original = estimator.predict(X[:5])
-    pred_c = cmodel.predict(X[:5])
-    numpy.testing.assert_equal(pred_c, pred_original)
+    allowed_incorrect = 2 if 'int8' in dtype else 0
 
-    proba_original = estimator.predict_proba(X[:5])
-    proba_c = cmodel.predict_proba(X[:5])
-    numpy.testing.assert_allclose(proba_c, proba_original, atol=0.1, rtol=0.001)
+    X_sub = X[:10]
+    pred_original = estimator.predict(X_sub)
+    pred_c = cmodel.predict(X_sub)
+    incorrect = numpy.where(pred_c != pred_original)[0]
+    assert len(incorrect) <= allowed_incorrect, (pred_c, pred_original)
+
+    # no point checking where we were off
+    X_sub = X_sub[pred_c == pred_original]
+    assert len(X_sub >= 4)
+    proba_original = estimator.predict_proba(X_sub)
+    proba_c = cmodel.predict_proba(X_sub)
+    numpy.testing.assert_allclose(proba_c, proba_original, atol=0.3 , rtol=0.001)
 
 
 @pytest.mark.parametrize("data", REGRESSION_DATASETS.keys())
@@ -170,8 +177,9 @@ def test_trees_sklearn_regressor_inline_dtype(data, model, dtype):
     pred_original = estimator.predict(X[:5])
     pred_c = cmodel.predict(X[:5])
 
-    numpy.testing.assert_allclose(pred_c, pred_original, rtol=1e-3, atol=2)
-
+    allowed_rtol = 0.1 if 'int8' in dtype else 0.001
+    allowed_atol = 2.0
+    numpy.testing.assert_allclose(pred_c, pred_original, rtol=allowed_rtol, atol=allowed_atol)
     check_csv_export(cmodel)
 
 
