@@ -25,17 +25,22 @@ here = os.path.dirname(__file__)
 random = numpy.random.randint(0, 1000)
 print('random_state={}'.format(random))
 
-# FIXME: add tests case for soft voting with leaf quantization. leaf_bits=2,4,6
-# FIXME: add case with majority voting. leaf_bits=0?
 
-
-# FIXME: add case with max_depth
 CLASSIFICATION_MODELS = {
     'RFC': RandomForestClassifier(n_estimators=10, random_state=random),
-    #'RFC-maxdepth': RandomForestClassifier(n_estimators=10, random_state=random, max_depth=2),
     'ETC': ExtraTreesClassifier(n_estimators=10, random_state=random),
     'DTC': DecisionTreeClassifier(random_state=random),
 }
+
+# these will cause incomplete leaf nodes. Needs class proportion support
+CLASSIFICATION_MODELS_DEPTH_LIMIT = {
+    'RFC-max_depth': RandomForestClassifier(n_estimators=10, random_state=random, max_depth=3),
+    'ETC-min_samples_leaf': RandomForestClassifier(n_estimators=10, random_state=random, min_samples_leaf=2),
+}
+LEAF_BITS_VALID = [0,1,2,3,4,5,6,7,8]
+# FIXME: add tests case for soft voting with leaf quantization. leaf_bits=2,4,6
+# FIXME: add case with majority voting. leaf_bits=0?
+
 
 REGRESSION_MODELS = {
     'RFR': RandomForestRegressor(n_estimators=10, random_state=random),
@@ -181,6 +186,28 @@ def test_trees_sklearn_regressor_inline_dtype(data, model, dtype):
     allowed_atol = 2.0
     numpy.testing.assert_allclose(pred_c, pred_original, rtol=allowed_rtol, atol=allowed_atol)
     check_csv_export(cmodel)
+
+
+@pytest.mark.parametrize("data", CLASSIFICATION_DATASETS.keys())
+@pytest.mark.parametrize("model", CLASSIFICATION_MODELS_DEPTH_LIMIT.keys())
+@pytest.mark.parametrize("method", ['loadable']) # TODO: support inline also
+def test_trees_sklearn_classifier_leaf_proportions(data, model, method):
+    X, y = CLASSIFICATION_DATASETS[data]
+    estimator = CLASSIFICATION_MODELS_DEPTH_LIMIT[model]
+    X = Quantizer().fit_transform(X)
+
+    estimator.fit(X, y)
+    cmodel = emlearn.convert(estimator, method=method, leaf_bits=8)
+
+    proba_original = estimator.predict_proba(X[:5])
+    proba_c = cmodel.predict_proba(X[:5])
+    atol = (1.0/255)
+    numpy.testing.assert_allclose(proba_c, proba_original, rtol=1e-6, atol=atol)
+
+    pred_original = estimator.predict(X[:5])
+    pred_c = cmodel.predict(X[:5])
+    numpy.testing.assert_equal(pred_c, pred_original)
+
 
 
 @pytest.mark.parametrize("model", CLASSIFICATION_MODELS.keys())
