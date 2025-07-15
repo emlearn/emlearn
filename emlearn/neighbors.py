@@ -37,6 +37,9 @@ class Wrapper:
 
         check_params_supported(estimator)
 
+        if inference is None:
+            inference = 'loadable'
+
         self.fit_data_X = estimator._fit_X
         self.fit_data_Y = estimator._y
         self.n_neighbors = estimator.n_neighbors

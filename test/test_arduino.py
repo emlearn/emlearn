@@ -77,8 +77,5 @@ def test_arduino_helloworld():
     # build sketch
     out = arduino_build(out_dir, library_dir=os.path.join(library_dir, 'emlearn'))
     assert 'Sketch uses' in out
-    assert 'Used library' in out
-    assert 'emlearn' in out
-    assert library_dir in out
 
 

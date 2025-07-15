@@ -112,6 +112,8 @@ def check_correctness(out_dir, name, model_filename, test_data, test_predictions
     except subprocess.CalledProcessError as e:
         errors = e.returncode
 
+    return errors
+
 # %%
 # Plotting tools
 # ------------------------
@@ -155,7 +157,7 @@ def build_run_classifier(ax, model, name):
         os.makedirs(out_dir)
 
     model_filename = os.path.join(out_dir, f'{name}_model.h')
-    cmodel = emlearn.convert(model, method='loadable')
+    cmodel = emlearn.convert(model, method=None, dtype='float')
     code = cmodel.save(file=model_filename, name='model')
 
     test_pred = cmodel.predict(test[feature_columns])

@@ -1,7 +1,7 @@
 platform,cpu,dtype,flash,ram
-arm,Cortex-M0,loadable,5336,264
-arm,Cortex-M0,float,4372,240
-arm,Cortex-M0,int32_t,2380,240
-arm,Cortex-M0,int16_t,2752,120
-arm,Cortex-M0,int8_t,2600,60
-arm,Cortex-M0,uint8_t,2244,60
+arm,Cortex-M0,loadable,4876,144
+arm,Cortex-M0,float,4288,240
+arm,Cortex-M0,int32_t,2228,240
+arm,Cortex-M0,int16_t,2596,120
+arm,Cortex-M0,int8_t,2428,60
+arm,Cortex-M0,uint8_t,2164,60

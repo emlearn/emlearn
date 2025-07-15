@@ -12,6 +12,7 @@ from . import distance
 from . import mixture
 from . import neighbors
 
+from typing import Optional
 
 class Model():
     """Inference model powered by emlearn
@@ -46,7 +47,7 @@ class Model():
 
 def convert(estimator, 
         kind : str = None,
-        method: str = 'loadable',
+        method: Optional[str] = None,
         dtype: str = None,
         return_type: str = 'classifier',
         **kwargs,

@@ -120,6 +120,69 @@ def test_trees_sklearn_regressor_predict(data, model, method):
 
     check_csv_export(cmodel)
 
+
+SUPPORTED_FEATURE_DTYPES = [
+    'float',
+    'int32_t',
+    'int16_t',
+    'int8_t',
+    #'uint8_t',
+]
+@pytest.mark.parametrize("data", CLASSIFICATION_DATASETS.keys())
+@pytest.mark.parametrize("model", CLASSIFICATION_MODELS.keys())
+@pytest.mark.parametrize("dtype", SUPPORTED_FEATURE_DTYPES)
+def test_trees_sklearn_classifier_inline_dtype(data, model, dtype):
+    """
+    The inline method supports specifying the input datatype
+    """
+    X, y = CLASSIFICATION_DATASETS[data]
+    estimator = CLASSIFICATION_MODELS[model]
+
+    # Convert the data to the dtype (and range)
+    python_dtype = dtype.removesuffix('_t')
+    if dtype != 'float':
+        X = Quantizer(dtype=python_dtype).fit_transform(X)
+    assert X.dtype == python_dtype
+
+    estimator.fit(X, y)
+    cmodel = emlearn.convert(estimator, method='inline', dtype=dtype)
+
+    allowed_incorrect = 2 if 'int8' in dtype else 0
+
+    X_sub = X[:10]
+    pred_original = estimator.predict(X_sub)
+    pred_c = cmodel.predict(X_sub)
+    incorrect = numpy.where(pred_c != pred_original)[0]
+    assert len(incorrect) <= allowed_incorrect, (pred_c, pred_original)
+
+    # no point checking where we were off
+    X_sub = X_sub[pred_c == pred_original]
+    assert len(X_sub >= 4)
+    proba_original = estimator.predict_proba(X_sub)
+    proba_c = cmodel.predict_proba(X_sub)
+    numpy.testing.assert_allclose(proba_c, proba_original, atol=0.3 , rtol=0.001)
+
+
+@pytest.mark.parametrize("data", REGRESSION_DATASETS.keys())
+@pytest.mark.parametrize("model", REGRESSION_MODELS.keys())
+@pytest.mark.parametrize("dtype", SUPPORTED_FEATURE_DTYPES)
+def test_trees_sklearn_regressor_inline_dtype(data, model, dtype):
+    X, y = REGRESSION_DATASETS[data]
+    estimator = REGRESSION_MODELS[model]
+    X = Quantizer().fit_transform(X)
+
+    estimator.fit(X, y)
+    cmodel = emlearn.convert(estimator, method='inline')
+
+    pred_original = estimator.predict(X[:5])
+    pred_c = cmodel.predict(X[:5])
+
+    allowed_rtol = 0.1 if 'int8' in dtype else 0.001
+    allowed_atol = 2.0
+    numpy.testing.assert_allclose(pred_c, pred_original, rtol=allowed_rtol, atol=allowed_atol)
+    check_csv_export(cmodel)
+
+
 @pytest.mark.parametrize("model", CLASSIFICATION_MODELS.keys())
 @pytest.mark.parametrize("data", CLASSIFICATION_DATASETS.keys())
 def test_trees_evaluate_scoring(model, data):
@@ -278,5 +341,18 @@ def test_trees_too_many_features(method, deep_trees_model):
 
     with pytest.raises(ValueError, match='features'):
         cmodel = emlearn.convert(estimator, method=method)
+
+LOADABLE_UNSUPPORTED_FEATURE_DTYPES=['float', 'int8_t', 'uint8_t', 'int32_t']
+@pytest.mark.parametrize("dtype", LOADABLE_UNSUPPORTED_FEATURE_DTYPES)
+def test_trees_loadable_unsupported_dtype(dtype):
+    """Should raise error during convert()"""
+
+    X, Y = datasets.make_classification(n_classes=10, n_features=10,
+        n_informative=8, n_samples=100, random_state=1)
+    estimator = RandomForestClassifier(n_estimators=5, random_state=1)
+    estimator.fit(X, Y)
+
+    with pytest.raises(ValueError, match='loadable'):
+        cmodel = emlearn.convert(estimator, method='loadable', dtype=dtype)
 
 
