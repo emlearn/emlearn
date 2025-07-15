@@ -347,12 +347,10 @@ def leaves_to_bytelist(leaves, leaf_bits):
         raise ValueError(f"Unsupported number for leaf_bits: {leaf_bits}")
     
 
-def generate_c_inlined(forest, name, n_features, n_classes=0, leaf_bits=0, dtype='float', classifier=True, include_proba=True):
+def generate_c_inlined(forest, name, n_features, n_classes=0, leaf_bits=0, dtype='float', classifier=True, include_proba=True, weight_modifiers='static const'):
     nodes, roots, leaves = forest
 
     cgen.assert_valid_identifier(name)
-    if classifier and leaf_bits != 0:
-        raise ValueError('Class proportions not supported for inline yet. Must use leaf_bits=0')
 
     tree_names = [ name + '_tree_{}'.format(i) for i,_ in enumerate(roots) ]
 
@@ -361,6 +359,13 @@ def generate_c_inlined(forest, name, n_features, n_classes=0, leaf_bits=0, dtype
     if not classifier:
         leaf_dtype = 'float'
     indent = 2
+
+    leaves_dtype = 'uint8_t'
+    leaves_array = leaves_to_bytelist(leaves, leaf_bits=leaf_bits)
+    leaves_length = len(leaves_array)
+    leaves_name = name+'_leaves';
+    leaves_code = cgen.array_declare(leaves_name, leaves_length,
+            modifiers=weight_modifiers, dtype=leaves_dtype, values=leaves_array)
 
     def c_leaf(data, depth):
         value = cgen.constant(data, dtype=leaf_dtype)
@@ -381,9 +386,19 @@ def generate_c_inlined(forest, name, n_features, n_classes=0, leaf_bits=0, dtype
     def c_node(idx, depth):
         if idx < 0:
             leaf_idx = -idx-1
-            return c_leaf(leaves[leaf_idx], depth+1)
+            if not classifier:
+                # regression, put value directly into leaf
+                leaf_value = leaves[leaf_idx]
+            elif leaf_bits == 0:
+                # hard voting, put the class index directly into leaf
+                leaf_value = leaves[leaf_idx]
+            else:
+                # soft voting, offet into a leaves array
+                leaf_value = leaf_idx
+            return c_leaf(leaf_value, depth+1)
         else:
             return c_internal(nodes[idx], depth+1)
+
 
 
     def tree_func(name, root, return_type='int32_t'):
@@ -402,7 +417,6 @@ def generate_c_inlined(forest, name, n_features, n_classes=0, leaf_bits=0, dtype
 
     def tree_vote_proba(name):
         return '_class = {}(features, features_length); out[_class] += 1.0f;'.format(name)
-
 
     def tree_vote_regressor(name):
         return 'avg += {}(features, features_length); '.format(name)
@@ -423,7 +437,7 @@ def generate_c_inlined(forest, name, n_features, n_classes=0, leaf_bits=0, dtype
       'ctype': ctype,
     })
 
-    forest_classifier_func = """int32_t {function_name}(const {ctype} *features, int32_t features_length) {{
+    forest_predict_majority_func = """int32_t {function_name}(const {ctype} *features, int32_t features_length) {{
 
         int32_t votes[{n_classes}] = {{0,}};
         int32_t _class = -1;
@@ -449,7 +463,7 @@ def generate_c_inlined(forest, name, n_features, n_classes=0, leaf_bits=0, dtype
     })
 
 
-    forest_proba_func = """int {function_name}(const {ctype} *features, int32_t features_length, float *out, int out_length) {{
+    forest_proba_majority_func = """int {function_name}(const {ctype} *features, int32_t features_length, float *out, int out_length) {{
 
         int32_t _class = -1;
 
@@ -473,15 +487,79 @@ def generate_c_inlined(forest, name, n_features, n_classes=0, leaf_bits=0, dtype
       'ctype': ctype,
     })
 
+
+
+    # proportions
+    def tree_vote_leaf_proportion(tree_no, name):
+        leaves = leaves_name
+        c = f"""offset = {n_classes}*{name}(features, features_length);
+            for (int i=0; i<{n_classes}; i++) {{ out[i] += ({leaves}[offset+i]/255.0f); }}
+        """
+        return c
+    forest_proba_proportions_func = """int {function_name}(const {ctype} *features, int32_t features_length, float *out, int out_length) {{
+
+        int offset = 0;
+
+        for (int i=0; i<out_length; i++) {{
+            out[i] = 0.0f;
+        }}
+
+        {tree_predictions}
+    
+        // compute mean
+        for (int i=0; i<out_length; i++) {{
+            out[i] = out[i] / {n_trees};
+        }}
+        return 0;
+    }}
+    """.format(**{
+      'function_name': name+"_predict_proba",
+      'n_classes': n_classes,
+      'tree_predictions': '\n    '.join([ tree_vote_leaf_proportion(i, n) for i, n in enumerate(tree_names) ]),
+      'n_trees': len(tree_names),
+      'ctype': ctype,
+    })
+
+
+    forest_predict_proportions_func = """int32_t {function_name}(const {ctype} *features, int32_t features_length) {{
+
+        float out[{n_classes}] = {{0.0f,}};
+
+        int offset = 0;
+
+        {tree_predictions}
+    
+        // argmax over probabilities
+        int32_t most_voted_class = -1;
+        float most_voted_proba = 0.0f;
+        for (int32_t i=0; i<{n_classes}; i++) {{
+
+            if (out[i] > most_voted_proba) {{
+                most_voted_class = i;
+                most_voted_proba = out[i];
+            }}
+        }}
+        return most_voted_class;
+    }}
+    """.format(**{
+      'function_name': name+"_predict",
+      'n_classes': n_classes,
+      'tree_predictions': '\n    '.join([ tree_vote_leaf_proportion(i, n) for i, n in enumerate(tree_names) ]),
+      'ctype': ctype,
+    })
+
+
     return_type = 'int32_t'
+    forest_classifier_func = forest_predict_majority_func if leaf_bits == 0 else forest_predict_proportions_func
     forest_funcs = [forest_classifier_func]
+
+    forest_proba_func = forest_proba_majority_func if leaf_bits == 0 else forest_proba_proportions_func
     if include_proba:
         forest_funcs += [forest_proba_func]
 
     if not classifier:
         return_type = 'float'
         forest_funcs = [ forest_regressor_func ]
-
 
     tree_funcs = [tree_func(n, r, return_type=return_type) for n,r in zip(tree_names, roots)]
 
@@ -491,7 +569,13 @@ def generate_c_inlined(forest, name, n_features, n_classes=0, leaf_bits=0, dtype
     #include <stdint.h>
     """
 
-    return '\n\n'.join([head] + tree_funcs + forest_funcs)
+    parts  = [head] + tree_funcs
+    if leaf_bits != 0:
+        parts += [ leaves_code ]
+    parts += forest_funcs
+    out = '\n\n'.join(parts)
+
+    return out
 
 
 def generate_c_loadable(forest, name, n_features,
