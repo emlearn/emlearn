@@ -7,6 +7,7 @@ Tree-based models
 import os.path
 import os
 import warnings
+import math
 
 import numpy
 
@@ -21,16 +22,21 @@ SUPPORTED_ESTIMATORS=[
     'DecisionTreeRegressor',
 ]
 
-def quantize_probabilities(p, bits=8):
+
+def quantize_probabilities_into_byte(p, bits=8):
     assert bits <= 8
     assert bits >= 1
+    max = numpy.max(p)
+    min = numpy.min(p)
+    assert max <= 1.0, max
+    assert min >= 0.0, min
     steps = (2**bits)-1
 
-    bins = numpy.arange(0, steps)
-    digits = numpy.digitize(p, bins)
-    out = digits.astype(numpy.uint8)    
-    return out    
-
+    quantized = (p * steps).round(0).astype(numpy.uint8)
+    out_max = numpy.max(quantized)
+    assert out_max <= (2**bits)-1, (out_max, (2**bits)-1)
+    # TODO: ? scale to fill out uint8, even when bits is smaller
+    return quantized
 
 # Tree representation as 2 arrays
 # array of decision nodes:
@@ -49,6 +55,7 @@ def flatten_tree(tree, leaf='argmax', leaf_bits=8):
         Returns an updated index value to identify the leaf
         """
         value = tree.value[idx]
+        assert len(value) == 1, 'only one output supported'
 
         if leaf == 'argmax':
             # majority voting
@@ -57,7 +64,7 @@ def flatten_tree(tree, leaf='argmax', leaf_bits=8):
             # regression
             val = value[0][0]
         elif leaf == 'probabilities':
-            val = quantize_probabilities(value[0], bits=leaf_bits)
+            val = quantize_probabilities_into_byte(value[0], bits=leaf_bits)
 
         leaf_data = val
         leaf_idx = len(leaf_nodes)
@@ -198,7 +205,7 @@ def assert_forest_valid(forest):
     assert_node_references_valid(nodes, leaves, roots)
 
 
-def flatten_forest(trees, leaf='argmax'):
+def flatten_forest(trees, leaf='argmax', leaf_bits=0):
     tree_roots = []
     decision_nodes_offset = 0
     leaf_nodes_offset = 0
@@ -206,7 +213,7 @@ def flatten_forest(trees, leaf='argmax'):
     forest_leaves = []
 
     for tree in trees: 
-        decision_nodes, leaf_nodes = flatten_tree(tree, leaf=leaf)
+        decision_nodes, leaf_nodes = flatten_tree(tree, leaf=leaf, leaf_bits=leaf_bits)
 
         # Offset the nodes in tree, so they can be stored in one array 
         root = 0 + decision_nodes_offset
@@ -241,13 +248,19 @@ def flatten_forest(trees, leaf='argmax'):
 def remove_duplicate_leaves(forest):
     nodes, roots, leaves = forest
 
+    def find_array_index(array_list, target):
+       for i, arr in enumerate(array_list):
+           if numpy.array_equal(target, arr):
+               return i
+       return None  # or None if not found
+
     # Determine de-duplicated leaves
     unique_leaves = []
     #unique_idx = []
     remap_leaves = {}
     for old_idx, node in enumerate(leaves):
         old_encoded = -old_idx-1
-        found = unique_leaves.index(node) if node in unique_leaves else None
+        found = find_array_index(unique_leaves, node)
         if found is None:
             new_idx = len(unique_leaves)
             unique_leaves.append(node)
@@ -312,7 +325,6 @@ def generate_c_nodes(flat, name, dtype='float', modifiers='static const'):
     return out
 
 def leaves_to_bytelist(leaves, leaf_bits):
-    import math
 
     if leaf_bits == 0:
         return leaves
@@ -325,9 +337,13 @@ def leaves_to_bytelist(leaves, leaf_bits):
         expect_bytes = leaf_bytes*len(leaves)
         assert len(out) == expect_bytes, (len(out), expect_bytes) 
         return out
-    else:
-        # FIxME: support class proportions, with up to 8 bits
-        raise ValueError('Only 0 or 32 supported for leaf_bits')
+    elif leaf_bits <= 8:
+        arr = numpy.array(leaves).astype(numpy.uint8)
+        out = list(arr.tobytes())
+        return out
+    else: 
+        raise ValueError(f"Unsupported number for leaf_bits: {leaf_bits}")
+    
 
 def generate_c_inlined(forest, name, n_features, n_classes=0, leaf_bits=0, dtype='float', classifier=True, include_proba=True):
     nodes, roots, leaves = forest
@@ -599,6 +615,10 @@ class Wrapper:
                 leaf_bits = 0
             else:
                 leaf_bits = 32
+
+        if leaf_bits > 0 and leaf_bits <= 8 and self.is_classifier:
+            leaf = 'probabilities'
+
         self.leaf_bits = leaf_bits
 
         if hasattr(estimator, 'estimators_'):
@@ -608,7 +628,7 @@ class Wrapper:
 
         trees = [ e.tree_ for e in estimators ]
 
-        self.forest_ = flatten_forest(trees, leaf=leaf)
+        self.forest_ = flatten_forest(trees, leaf=leaf, leaf_bits=self.leaf_bits)
         self.forest_ = remove_duplicate_leaves(self.forest_)
 
 
