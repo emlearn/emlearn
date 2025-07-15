@@ -154,14 +154,14 @@ eml_trees_predict_proba(const EmlTrees *self,
             const uint8_t *leaf_data = self->leaves + leaf_offset;
 
             for (int class_no=0; class_no<self->n_classes; class_no++) {
-                const float class_proportion = leaf_data[class_no] / 255;
+                const float class_proportion = leaf_data[class_no] / 255.0f;
                 out[class_no] += class_proportion;
             }
 
 #if 0
             fprintf(stderr,
-                " predict-proba-tree tree=%d leaf=%d ",
-                i, leaf_number, leaf_offset,
+                " predict-proba-tree tree=%d leaf=%d offset=%d \n",
+                i, leaf_number, leaf_offset
             );
 #endif
 
