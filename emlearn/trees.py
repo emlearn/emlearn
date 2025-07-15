@@ -347,12 +347,12 @@ def leaves_to_bytelist(leaves, leaf_bits):
         raise ValueError(f"Unsupported number for leaf_bits: {leaf_bits}")
     
 
-def generate_c_inlined(forest, name, n_features, n_classes=0, leaf_bits=0, dtype='float', classifier=True, include_proba=True):
+def generate_c_inlined(forest, name, n_features, n_classes=0, leaf_bits=0, dtype='float', classifier=True, include_proba=True, weight_modifiers='static const'):
     nodes, roots, leaves = forest
 
+    print('ll', leaves)
+
     cgen.assert_valid_identifier(name)
-    if classifier and leaf_bits != 0:
-        raise ValueError('Class proportions not supported for inline yet. Must use leaf_bits=0')
 
     tree_names = [ name + '_tree_{}'.format(i) for i,_ in enumerate(roots) ]
 
@@ -361,6 +361,13 @@ def generate_c_inlined(forest, name, n_features, n_classes=0, leaf_bits=0, dtype
     if not classifier:
         leaf_dtype = 'float'
     indent = 2
+
+    leaves_dtype = 'uint8_t'
+    leaves_array = leaves_to_bytelist(leaves, leaf_bits=leaf_bits)
+    leaves_length = len(leaves_array)
+    leaves_name = name+'_leaves';
+    leaves = cgen.array_declare(leaves_name, leaves_length,
+            modifiers=weight_modifiers, dtype=leaves_dtype, values=leaves_array)
 
     def c_leaf(data, depth):
         value = cgen.constant(data, dtype=leaf_dtype)
@@ -381,7 +388,11 @@ def generate_c_inlined(forest, name, n_features, n_classes=0, leaf_bits=0, dtype
     def c_node(idx, depth):
         if idx < 0:
             leaf_idx = -idx-1
-            return c_leaf(leaves[leaf_idx], depth+1)
+            # FIXME: handle the various cases
+            #leaf_value = leaves[leaf_idx]
+            print('leaf idx', leaf_idx)
+            leaf_value = leaf_idx
+            return c_leaf(leaf_value, depth+1)
         else:
             return c_internal(nodes[idx], depth+1)
 
@@ -444,12 +455,13 @@ def generate_c_inlined(forest, name, n_features, n_classes=0, leaf_bits=0, dtype
     """.format(**{
       'function_name': name+"_predict",
       'n_classes': n_classes,
-      'tree_predictions': '\n    '.join([ tree_vote_classifier(n) for n in tree_names ]),
+      'tree_predictions': '', # FIXME: call proba internally. Right now messes up leaf idx with class idx '\n    '.join([ tree_vote_classifier(n) for n in tree_names ]),
       'ctype': ctype,
     })
 
 
-    forest_proba_func = """int {function_name}(const {ctype} *features, int32_t features_length, float *out, int out_length) {{
+
+    forest_proba_majority_func = """int {function_name}(const {ctype} *features, int32_t features_length, float *out, int out_length) {{
 
         int32_t _class = -1;
 
@@ -472,6 +484,43 @@ def generate_c_inlined(forest, name, n_features, n_classes=0, leaf_bits=0, dtype
       'n_trees': len(tree_names),
       'ctype': ctype,
     })
+
+
+    # proportions
+    def tree_vote_leaf_proportion(tree_no, name):
+        leaves = leaves_name
+        c = f"""offset = {n_classes}*{name}(features, features_length);
+            fprintf(stderr, "tree={tree_no} offset=%d\\n", offset);
+            for (int i=0; i<{n_classes}; i++) {{ out[i] += ({leaves}[offset+i]/255.0f); }}
+        """
+        return c
+    forest_proba_func = """int {function_name}(const {ctype} *features, int32_t features_length, float *out, int out_length) {{
+
+        int offset = 0;
+
+        fprintf(stderr, "proba out_length=%d n_classes=%d\\n", out_length, {n_classes});
+
+        for (int i=0; i<out_length; i++) {{
+            out[i] = 0.0f;
+        }}
+
+        {tree_predictions}
+    
+        // compute mean
+        for (int i=0; i<out_length; i++) {{
+            out[i] = out[i] / {n_trees};
+            fprintf(stderr, "out class=%d value=%f \\n", i, (double)out[i]);
+        }}
+        return 0;
+    }}
+    """.format(**{
+      'function_name': name+"_predict_proba",
+      'n_classes': n_classes,
+      'tree_predictions': '\n    '.join([ tree_vote_leaf_proportion(i, n) for i, n in enumerate(tree_names) ]),
+      'n_trees': len(tree_names),
+      'ctype': ctype,
+    })
+
 
     return_type = 'int32_t'
     forest_funcs = [forest_classifier_func]

@@ -187,7 +187,7 @@ def test_trees_sklearn_regressor_inline_dtype(data, model, dtype):
 
 @pytest.mark.parametrize("data", CLASSIFICATION_DATASETS.keys())
 @pytest.mark.parametrize("model", CLASSIFICATION_MODELS_DEPTH_LIMIT.keys())
-@pytest.mark.parametrize("method", ['loadable']) # TODO: support inline also
+@pytest.mark.parametrize("method", ['inline', 'loadable'])
 @pytest.mark.parametrize("leaf_bits", [3, 4, 5, 6, 7, 8])
 def test_trees_sklearn_classifier_leaf_proportions(data, model, method, leaf_bits):
     X, y = CLASSIFICATION_DATASETS[data]
