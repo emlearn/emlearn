@@ -75,8 +75,8 @@ dataset = dataset_split_random(dataset, test_size=0.10).set_index('split')
 ax = seaborn.scatterplot(data=dataset, x=0, y=1, hue='label')
 ax.axvline(0.0, ls='--', alpha=0.5, color='black')
 ax.axhline(0.0, ls='--', alpha=0.5, color='black')
-ax.set_xlim(-4.0, +4.0)
-ax.set_ylim(-4.0, +4.0)
+ax.set_xlim(-4.0*255, +4.0*255)
+ax.set_ylim(-4.0*255, +4.0*255)
 
 # Show colums of the data
 print(dataset.head(5))
