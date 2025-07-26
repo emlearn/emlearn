@@ -697,6 +697,10 @@ class Wrapper:
             self.is_classifier = False
             self.out_dtype = "float"
 
+        if leaf_bits == 1:
+            # treat as majority voting
+            leaf_bits = 0
+
         if leaf_bits is None:
             if self.is_classifier:
                 leaf_bits = 0
