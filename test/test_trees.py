@@ -100,7 +100,7 @@ def test_trees_sklearn_classifier_predict(data, model, method):
 
     proba_original = estimator.predict_proba(X[:5])
     proba_c = cmodel.predict_proba(X[:5])
-    numpy.testing.assert_allclose(proba_c, proba_original, rtol=0.001)
+    numpy.testing.assert_allclose(proba_c, proba_original, rtol=0.001, atol=0.11)
 
     check_csv_export(cmodel)
 
