@@ -32,9 +32,11 @@ def model_size_bytes(model, a=None, b=None, node_size=None):
     """
     Size of model, in bytes
     """
-    # EmlTreesNode consists of feature index, a threshold value, left-right child indices 
+    # EmlTreesNode is 56 bits
+    # This is 8 bytes on most platforms due to padding/alignment
+    # feature index, a threshold value, left, and right child indices
     if node_size is None:
-        node_size = 1+4+2+2
+        node_size = 8
 
     nodes = model_size_nodes(model)
     bytes = nodes * node_size
