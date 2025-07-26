@@ -88,13 +88,6 @@ def check_program_size(dtype, model, platform, mcu):
         # Quantize with the specified dtype
         c_model = emlearn.convert(model, dtype=dtype, method=method)
         model_code = c_model.save(name=model_name, include_proba=False)
-
-        if method == 'loadable':
-            # Only works for size estimation
-            model_code += f"""
-            int {model_name}_predict(const {dtype} *f, int l) {{
-                return eml_trees_predict(&{model_name}, ({dtype} *)f, l);
-            }}"""
     else:
         model_code = ""
 
