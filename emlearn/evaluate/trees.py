@@ -2,10 +2,12 @@
 """
 Tree evaluation metrics
 =========================
-Convert a Python model into C code
+Utilities for measuring a tree-based model
 """
+import math
 
 from ..convert import convert as convert_model
+from ..trees import Wrapper as TreesWrapper
 
 import numpy
 
@@ -23,14 +25,28 @@ def model_size_nodes(model, a=None, b=None):
     """
     Size of model, in number of decision nodes
     """
-    em = convert_model(model)
+    if isinstance(model, TreesWrapper):
+        em = model
+    else:
+        em = convert_model(model)
     
     nodes, roots, leaves = em.forest_
     return len(nodes)
 
-def model_size_bytes(model, a=None, b=None, node_size=None):
+def model_size_leaves(model, a=None, b=None):
     """
-    Size of model, in bytes
+    """
+    if isinstance(model, TreesWrapper):
+        em = model
+    else:
+        em = convert_model(model)
+
+    nodes, roots, leaves = em.forest_
+    return len(leaves)
+
+def model_size_bytes(model, a=None, b=None, node_size=None, leaf_size=None):
+    """
+    Size of model, in bytes. For both decision nodes and leaves
     """
     # EmlTreesNode is 56 bits
     # This is 8 bytes on most platforms due to padding/alignment
@@ -38,9 +54,20 @@ def model_size_bytes(model, a=None, b=None, node_size=None):
     if node_size is None:
         node_size = 8
 
-    nodes = model_size_nodes(model)
-    bytes = nodes * node_size
+    if isinstance(model, TreesWrapper):
+        em = model
+    else:
+        em = convert_model(model)
+
+    if leaf_size is None:
+        leaf_size = math.ceil(em.leaf_bits/8)
+
+    nodes = model_size_nodes(em)
+    leaves = model_size_leaves(em)
+    bytes = (nodes * node_size) + (leaves * leaf_size)
+
     return bytes
+
 
 def tree_depth_average(model, a=None, b=None):
     """
