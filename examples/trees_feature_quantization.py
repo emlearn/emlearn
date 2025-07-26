@@ -2,7 +2,7 @@
 # coding: utf-8
 
 """
-Feature data-type in tree-based models
+Feature data-types for trees
 ===========================
 
 Tree-based models in emlearn supports both float and integer datatypes for the feature datatype.

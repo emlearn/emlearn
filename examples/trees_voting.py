@@ -2,7 +2,7 @@
 # coding: utf-8
 
 """
-Voting options for tree-based models
+Voting options for trees
 ===========================
 
 This example illustrates hard majority voting

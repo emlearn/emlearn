@@ -3,7 +3,7 @@
 
 
 """
-Optimizing tree ensembles
+Optimizing model size for trees
 ===========================
 
 Example of hyperparameter-optimization of a tree-based classifier model.
