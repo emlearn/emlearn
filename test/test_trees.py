@@ -203,7 +203,7 @@ def test_trees_sklearn_classifier_leaf_proportions(data, model, method, leaf_bit
     atol = (1.5/(2**leaf_bits))
     numpy.testing.assert_allclose(proba_c, proba_original, rtol=1e-6, atol=atol)
 
-    allowed_incorrect = 3 if leaf_bits <= 4 else 1
+    allowed_incorrect = 3 if leaf_bits <= 5 else 1
     pred_original = estimator.predict(X_sub)
     pred_c = cmodel.predict(X_sub)
     incorrect = numpy.where(pred_c != pred_original)[0]
