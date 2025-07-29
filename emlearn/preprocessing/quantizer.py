@@ -20,7 +20,7 @@ class Quantizer(BaseEstimator, TransformerMixin):
     def __init__(self,
             max_quantile=0.0001,
             max_value=None,
-            out_max=None, # automatically from dtype
+            out_max=None, # None: automatically from dtype
             dtype='int16'):
         self.max_quantile = max_quantile
         self.max_value = max_value
@@ -48,17 +48,20 @@ class Quantizer(BaseEstimator, TransformerMixin):
 
         if self.max_value is None:
             # learn the value from data
-            high = 1.0-self.max_quantile
-            low = self.max_quantile
-            min_value = numpy.quantile(X, q=low, axis=None)
-            max_value = numpy.quantile(X, q=high, axis=None)
-            largest = max(max_value, -min_value)
+            if self.max_quantile is None:
+                min_value = numpy.min(X, axis=None)
+                max_value = numpy.max(X, axis=None)
+            else:
+                high = 1.0-self.max_quantile
+                low = self.max_quantile
+                min_value = numpy.quantile(X, q=low, axis=None)
+                max_value = numpy.quantile(X, q=high, axis=None)
+            largest = max(max_value, -min_value)	
             #print('mm', min_value, max_value, largest)
         else:
             largest = self.max_value            
     
         self.scale_ = out_max / largest
-        #print('ss', self.scale_, out_max)
         return self
 
     def transform(self, X, y=None):
