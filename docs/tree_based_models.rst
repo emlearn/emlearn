@@ -18,23 +18,68 @@ The documentation here covers the topics in using tree-based models that are
 specific to compute-constrained environments (microcontrollers and embedded devices),
 and the techniques that emlearn implements to optimize for such usage.
 
-
-Optimizing model complexity 
+Basic usage
 ===========================
-The complexity of a tree-based ensemble is a function of its width (the number of trees) and depth of the trees.
-This influences both the predictive performance and computational costs of the model.
 
-A larger model will generally have higher predictive performance, but need more CPU/RAM/storage.
-This leads to a trade-off, and different applications may chose different operating points. 
-We may try to find a set of `Pareto optimal <https://en.wikipedia.org/wiki/Pareto_efficiency>`_ model alternatives.
-This is illustrated in the example :ref:`sphx_glr_auto_examples_trees_hyperparameters.py`.
+A trained tree-based model can be converted using ``cmodel = emlearn.convert(estimator)``,
+and the C code can be outputted using ``cmodel.save(file='mymodel.h')``.
+
+One can then use the model in C code to perform inference, using the ``predict()`` function.
+
+.. code-block:: c
+
+    // header generated with emlearn
+    #include "mymodel.h"
+
+    // To get just the predicted class
+    const int cls = mymodel_predict(features, features_length);
+
+For a complete example see :ref:`sphx_glr_auto_examples_xor.py`
 
 
-Inference strategy: Inline vs loadable 
+Probability output
+===========================
+
+emlearn supports probabilities as outputs of tree-based models.
+This functionality is enabled by default, and generates a ``predict_proba()`` function.
+
+.. code-block:: c
+
+    // header generated with emlearn
+    #include "mymodel.h"
+
+    float probabilities[N_CLASSES];
+    mymodel_predict_proba(mymodel, features, features_length, probabilities, N_CLASSES)
+
+
+The generated ``predict_proba()`` functions can be disabled by passing ``include_proba=False`` to ``save()``.
+This can reduce the size of the code.
+
+Note: probabilities will have higher resolution and be more accurate if enabling soft-voting (see below).
+
+
+Regression
+===========================
+
+emlearn supports tree-based models also for regression.
+Usage is the same as for a classifier, the estimator being a regressor is deteted automatically.
+
+In this case the generated ``predict()`` function returns a float instead of an integer.
+
+.. code-block:: c
+
+    // use "loadable" strategy for regression 
+    const float out = mymodel_predict(mymodel, features, features_length)
+
+
+Inference method: Inline vs loadable 
 =========================================
 
 emlearn supports two different strategies for inference of tree-based models.
 These are called **inline** and **loadable**.
+
+The inference method is specified by passing the ``method`` argument can be passed to **emlearn.convert()**.
+For example ``emlearn.convert(estimator, method='inline')``.
 
 .. TODO: link to C code.
 The **loadable** option uses a ``EmlTrees`` data-structure to store the decision tree ensembles.
@@ -51,78 +96,80 @@ However the exact impact on code space and execution time depends on the particu
 the target architecture and compiler options.
 So it may need to be tested for your particular application.
 
-The ``save()`` outputs code for both the loadable and inline strategies.
-
-.. code-block:: c
-
-    // header generated with emlearn
-    #include "mymodel.h"
-
-    // use "inline" model for classification
-    const int cls = mymodel_predict(features, features_length)
-
-    // use "loadable" model for classification
-    const int cls = eml_trees_predict(mymodel, features, features_length)
-
-    // use "inline" model for classification
-    const float out = mymodel_predict(features, features_length)
-
-    // use "loadable" strategy for regression 
-    const float out = eml_trees_regress1(mymodel, features, features_length)
-
-
-NOTE: this means the compiler is responsible for eliminating the version that is not used.
-Make sure you are using suitable compiler options to enable such optimization.
-
-
-The two strategies normally give identical results.
-But when combined with other optimizations (see below), they may have slight differences.
-When evaluating performance in Python, the ``method`` argument can be passed to **emlearn.convert()**.
-For example ``emlearn.convert(method='inline')``.
 
 .. TODO: link to Python module docs
 .. TODO: link to usage guide for model evaluation
 
-Optimization using feature quantization
+Feature representation
 ========================================
-The default feature representation in emlearn trees is ``float``, 32-bit floating point.
-However the **inline** inference strategy also supports using 8 and 16-bit integers.
+The default feature representation in emlearn trees is ``int16_t``, 16-bit integers.
+This is a medium precision, which has been found to give practically identical performance as 32-bit floats
+for a wide range of datasets, while having several key benefits:
 
-.. TODO: update to include loadable, when feature quantization is supported there
-
-Quite often it is acceptable to use lower precision for features,
-and this has multiple benefits.
-
-- Reduces the RAM space needed for features
+- Reduces the program space and RAM space needed for the model
 - Avoids using floating-point code. Big benefit when there is no hardware FPU
-- On 8-bit and 16-bit microprocessor architectures, model may take up less code space
+- Much faster on 8-bit and 16-bit microprocessor architectures
 
-To use this feature, make sure all the input data is scaled to be integers that fits in 8/16/32 bits,
+.. TODO: mention Quantizer module
+So by default you should ensure to scale your data to fit the range of int16 (-32,768 to +32,767).
+
+The **inline** inference strategy also supports using floats, 32-bit integers or 8 bit integers.
 and set the ``dtype`` argument of ``emlearn.convert()`` to the appropriate C datatype.
 For example **emlearn.convert(model, dtype='int8')**.
+
 A complete example can be found in :ref:`sphx_glr_auto_examples_trees_feature_quantization.py`.
 
 
-Optimization using target quantization and leaf-deduplication
+Hard voting (majority) vs soft voting (proportions)
 ================================================================
 
-The leaf-nodes are the output of the trees.
-For classification this is the class index or class-probabilities,
-and for regression it is the predicted value.
+The results of individual decision trees for classification can be stored and combined in two different ways.
+
+With **hard (majority) voting**, each tree stores in the leaf nodes a single class index,
+and the ensemble returns the majority vote (the most common class).
+
+With **soft (proportion) voting**,
+each tree stores in the leaf nodes the class proportions (one value per class),
+and the ensemble returns the average over all the class proportions.
+
+Storing only the class index (majority voting) gives the smallest model,
+but it may lead to lower predictive performance.
+
+To use majority voting, pass ``leaf_bits=0`` to ``emlearn.convert()``.
+To enable soft voting, set the ``leaf_bits`` option to a value between 3 and 8.
+This determines the quantization applied to the class proportions.
+
+
+Target quantization and leaf-deduplication
+================================================================
 
 emlearn implements leaf de-duplication, such that identical leaves are only stored once across all trees.
 This can considerably reduce the storage needed for the model.
-This is particularly applicable to the **loadable** inference strategy.
 
 For majority-based voting in classifiers, the benefits of leaf-deduplication is automatic.
 This is because the leaf values is the index of different classes, which naturally a limited set.
 
+For soft voting, the amount of deduplication is affected by the leaf quantization.
+Lower number for ``leaf_bits`` will give fewer unique values, and may reduce size of the model. 
+
 For regression, one needs to ensure that the targets are quantized to a small set of values.
 The best way to do this will be application specific.
 
-.. TODO: also explain probability, when that is supported
-
 .. TODO: link to example of quantization+leaf-deduplication
+
+
+Optimizing model complexity 
+===========================
+The complexity of a tree-based ensemble is a function of its width (the number of trees) and depth of the trees.
+This influences both the predictive performance and computational costs of the model.
+
+A larger model will generally have higher predictive performance, but need more CPU/RAM/storage.
+This leads to a trade-off, and different applications may chose different operating points. 
+
+Hyper-parameter tuning can be used to find a set of `Pareto optimal <https://en.wikipedia.org/wiki/Pareto_efficiency>`_ model alternatives.
+This is illustrated in the example :ref:`sphx_glr_auto_examples_trees_hyperparameters.py`.
+A basic starting point is to use ``n_estimators=10``,
+and tune the depth (using for example ``max_depth`` or ``min_samples_leaf``).
 
 
 Optimization of features
@@ -131,7 +178,7 @@ Optimization of features
 A high-performing and computationally efficient model is dependent on good input features.
 
 Predictive performance of tree-based models is relatively robust against less-useful features.
-However they do tend to get used a bit, and may cause higher than-necessary computational costs. 
+However they do tend to get used occationally, and may cause higher than-necessary computational costs (especially model size).
 Therefore it is good practice to remove features that are completely useless or redundant.
 This can be achieved with `standard feature selection <https://scikit-learn.org/stable/modules/feature_selection.html>`_ methods.
 
@@ -141,7 +188,6 @@ This tends to be very problem/task dependent and specific recommendations are ou
 But for inspiration, see for example
 `Energy-efficient activity recognition framework using wearable accelerometers <https://www.mdpi.com/2079-9292/10/21/2640/htm>`_
 where tree-based models outperform Convolutional Neural Networks.
-
 
 
 .. TODO: add Outro section

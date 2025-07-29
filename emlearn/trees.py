@@ -7,6 +7,7 @@ Tree-based models
 import os.path
 import os
 import warnings
+import math
 
 import numpy
 
@@ -21,16 +22,23 @@ SUPPORTED_ESTIMATORS=[
     'DecisionTreeRegressor',
 ]
 
-def quantize_probabilities(p, bits=8):
-    assert bits <= 8
-    assert bits >= 1
+
+def quantize_probabilities_into_byte(p, bits=8):
+    assert bits <= 8, bits
+    assert bits >= 1, bits
+    max = numpy.max(p)
+    min = numpy.min(p)
+    assert max <= 1.0, max
+    assert min >= 0.0, min
     steps = (2**bits)-1
 
-    bins = numpy.arange(0, steps)
-    digits = numpy.digitize(p, bins)
-    out = digits.astype(numpy.uint8)    
-    return out    
-
+    # Quantize to n_bits levels
+    quantized = numpy.round(p * (steps - 1))
+    out_max = numpy.max(quantized)
+    assert out_max <= (2**bits)-1, (out_max, (2**bits)-1)
+    # Scale back to full uint8 range [0, 255]
+    scaled = (quantized / (steps - 1) * 255).astype(numpy.uint8)
+    return scaled
 
 # Tree representation as 2 arrays
 # array of decision nodes:
@@ -49,6 +57,7 @@ def flatten_tree(tree, leaf='argmax', leaf_bits=8):
         Returns an updated index value to identify the leaf
         """
         value = tree.value[idx]
+        assert len(value) == 1, 'only one output supported'
 
         if leaf == 'argmax':
             # majority voting
@@ -57,7 +66,7 @@ def flatten_tree(tree, leaf='argmax', leaf_bits=8):
             # regression
             val = value[0][0]
         elif leaf == 'probabilities':
-            val = quantize_probabilities(value[0], bits=leaf_bits)
+            val = quantize_probabilities_into_byte(value[0], bits=leaf_bits)
 
         leaf_data = val
         leaf_idx = len(leaf_nodes)
@@ -198,7 +207,7 @@ def assert_forest_valid(forest):
     assert_node_references_valid(nodes, leaves, roots)
 
 
-def flatten_forest(trees, leaf='argmax'):
+def flatten_forest(trees, leaf='argmax', leaf_bits=0):
     tree_roots = []
     decision_nodes_offset = 0
     leaf_nodes_offset = 0
@@ -206,7 +215,7 @@ def flatten_forest(trees, leaf='argmax'):
     forest_leaves = []
 
     for tree in trees: 
-        decision_nodes, leaf_nodes = flatten_tree(tree, leaf=leaf)
+        decision_nodes, leaf_nodes = flatten_tree(tree, leaf=leaf, leaf_bits=leaf_bits)
 
         # Offset the nodes in tree, so they can be stored in one array 
         root = 0 + decision_nodes_offset
@@ -241,13 +250,19 @@ def flatten_forest(trees, leaf='argmax'):
 def remove_duplicate_leaves(forest):
     nodes, roots, leaves = forest
 
+    def find_array_index(array_list, target):
+       for i, arr in enumerate(array_list):
+           if numpy.array_equal(target, arr):
+               return i
+       return None  # or None if not found
+
     # Determine de-duplicated leaves
     unique_leaves = []
     #unique_idx = []
     remap_leaves = {}
     for old_idx, node in enumerate(leaves):
         old_encoded = -old_idx-1
-        found = unique_leaves.index(node) if node in unique_leaves else None
+        found = find_array_index(unique_leaves, node)
         if found is None:
             new_idx = len(unique_leaves)
             unique_leaves.append(node)
@@ -312,7 +327,6 @@ def generate_c_nodes(flat, name, dtype='float', modifiers='static const'):
     return out
 
 def leaves_to_bytelist(leaves, leaf_bits):
-    import math
 
     if leaf_bits == 0:
         return leaves
@@ -325,16 +339,18 @@ def leaves_to_bytelist(leaves, leaf_bits):
         expect_bytes = leaf_bytes*len(leaves)
         assert len(out) == expect_bytes, (len(out), expect_bytes) 
         return out
-    else:
-        # FIxME: support class proportions, with up to 8 bits
-        raise ValueError('Only 0 or 32 supported for leaf_bits')
+    elif leaf_bits <= 8:
+        arr = numpy.array(leaves).astype(numpy.uint8)
+        out = list(arr.tobytes())
+        return out
+    else: 
+        raise ValueError(f"Unsupported number for leaf_bits: {leaf_bits}")
+    
 
-def generate_c_inlined(forest, name, n_features, n_classes=0, leaf_bits=0, dtype='float', classifier=True, include_proba=True):
+def generate_c_inlined(forest, name, n_features, n_classes=0, leaf_bits=0, dtype='float', classifier=True, include_proba=True, weight_modifiers='static const'):
     nodes, roots, leaves = forest
 
     cgen.assert_valid_identifier(name)
-    if classifier and leaf_bits != 0:
-        raise ValueError('Class proportions not supported for inline yet. Must use leaf_bits=0')
 
     tree_names = [ name + '_tree_{}'.format(i) for i,_ in enumerate(roots) ]
 
@@ -343,6 +359,13 @@ def generate_c_inlined(forest, name, n_features, n_classes=0, leaf_bits=0, dtype
     if not classifier:
         leaf_dtype = 'float'
     indent = 2
+
+    leaves_dtype = 'uint8_t'
+    leaves_array = leaves_to_bytelist(leaves, leaf_bits=leaf_bits)
+    leaves_length = len(leaves_array)
+    leaves_name = name+'_leaves';
+    leaves_code = cgen.array_declare(leaves_name, leaves_length,
+            modifiers=weight_modifiers, dtype=leaves_dtype, values=leaves_array)
 
     def c_leaf(data, depth):
         value = cgen.constant(data, dtype=leaf_dtype)
@@ -363,9 +386,19 @@ def generate_c_inlined(forest, name, n_features, n_classes=0, leaf_bits=0, dtype
     def c_node(idx, depth):
         if idx < 0:
             leaf_idx = -idx-1
-            return c_leaf(leaves[leaf_idx], depth+1)
+            if not classifier:
+                # regression, put value directly into leaf
+                leaf_value = leaves[leaf_idx]
+            elif leaf_bits == 0:
+                # hard voting, put the class index directly into leaf
+                leaf_value = leaves[leaf_idx]
+            else:
+                # soft voting, offet into a leaves array
+                leaf_value = leaf_idx
+            return c_leaf(leaf_value, depth+1)
         else:
             return c_internal(nodes[idx], depth+1)
+
 
 
     def tree_func(name, root, return_type='int32_t'):
@@ -384,7 +417,6 @@ def generate_c_inlined(forest, name, n_features, n_classes=0, leaf_bits=0, dtype
 
     def tree_vote_proba(name):
         return '_class = {}(features, features_length); out[_class] += 1.0f;'.format(name)
-
 
     def tree_vote_regressor(name):
         return 'avg += {}(features, features_length); '.format(name)
@@ -405,7 +437,7 @@ def generate_c_inlined(forest, name, n_features, n_classes=0, leaf_bits=0, dtype
       'ctype': ctype,
     })
 
-    forest_classifier_func = """int32_t {function_name}(const {ctype} *features, int32_t features_length) {{
+    forest_predict_majority_func = """int32_t {function_name}(const {ctype} *features, int32_t features_length) {{
 
         int32_t votes[{n_classes}] = {{0,}};
         int32_t _class = -1;
@@ -431,7 +463,7 @@ def generate_c_inlined(forest, name, n_features, n_classes=0, leaf_bits=0, dtype
     })
 
 
-    forest_proba_func = """int {function_name}(const {ctype} *features, int32_t features_length, float *out, int out_length) {{
+    forest_proba_majority_func = """int {function_name}(const {ctype} *features, int32_t features_length, float *out, int out_length) {{
 
         int32_t _class = -1;
 
@@ -455,15 +487,79 @@ def generate_c_inlined(forest, name, n_features, n_classes=0, leaf_bits=0, dtype
       'ctype': ctype,
     })
 
+
+
+    # proportions
+    def tree_vote_leaf_proportion(tree_no, name):
+        leaves = leaves_name
+        c = f"""offset = {n_classes}*{name}(features, features_length);
+            for (int i=0; i<{n_classes}; i++) {{ out[i] += ({leaves}[offset+i]/255.0f); }}
+        """
+        return c
+    forest_proba_proportions_func = """int {function_name}(const {ctype} *features, int32_t features_length, float *out, int out_length) {{
+
+        int offset = 0;
+
+        for (int i=0; i<out_length; i++) {{
+            out[i] = 0.0f;
+        }}
+
+        {tree_predictions}
+    
+        // compute mean
+        for (int i=0; i<out_length; i++) {{
+            out[i] = out[i] / {n_trees};
+        }}
+        return 0;
+    }}
+    """.format(**{
+      'function_name': name+"_predict_proba",
+      'n_classes': n_classes,
+      'tree_predictions': '\n    '.join([ tree_vote_leaf_proportion(i, n) for i, n in enumerate(tree_names) ]),
+      'n_trees': len(tree_names),
+      'ctype': ctype,
+    })
+
+
+    forest_predict_proportions_func = """int32_t {function_name}(const {ctype} *features, int32_t features_length) {{
+
+        float out[{n_classes}] = {{0.0f,}};
+
+        int offset = 0;
+
+        {tree_predictions}
+    
+        // argmax over probabilities
+        int32_t most_voted_class = -1;
+        float most_voted_proba = 0.0f;
+        for (int32_t i=0; i<{n_classes}; i++) {{
+
+            if (out[i] > most_voted_proba) {{
+                most_voted_class = i;
+                most_voted_proba = out[i];
+            }}
+        }}
+        return most_voted_class;
+    }}
+    """.format(**{
+      'function_name': name+"_predict",
+      'n_classes': n_classes,
+      'tree_predictions': '\n    '.join([ tree_vote_leaf_proportion(i, n) for i, n in enumerate(tree_names) ]),
+      'ctype': ctype,
+    })
+
+
     return_type = 'int32_t'
+    forest_classifier_func = forest_predict_majority_func if leaf_bits == 0 else forest_predict_proportions_func
     forest_funcs = [forest_classifier_func]
+
+    forest_proba_func = forest_proba_majority_func if leaf_bits == 0 else forest_proba_proportions_func
     if include_proba:
         forest_funcs += [forest_proba_func]
 
     if not classifier:
         return_type = 'float'
         forest_funcs = [ forest_regressor_func ]
-
 
     tree_funcs = [tree_func(n, r, return_type=return_type) for n,r in zip(tree_names, roots)]
 
@@ -473,7 +569,13 @@ def generate_c_inlined(forest, name, n_features, n_classes=0, leaf_bits=0, dtype
     #include <stdint.h>
     """
 
-    return '\n\n'.join([head] + tree_funcs + forest_funcs)
+    parts  = [head] + tree_funcs
+    if leaf_bits != 0:
+        parts += [ leaves_code ]
+    parts += forest_funcs
+    out = '\n\n'.join(parts)
+
+    return out
 
 
 def generate_c_loadable(forest, name, n_features,
@@ -499,8 +601,9 @@ def generate_c_loadable(forest, name, n_features,
     leaves_name = name+'_leaves';
     leaves = cgen.array_declare(leaves_name, leaves_length,
             modifiers=weight_modifiers, dtype=leaves_dtype, values=leaves_array)
-
-    tree_leaf_bits = leaf_bits
+   
+    # The inference strategy uses either 0, 32 or 8 (for quantizations 1-7)
+    tree_leaf_bits = leaf_bits if leaf_bits == 0 or leaf_bits == 32 else 8
 
     forest_struct = """EmlTrees {name} = {{
         {nodes_length},
@@ -594,11 +697,19 @@ class Wrapper:
             self.is_classifier = False
             self.out_dtype = "float"
 
+        if leaf_bits == 1:
+            # treat as majority voting
+            leaf_bits = 0
+
         if leaf_bits is None:
             if self.is_classifier:
                 leaf_bits = 0
             else:
                 leaf_bits = 32
+
+        if leaf_bits > 0 and leaf_bits <= 8 and self.is_classifier:
+            leaf = 'probabilities'
+
         self.leaf_bits = leaf_bits
 
         if hasattr(estimator, 'estimators_'):
@@ -608,7 +719,7 @@ class Wrapper:
 
         trees = [ e.tree_ for e in estimators ]
 
-        self.forest_ = flatten_forest(trees, leaf=leaf)
+        self.forest_ = flatten_forest(trees, leaf=leaf, leaf_bits=self.leaf_bits)
         self.forest_ = remove_duplicate_leaves(self.forest_)
 
 
