@@ -79,13 +79,12 @@ void test_csv_file_write_readback()
     const int expect_columns = N_DATA_COLUMNS;
     TEST_ASSERT_EQUAL(expect_columns, reader->n_columns);
 
-    // TODO: read all rows, check got everything
-    int read_values;
-
+    int read_values = -1;
     for (int row=0; row<100; row++) {
         read_values = eml_csv_reader_read_data(reader,\
             read_buffer, READ_BUFFER_SIZE, read_columns, READ_COLUMNS_MAX);
         if (read_values == 0) {
+            TEST_ASSERT_EQUAL(write_rows, row);
             break;
         }
         TEST_ASSERT_EQUAL(expect_columns, read_values);
@@ -93,7 +92,7 @@ void test_csv_file_write_readback()
         for (int v=0; v<reader->n_columns; v++) {
             const float got = strtod(read_columns[v], NULL);
             const float expect = values[(row*N_DATA_COLUMNS)+v];
-            printf("read-value-compare expect=%f got=%f\n", expect, got);
+            //printf("read-value-compare expect=%f got=%f\n", expect, got);
             TEST_ASSERT_FLOAT_WITHIN(0.01f, expect, got);
         }
     }

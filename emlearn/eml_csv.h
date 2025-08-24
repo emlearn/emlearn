@@ -116,10 +116,6 @@ eml_csv_reader_read_internal(EmlCsvReader *self,
     // We will return pointers into this buffer
     const size_t read_length = self->read(self->stream, buffer, buffer_length);
 
-#if 1
-    printf("read-internal %.*s \n", read_length, buffer);
-#endif
-
     // Find start of data / end-of-header
     int data_start = -1;
 
@@ -205,7 +201,9 @@ eml_csv_reader_read_data(EmlCsvReader *self,
     }
 
     if (columns_read != self->n_columns) {
+#if 0
         printf("uncorrect-columns read=%d \n", columns_read);
+#endif
         return -EmlUnknownError;
     }
 
