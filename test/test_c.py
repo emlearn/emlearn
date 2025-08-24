@@ -21,6 +21,7 @@ C_TEST_MODULES = [
     'neighbors',
     'quantizer',
     'net',
+    'csv_file',
 ]
 
 def parse_test_summary(stdout):
