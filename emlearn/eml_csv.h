@@ -11,12 +11,24 @@
 #include <string.h>
 
 
+#ifndef EML_CSV_DELIMITER
 #define EML_CSV_DELIMITER ","
+#endif
+
 #define EML_CSV_EOL "\n"
+
+#ifndef EML_CSV_FLOAT_MAXSIZE
+#define EML_CSV_FLOAT_MAXSIZE 20
+#endif
+
+#ifndef EML_CSV_FLOAT_FORMAT
+#define EML_CSV_FLOAT_FORMAT "%.6f"
+#endif
 
 typedef struct _EmlCsvReader {
 
     size_t n_columns;
+    size_t stream_location;
 
     // IO
     EmlIoReadFunction read;
@@ -71,9 +83,13 @@ eml_csv_writer_write_data(EmlCsvWriter *self, const float *data, size_t data_len
 
     const char *endline = EML_CSV_EOL;
 
-    char buf[10] = {0,};
+    char buf[EML_CSV_FLOAT_MAXSIZE] = {0,};
+    const int max = EML_CSV_FLOAT_MAXSIZE;
     for (int i=0; i<data_length; i++) {
-        int written = snprintf(buf, 10, "%f", data[i]);
+        int written = snprintf(buf, max, EML_CSV_FLOAT_FORMAT, data[i]);
+        if (written >= max) {
+            return EmlUnsupported;
+        }
         const bool is_last = (i == data_length-1);
         if (!is_last) {
             buf[written] = (EML_CSV_DELIMITER)[0];
@@ -100,6 +116,10 @@ eml_csv_reader_read_internal(EmlCsvReader *self,
     // We will return pointers into this buffer
     const size_t read_length = self->read(self->stream, buffer, buffer_length);
 
+#if 1
+    printf("read-internal %.*s \n", read_length, buffer);
+#endif
+
     // Find start of data / end-of-header
     int data_start = -1;
 
@@ -109,21 +129,28 @@ eml_csv_reader_read_internal(EmlCsvReader *self,
     int offset = -1;
     for (offset=0; offset<read_length; offset++) {
 
+        if (column_idx >= columns_length) {
+            printf("parse-too-many-columns read=%d max=%d \n", column_idx, columns_length);
+            return EmlUnknownError;
+        }
+
         const char c = buffer[offset];
         if (c == (EML_CSV_DELIMITER)[0]) {
             // Keep a pointer to start of this column
             columns[column_idx] = buffer+column_start_offset;
             column_start_offset = offset+1;
             column_idx += 1;
-
             // NULL terminate previous string
             buffer[offset] = '\0';
-            if (column_idx >= columns_length) {
-                printf("parse-too-many-columns read=%d max=%d \n", column_idx, columns_length);
-                return EmlUnknownError;
-            }
+
         } else if (c == (EML_CSV_EOL)[0]) {
+            // Keep a pointer to start of this column
+            columns[column_idx] = buffer+column_start_offset;
+            column_start_offset = offset+1;
+            column_idx += 1;
+            // NULL terminate previous string
             buffer[offset] = '\0';
+
             break;
         }
     }
@@ -149,15 +176,16 @@ eml_csv_reader_read_header(EmlCsvReader *self,
     // Rembember number of columns
     self->n_columns = columns_read;
 
-    // Seek to start of data
-    const int seek_status = self->seek(self->stream, characters_read+1);
+    // Seek to start of data (after end of header)
+    self->stream_location = characters_read+1;
+    const int seek_status = self->seek(self->stream, self->stream_location);
     if (seek_status != 0) {
         return EmlUnknownError;
     }
     return EmlOk;
 }
 
-EmlError
+int
 eml_csv_reader_read_data(EmlCsvReader *self,
         char *buffer, size_t buffer_length,
         char **columns, size_t columns_length)
@@ -171,17 +199,23 @@ eml_csv_reader_read_data(EmlCsvReader *self,
         buffer, buffer_length, columns, columns_length, &columns_read, &characters_read);
     EML_CHECK_ERROR(read_err);
 
+    if (characters_read == 0) {
+        // EOF presumably
+        return 0;
+    }
+
     if (columns_read != self->n_columns) {
         printf("uncorrect-columns read=%d \n", columns_read);
-        return EmlUnknownError;
+        return -EmlUnknownError;
     }
 
     // Seek to start of next line
-    const int seek_status = self->seek(self->stream, characters_read+1);
+    self->stream_location += characters_read+1;
+    const int seek_status = self->seek(self->stream, self->stream_location);
     if (seek_status != 0) {
-        return EmlUnknownError;
+        return -EmlUnknownError;
     }
 
-    return EmlOk;
+    return columns_read;
 }
 
