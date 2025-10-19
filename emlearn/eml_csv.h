@@ -60,18 +60,17 @@ eml_csv_writer_write_header(EmlCsvWriter *self, const char **columns, size_t n_c
     const char *delimiter = EML_CSV_DELIMITER;
     const char *endline = EML_CSV_EOL;
 
-    char buf[10] = {0,};
     for (int i=0; i<data_length; i++) {
         const char *name = columns[i];
         const int length = strlen(name);
-        self->write(self->stream, name, length);
+        self->write(self->stream, (uint8_t *)name, length);
         const bool is_last = (i == data_length-1);
         if (!is_last) {
-            self->write(self->stream, delimiter, 1);
+            self->write(self->stream, (uint8_t *)delimiter, 1);
         }
     }
 
-    self->write(self->stream, endline, 1);
+    self->write(self->stream, (uint8_t *)endline, 1);
 
     return EmlOk;
 }
@@ -95,9 +94,9 @@ eml_csv_writer_write_data(EmlCsvWriter *self, const float *data, size_t data_len
             buf[written] = (EML_CSV_DELIMITER)[0];
             written += 1;
         }
-        self->write(self->stream, buf, written);
+        self->write(self->stream, (uint8_t *)buf, written);
     }
-    self->write(self->stream, endline, 1);
+    self->write(self->stream, (uint8_t *)endline, 1);
 
     return EmlOk;
 }
@@ -114,10 +113,11 @@ eml_csv_reader_read_internal(EmlCsvReader *self,
 
     // Copy the (potential header) into our buffer
     // We will return pointers into this buffer
-    const size_t read_length = self->read(self->stream, buffer, buffer_length);
+    const size_t read_length = \
+        self->read(self->stream, (uint8_t *)buffer, buffer_length);
 
     // Find start of data / end-of-header
-    int data_start = -1;
+    // int data_start = -1; // XXX: why unused?
 
     // Find each column
     int column_idx = 0;
@@ -126,7 +126,8 @@ eml_csv_reader_read_internal(EmlCsvReader *self,
     for (offset=0; offset<read_length; offset++) {
 
         if (column_idx >= columns_length) {
-            printf("parse-too-many-columns read=%d max=%d \n", column_idx, columns_length);
+            printf("parse-too-many-columns read=%d max=%lld \n",
+                column_idx, (long long int)columns_length);
             return EmlUnknownError;
         }
 
@@ -168,6 +169,7 @@ eml_csv_reader_read_header(EmlCsvReader *self,
 
     EmlError read_err = eml_csv_reader_read_internal(self, \
         buffer, buffer_length, columns, columns_length, &columns_read, &characters_read);
+    EML_CHECK_ERROR(read_err);
 
     // Rembember number of columns
     self->n_columns = columns_read;
@@ -181,6 +183,8 @@ eml_csv_reader_read_header(EmlCsvReader *self,
     return EmlOk;
 }
 
+// On success, returns the number of columns read
+// On failure, returns a negative value which is a EmlError
 int
 eml_csv_reader_read_data(EmlCsvReader *self,
         char *buffer, size_t buffer_length,
@@ -193,7 +197,9 @@ eml_csv_reader_read_data(EmlCsvReader *self,
 
     EmlError read_err = eml_csv_reader_read_internal(self, \
         buffer, buffer_length, columns, columns_length, &columns_read, &characters_read);
-    EML_CHECK_ERROR(read_err);
+    if (read_err) {
+        return -EmlUnknownError;
+    }
 
     if (characters_read == 0) {
         // EOF presumably
