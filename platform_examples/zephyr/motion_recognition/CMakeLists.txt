@@ -42,6 +42,11 @@ add_custom_target(generate_filter ALL
 target_include_directories(app PRIVATE 
     ${MOTION_DIR}
     ${CMAKE_CURRENT_BINARY_DIR}
+    ${ZEPHYR_BASE}/samples/subsys/usb/common
 )
 
 add_dependencies(app generate_model generate_filter)
+
+target_sources(app PRIVATE
+    ${ZEPHYR_BASE}/samples/subsys/usb/common/sample_usbd_init.c
+)

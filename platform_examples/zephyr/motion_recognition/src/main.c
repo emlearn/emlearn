@@ -7,13 +7,19 @@
 #include <zephyr/kernel.h>
 #include <zephyr/device.h>
 #include <zephyr/drivers/sensor.h>
+#include <zephyr/logging/log.h>
 #include <stdio.h>
 #include <zephyr/sys/util.h>
+
+// 
+#include "sample_usbd.h"
 
 // Application includes
 #include "sensor_reader.h"
 #include "motion_preprocessing.h"
 #include "motion_gravity_lowpass.h"
+
+LOG_MODULE_REGISTER(main, LOG_LEVEL_INF);
 
 // Configuration
 #define SAMPLERATE 104

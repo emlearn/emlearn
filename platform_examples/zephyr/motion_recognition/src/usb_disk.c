@@ -8,7 +8,7 @@
 #include <zephyr/fs/fs.h>
 #include <stdio.h>
 
-LOG_MODULE_REGISTER(main, LOG_LEVEL_INF);
+LOG_MODULE_REGISTER(usb_disk, LOG_LEVEL_INF);
 
 #if CONFIG_DISK_DRIVER_FLASH
 #include <zephyr/storage/flash_map.h>
