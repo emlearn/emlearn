@@ -6,13 +6,13 @@ CFLAGS := -g -fsanitize=address,undefined,leak -Wall -Werror -Wno-error=unused-f
 
 all: check
 
-build/gravity_filter.h:
+build/gravity_filter.h: tools/gravity_lowpass.py
 	mkdir -p build/
-	python tools/gravity_lowpass.py
+	python tools/gravity_lowpass.py --out $@ --format header
 
-build/motion_model.h:
+build/motion_model.h: combined.estimator.pickle
 	mkdir -p build/
-	python tools/convert_model.py
+	python tools/convert_model.py --out $@ --model $<
 
 test_processing: build/gravity_filter.h
 	gcc -o ./build/motion_preprocess tools/motion_process.c -I ${EMLEARN_INCLUDE_DIR} -I./ -I./build -lm ${CFLAGS}
