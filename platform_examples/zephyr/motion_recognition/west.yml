@@ -16,6 +16,11 @@ manifest:
           - cmsis      # required by the ARM port
           - hal_nordic # required by the qemu cortex board (Nordic based)
 
+    - name: fatfs
+      url: https://github.com/zephyrproject-rtos/fatfs
+      revision: main
+      path: modules/fs/fatfs
+
     - name: emlearn
       url: https://github.com/emlearn/emlearn
       revision: master

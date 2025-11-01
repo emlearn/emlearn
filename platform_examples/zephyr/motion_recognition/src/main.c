@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <zephyr/sys/util.h>
 
+// Application includes
 #include "sensor_reader.h"
 #include "motion_preprocessing.h"
 #include "motion_gravity_lowpass.h"
@@ -70,6 +71,8 @@ setup_sensor(const struct device *const lsm6dsl_dev)
 }
 
 
+
+
 int main(void) {
 
     struct sensor_chunk_msg chunk;
@@ -125,7 +128,6 @@ int main(void) {
         return 2;
     }
 
-
     if (!device_is_ready(lsm6dsl_dev)) {
         printk("sensor: device %s not ready.\n", lsm6dsl_dev->name);
         return 0;
@@ -136,6 +138,15 @@ int main(void) {
 
     // Start high-priority thread for collecting data
     sensor_chunk_reader_start(&reader);
+
+
+    // Setup USB disk
+    const int usb_err = usb_disk_setup();
+    if (usb_err) {
+		LOG_ERR("Failed to setup USB disk");
+    } else {
+		LOG_ERR("Now in USB mass storage mode");
+    }
 
     int iteration = 0;
     float previous_input = 0.0f;
