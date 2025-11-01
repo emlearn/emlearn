@@ -1,8 +1,8 @@
 .. zephyr:code-sample:: sensor_reader
-   :name: Sensor readout using 
+   :name: Motion recognition using emlearn
    :relevant-api: sensor_interface
 
-   Get accelerometer and gyroscope data from an LSM6DSL sensor.
+   Classify motion using machine learning
 
 Overview
 ********
@@ -19,20 +19,20 @@ References
 **********
 
 - LSM6DSL https://www.st.com/en/mems-and-sensors/lsm6dsl.html
+- emlearn https://github.com/emlearn/emlearn
 
 Building and Running
 ********************
 
 
-Building on ArgonKey board
+Building on XIAO BLE Sense NRF52840 board
 ==========================
 
-.. zephyr-app-commands::
-   :zephyr-app: samples/emlearn/sensor_reader
-   :host-os: unix
-   :board: xiao_ble/nrf52840/sense
-   :goals: build
-   :compact:
+.. code-block:: console
+
+    west build --board xiao_ble/nrf52840/sense ./motion_recognition/
+
+
 
 Sample Output
 =============
@@ -41,6 +41,6 @@ Sample Output
 
     LSM6DSL sensor samples:
 
-    XXX 
+    XXX
 
 
