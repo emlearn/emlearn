@@ -9,11 +9,11 @@ manifest:
   projects:
     - name: zephyr
       remote: zephyrproject-rtos
-      revision: v4.1.0
+      revision: v4.2.1
       import:
         # By using name-allowlist we can clone only the modules that are strictly needed
         name-allowlist:
-          - cmsis      # required by the ARM port
+          - cmsis_6      # required by the ARM port
           - hal_nordic # required by the qemu cortex board (Nordic based)
 
     - name: emlearn
