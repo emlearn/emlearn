@@ -273,7 +273,7 @@ motion_preprocessor_run(struct motion_preprocessor *self,
 
     if (self->samplerate <= 0) {
         // Invalid samplerate. Not initialized?
-        return -1;
+        return -2;
     }
 
     float motion_x_squared = 0.0;

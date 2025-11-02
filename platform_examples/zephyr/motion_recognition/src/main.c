@@ -22,9 +22,9 @@
 LOG_MODULE_REGISTER(main, LOG_LEVEL_INF);
 
 // Configuration
-#define SAMPLERATE 104
-#define WINDOW_LENGTH 100
-#define HOP_LENGTH 50
+#define SAMPLERATE 52
+#define WINDOW_LENGTH 50
+#define HOP_LENGTH 25
 
 #define N_CHANNELS 6
 enum sensor_channel sensor_reader_channels[N_CHANNELS] = {
@@ -35,6 +35,11 @@ enum sensor_channel sensor_reader_channels[N_CHANNELS] = {
 	SENSOR_CHAN_GYRO_Y,
 	SENSOR_CHAN_GYRO_Z,
 };
+
+
+#define MOTION_MODEL_CLASSES 0
+#define FEATURE_COLUMNS_LENGTH (1+motion_features_length+1+MOTION_MODEL_CLASSES+MOTION_FFT_LENGTH)
+float feature_values[FEATURE_COLUMNS_LENGTH];
 
 
 // Reader internals
@@ -85,9 +90,6 @@ int main(void) {
 
 	const struct device *const lsm6dsl_dev = DEVICE_DT_GET_ONE(st_lsm6dsl);
 
-    const int window_length = 50;
-    const int hop_length = 25;
-
     struct sensor_chunk_reader reader = {
         .samplerate = SAMPLERATE,
         .window_length = WINDOW_LENGTH,
@@ -112,7 +114,7 @@ int main(void) {
     struct motion_preprocessor _preprocessor;
     struct motion_preprocessor *preprocessor = &_preprocessor;
 
-    const int init_err = motion_preprocessor_init(preprocessor, SAMPLERATE, window_length);
+    const int init_err = motion_preprocessor_init(preprocessor, SAMPLERATE, WINDOW_LENGTH);
     if (init_err != 0) {
         fprintf(stderr, "preprocess init error %d\n", init_err);
         return -2;
@@ -153,6 +155,13 @@ int main(void) {
     } else {
 		LOG_ERR("Now in USB mass storage mode");
     }
+#endif
+
+
+    const int n_features = motion_preprocessor_get_feature_length(preprocessor);
+    if (n_features < 0) {
+        return 2;
+    }
 
     int iteration = 0;
     float previous_input = 0.0f;
@@ -162,22 +171,28 @@ int main(void) {
         // check for new data
         const int get_error = k_msgq_get(reader.queue, &chunk, K_NO_WAIT);
         if (get_error == 0) {
+            const float dt = uptime - previous_input;
 
             //printk("process-chunk length=%d \n", chunk.length);
             const int run_status = \
                 motion_preprocessor_run(preprocessor, chunk.buffer, chunk.length);
 
-            const float dt = uptime - previous_input;
-            printk("features err=%d l=%d dt=%.3f time=%.3f | ", run_status, chunk.length, (double)dt, (double)uptime);
-            const int n_features = motion_features_length;
+            // Log extracted features
+            const int copy_err = \
+                motion_preprocessor_get_features(preprocessor, feature_values, FEATURE_COLUMNS_LENGTH);
+
+            printk("features run_err=%d copy_err=%d l=%d dt=%.3f time=%.3f | ",
+                run_status, copy_err, chunk.length, (double)dt, (double)uptime);
             for (int i=0; i<n_features; i++) {
-                printk("%.4f ", (double)preprocessor->features[i]);
+                printk("%.4f ", (double)feature_values[i]);
             }
             printk("\n");
 
+#if 0
             const float *gravity = preprocessor->gravity;
             printk("gravity %.2f %.2f %.2f \n",
                 (double)gravity[0], (double)gravity[1], (double)gravity[2]);
+#endif
 
             // TODO: run through ML model, print outputs
             previous_input = uptime;
