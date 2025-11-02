@@ -3,33 +3,33 @@
 #include <eml_iir.h>
 #include <eml_fft.h>
 
-#define ACCELGYRO_INPUT_CHANNELS 6
+#define MOTION_INPUT_CHANNELS 6
 
 // IIR filters for gravity estimation are biquads, so 2 stages -> 4th order
-#define ACCELGYRO_GRAVITY_FILTER_STAGES 2
-#define ACCELGYRO_GRAVITY_FILTER_COEFFICIENTS (ACCELGYRO_GRAVITY_FILTER_STAGES*6)
-#define ACCELGYRO_GRAVITY_FILTER_STATES (ACCELGYRO_GRAVITY_FILTER_STAGES*4)
+#define MOTION_GRAVITY_FILTER_STAGES 2
+#define MOTION_GRAVITY_FILTER_COEFFICIENTS (MOTION_GRAVITY_FILTER_STAGES*6)
+#define MOTION_GRAVITY_FILTER_STATES (MOTION_GRAVITY_FILTER_STAGES*4)
 
-#ifndef ACCELGYRO_FFT_LENGTH
-#define ACCELGYRO_FFT_LENGTH 64
+#ifndef MOTION_FFT_LENGTH
+#define MOTION_FFT_LENGTH 64
 #endif
-#define ACCELGYRO_FFT_TABLE_LENGTH (ACCELGYRO_FFT_LENGTH/2)
+#define MOTION_FFT_TABLE_LENGTH (MOTION_FFT_LENGTH/2)
 
 
-enum accelgyro_feature {
-    accelgyro_feature_orientation_x = 0,
-    accelgyro_feature_orientation_y,
-    accelgyro_feature_orientation_z,
-    accelgyro_feature_motion_mag_rms,
-    accelgyro_feature_motion_mag_p2p,
-    accelgyro_feature_motion_x_rms,
-    accelgyro_feature_motion_y_rms,
-    accelgyro_feature_motion_z_rms,
-    accelgyro_features_length
+enum motion_feature {
+    motion_feature_orientation_x = 0,
+    motion_feature_orientation_y,
+    motion_feature_orientation_z,
+    motion_feature_motion_mag_rms,
+    motion_feature_motion_mag_p2p,
+    motion_feature_motion_x_rms,
+    motion_feature_motion_y_rms,
+    motion_feature_motion_z_rms,
+    motion_features_length
 };
-//#define ACCELGYRO_PREPROCESSOR_FEATURES 6
+//#define MOTION_PREPROCESSOR_FEATURES 6
 
-const char *accelgyro_feature_names[accelgyro_features_length+1] = {
+const char *motion_feature_names[motion_features_length+1] = {
     "orientation_x",
     "orientation_y",
     "orientation_z",
@@ -41,13 +41,13 @@ const char *accelgyro_feature_names[accelgyro_features_length+1] = {
     "LENGTH_NOT_FEATURE"
 };
 
-struct accelgyro_preprocessor {
+struct motion_preprocessor {
 
     int samplerate;
     int window_length;
 
     // output buffer
-    float features[accelgyro_features_length];
+    float features[motion_features_length];
 
     // decomposed gravity and motion (linear acceleration) vectors
     float motion[3];
@@ -59,8 +59,8 @@ struct accelgyro_preprocessor {
     // Multiple filters and associated states in XYZ order
     // Coefficients are shared, same for X,Y,Z
     EmlIIR gravity_filters[3];
-    float gravity_coefficients[ACCELGYRO_GRAVITY_FILTER_COEFFICIENTS];
-    float gravity_states[3*ACCELGYRO_GRAVITY_FILTER_STATES];
+    float gravity_coefficients[MOTION_GRAVITY_FILTER_COEFFICIENTS];
+    float gravity_states[3*MOTION_GRAVITY_FILTER_STATES];
     bool gravity_filter_enable;
 
     // FFT for frequency-domain feature extraction
@@ -70,17 +70,17 @@ struct accelgyro_preprocessor {
     int fft_feature_start;
     int fft_feature_end;
     // pre-computed table of coefficients
-    float fft_sin[ACCELGYRO_FFT_TABLE_LENGTH];
-    float fft_cos[ACCELGYRO_FFT_TABLE_LENGTH];
+    float fft_sin[MOTION_FFT_TABLE_LENGTH];
+    float fft_cos[MOTION_FFT_TABLE_LENGTH];
     // FFT data buffers
-    float fft_real[ACCELGYRO_FFT_LENGTH];
-    float fft_imag[ACCELGYRO_FFT_LENGTH];
+    float fft_real[MOTION_FFT_LENGTH];
+    float fft_imag[MOTION_FFT_LENGTH];
 };
 
 int
-accelgyro_preprocessor_init(struct accelgyro_preprocessor *self, int samplerate, int window_length)
+motion_preprocessor_init(struct motion_preprocessor *self, int samplerate, int window_length)
 {
-    const int fft_length = ACCELGYRO_FFT_LENGTH;
+    const int fft_length = MOTION_FFT_LENGTH;
     if (fft_length != 0 && window_length >= fft_length) {
         return -1;
     }
@@ -96,11 +96,11 @@ accelgyro_preprocessor_init(struct accelgyro_preprocessor *self, int samplerate,
 
     for (int i=0; i<3; i++) {
         self->gravity_filters[i] = (EmlIIR){
-            ACCELGYRO_GRAVITY_FILTER_STAGES,
-            self->gravity_states + (i * ACCELGYRO_GRAVITY_FILTER_STATES),
-            ACCELGYRO_GRAVITY_FILTER_STATES,
+            MOTION_GRAVITY_FILTER_STAGES,
+            self->gravity_states + (i * MOTION_GRAVITY_FILTER_STATES),
+            MOTION_GRAVITY_FILTER_STATES,
             self->gravity_coefficients,
-            ACCELGYRO_GRAVITY_FILTER_COEFFICIENTS,
+            MOTION_GRAVITY_FILTER_COEFFICIENTS,
         };
 
         const EmlError filter_err = eml_iir_check(self->gravity_filters[i]);
@@ -109,12 +109,12 @@ accelgyro_preprocessor_init(struct accelgyro_preprocessor *self, int samplerate,
         }
 
     }
-    for (int i=0; i<3*ACCELGYRO_GRAVITY_FILTER_STATES; i++) {
+    for (int i=0; i<3*MOTION_GRAVITY_FILTER_STATES; i++) {
         self->gravity_states[i] = 0.0f;
     }
 
     // FFT
-    self->fft = (EmlFFT){ ACCELGYRO_FFT_TABLE_LENGTH, self->fft_sin, self->fft_cos };
+    self->fft = (EmlFFT){ MOTION_FFT_TABLE_LENGTH, self->fft_sin, self->fft_cos };
     const EmlError fill_err = eml_fft_fill(self->fft, self->fft_length);
     if (fill_err != EmlOk) {
         return -3;
@@ -131,9 +131,9 @@ accelgyro_preprocessor_init(struct accelgyro_preprocessor *self, int samplerate,
 }
 
 int
-accelgyro_preprocessor_get_feature_length(struct accelgyro_preprocessor *self)
+motion_preprocessor_get_feature_length(struct motion_preprocessor *self)
 {
-    const int fixed_features = accelgyro_features_length;
+    const int fixed_features = motion_features_length;
     const int fft_features = self->fft_feature_end - self->fft_feature_start;
     const int total_features = fixed_features + fft_features;
 
@@ -143,10 +143,10 @@ accelgyro_preprocessor_get_feature_length(struct accelgyro_preprocessor *self)
 // On success, returns number of characters written (including the \0 byte)
 // On failure, returns a negative error code
 int
-accelgyro_preprocessor_get_feature_name(struct accelgyro_preprocessor *self,
+motion_preprocessor_get_feature_name(struct motion_preprocessor *self,
         int index, char *out, size_t length)
 {
-    const int n_features = accelgyro_preprocessor_get_feature_length(self);
+    const int n_features = motion_preprocessor_get_feature_length(self);
     if (n_features < 0) {
         return -1;
     }
@@ -157,9 +157,9 @@ accelgyro_preprocessor_get_feature_name(struct accelgyro_preprocessor *self,
         return -2;
     }
 
-    if (index < accelgyro_features_length) {
+    if (index < motion_features_length) {
         // regular fixed feature
-        const char * feature_name = accelgyro_feature_names[index];
+        const char * feature_name = motion_feature_names[index];
         const int needed = snprintf(out, length, "%s", feature_name);
         if (needed < 0) {
             // error
@@ -176,7 +176,7 @@ accelgyro_preprocessor_get_feature_name(struct accelgyro_preprocessor *self,
         // FFT feature
 
         // Find the frequency for the FFT bin in question
-        const int fft_index = index - accelgyro_features_length;
+        const int fft_index = index - motion_features_length;
         const int fft_bin = fft_index + self->fft_feature_start;
         const float freq = fft_bin * (self->samplerate/(float)self->fft_length);
         float freq_integer;
@@ -202,9 +202,9 @@ accelgyro_preprocessor_get_feature_name(struct accelgyro_preprocessor *self,
 }
 
 int
-accelgyro_preprocessor_get_features(struct accelgyro_preprocessor *self, float *out, size_t length)
+motion_preprocessor_get_features(struct motion_preprocessor *self, float *out, size_t length)
 {
-    const int n_features = accelgyro_preprocessor_get_feature_length(self);
+    const int n_features = motion_preprocessor_get_feature_length(self);
     if (n_features < 0) {
         return -2;
     }
@@ -213,12 +213,12 @@ accelgyro_preprocessor_get_features(struct accelgyro_preprocessor *self, float *
     }
 
     // Copy regular features
-    memcpy(out, self->features, accelgyro_features_length*sizeof(float));
+    memcpy(out, self->features, motion_features_length*sizeof(float));
 
     // Copy FFT features
     const float *fft_start = self->fft_real + self->fft_feature_start;
     const int fft_items = self->fft_feature_end - self->fft_feature_start;
-    memcpy(out+accelgyro_features_length, fft_start, fft_items*sizeof(float));
+    memcpy(out+motion_features_length, fft_start, fft_items*sizeof(float));
 
     return 0;
 }
@@ -226,10 +226,10 @@ accelgyro_preprocessor_get_features(struct accelgyro_preprocessor *self, float *
 // Configure the lowpass filter used to estimate gravity
 // coeff must be for a 4th-order IIR filter, on EmlIIR format
 int
-accelgyro_preprocessor_set_gravity_lowpass(struct accelgyro_preprocessor *self,
+motion_preprocessor_set_gravity_lowpass(struct motion_preprocessor *self,
         const float *coeff, int n_coefficients)
 {
-    if (n_coefficients != ACCELGYRO_GRAVITY_FILTER_COEFFICIENTS) {
+    if (n_coefficients != MOTION_GRAVITY_FILTER_COEFFICIENTS) {
         return -1;
     }
 
@@ -241,7 +241,7 @@ accelgyro_preprocessor_set_gravity_lowpass(struct accelgyro_preprocessor *self,
 
 // Configure which FFT bins should be included as features. Range: [start, end-1]
 int
-accelgyro_preprocessor_set_fft_features(struct accelgyro_preprocessor *self,
+motion_preprocessor_set_fft_features(struct motion_preprocessor *self,
         int start, int end)
 {
     if (start < 0 || end < 0) {
@@ -262,11 +262,11 @@ accelgyro_preprocessor_set_fft_features(struct accelgyro_preprocessor *self,
 
 
 int
-accelgyro_preprocessor_run(struct accelgyro_preprocessor *self,
+motion_preprocessor_run(struct motion_preprocessor *self,
                             const float *data,
                             int length)
 {
-    const int expect_length = self->window_length * ACCELGYRO_INPUT_CHANNELS;
+    const int expect_length = self->window_length * MOTION_INPUT_CHANNELS;
     if (length != expect_length) {
         return -1;
     }
@@ -295,11 +295,11 @@ accelgyro_preprocessor_run(struct accelgyro_preprocessor *self,
         self->fft_imag[i] = 0.0f;
     }
 
-    const int n_frames = length / ACCELGYRO_INPUT_CHANNELS;
+    const int n_frames = length / MOTION_INPUT_CHANNELS;
     for (int frame=0; frame<n_frames; frame++) {
 
         // NOTE: accelerometer XYZ must be first 3 components
-        const int offset = frame * ACCELGYRO_INPUT_CHANNELS;
+        const int offset = frame * MOTION_INPUT_CHANNELS;
         const float *xyz = data+offset;
 
         // NOTE: gyro data currently ignored
@@ -371,22 +371,22 @@ accelgyro_preprocessor_run(struct accelgyro_preprocessor *self,
     // Is the gravity vector estimate, normalized to 1.0 magitude
     const float *gv = self->gravity;
     const float gravity_mag = sqrtf((gv[0]*gv[0]) + (gv[1]*gv[1]) + (gv[2]*gv[2]));
-    features[accelgyro_feature_orientation_x] = self->gravity[0] / gravity_mag;
-    features[accelgyro_feature_orientation_y] = self->gravity[1] / gravity_mag;
-    features[accelgyro_feature_orientation_z] = self->gravity[2] / gravity_mag;
+    features[motion_feature_orientation_x] = self->gravity[0] / gravity_mag;
+    features[motion_feature_orientation_y] = self->gravity[1] / gravity_mag;
+    features[motion_feature_orientation_z] = self->gravity[2] / gravity_mag;
 
     // Motion in XYZ
-    features[accelgyro_feature_motion_x_rms] = sqrtf(motion_x_squared / n_frames);
-    features[accelgyro_feature_motion_y_rms] = sqrtf(motion_y_squared / n_frames);
-    features[accelgyro_feature_motion_z_rms] = sqrtf(motion_z_squared / n_frames);
+    features[motion_feature_motion_x_rms] = sqrtf(motion_x_squared / n_frames);
+    features[motion_feature_motion_y_rms] = sqrtf(motion_y_squared / n_frames);
+    features[motion_feature_motion_z_rms] = sqrtf(motion_z_squared / n_frames);
 
     // Motion magnitude RMS
     const float motion_mag_rms = sqrtf(motion_mag_squared / n_frames);
-    features[accelgyro_feature_motion_mag_rms] = motion_mag_rms;
+    features[motion_feature_motion_mag_rms] = motion_mag_rms;
 
     // Motion magnitude p2p
     const float motion_mag_p2p = motion_mag_max - motion_mag_min;
-    features[accelgyro_feature_motion_mag_p2p] = motion_mag_p2p;
+    features[motion_feature_motion_mag_p2p] = motion_mag_p2p;
 
     // Perform FFT
     if (self->fft_length != 0) {
@@ -412,7 +412,7 @@ accelgyro_preprocessor_run(struct accelgyro_preprocessor *self,
 
 #if 0
         fprintf(stderr, "fft-run nfft=%d window=%d\n",
-            self->fft_length, length/ACCELGYRO_INPUT_CHANNELS);
+            self->fft_length, length/MOTION_INPUT_CHANNELS);
 #endif
 
     }

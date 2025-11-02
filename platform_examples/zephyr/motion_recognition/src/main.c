@@ -109,17 +109,17 @@ int main(void) {
         .put_errors = 0
     };
 
-    struct accelgyro_preprocessor _preprocessor;
-    struct accelgyro_preprocessor *preprocessor = &_preprocessor;
+    struct motion_preprocessor _preprocessor;
+    struct motion_preprocessor *preprocessor = &_preprocessor;
 
-    const int init_err = accelgyro_preprocessor_init(preprocessor, SAMPLERATE, window_length);
+    const int init_err = motion_preprocessor_init(preprocessor, SAMPLERATE, window_length);
     if (init_err != 0) {
         fprintf(stderr, "preprocess init error %d\n", init_err);
         return -2;
     }
 
 #if 1
-    const int gravity_err = accelgyro_preprocessor_set_gravity_lowpass(preprocessor,
+    const int gravity_err = motion_preprocessor_set_gravity_lowpass(preprocessor,
         gravity_lowpass_values, gravity_lowpass_length);
     if (gravity_err != 0) {
         fprintf(stderr, "lowpass config error %d\n", gravity_err);
@@ -128,7 +128,7 @@ int main(void) {
 #endif
 
     const int fft_config_err = \
-        accelgyro_preprocessor_set_fft_features(preprocessor, 1, 10);
+        motion_preprocessor_set_fft_features(preprocessor, 1, 10);
     if (fft_config_err != 0) {
         fprintf(stderr, "FFT config error %d\n", fft_config_err);
         return 2;
@@ -165,11 +165,11 @@ int main(void) {
 
             //printk("process-chunk length=%d \n", chunk.length);
             const int run_status = \
-                accelgyro_preprocessor_run(preprocessor, chunk.buffer, chunk.length);
+                motion_preprocessor_run(preprocessor, chunk.buffer, chunk.length);
 
             const float dt = uptime - previous_input;
             printk("features err=%d l=%d dt=%.3f time=%.3f | ", run_status, chunk.length, (double)dt, (double)uptime);
-            const int n_features = accelgyro_features_length;
+            const int n_features = motion_features_length;
             for (int i=0; i<n_features; i++) {
                 printk("%.4f ", (double)preprocessor->features[i]);
             }

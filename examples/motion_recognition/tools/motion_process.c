@@ -37,7 +37,7 @@ float input_values[INPUT_COLUMNS_MAX];
 
 // Output format
 // Add +1 because we also have time column
-#define OUTPUT_COLUMNS_LENGTH (1+accelgyro_features_length+1+MOTION_MODEL_CLASSES+ACCELGYRO_FFT_LENGTH)
+#define OUTPUT_COLUMNS_LENGTH (1+motion_features_length+1+MOTION_MODEL_CLASSES+MOTION_FFT_LENGTH)
 const char *output_columns[OUTPUT_COLUMNS_LENGTH];
 float output_values[OUTPUT_COLUMNS_LENGTH];
 // Buffer to store dynamically computeds names. Output columns will point into this. A kind of string pool
@@ -217,17 +217,17 @@ main(int argc, const char *argv[])
     const int window_buffer_length = window_length*SENSOR_DATA_COLUMNS;
 
     // Setup preprocessing
-    struct accelgyro_preprocessor _preprocessor;
-    struct accelgyro_preprocessor *preprocessor = &_preprocessor;
+    struct motion_preprocessor _preprocessor;
+    struct motion_preprocessor *preprocessor = &_preprocessor;
 
-    const int init_err = accelgyro_preprocessor_init(preprocessor, samplerate, window_length);
+    const int init_err = motion_preprocessor_init(preprocessor, samplerate, window_length);
     if (init_err != 0) {
         fprintf(stderr, "preprocess init error %d\n", init_err);
         return -2;
     }
 
 #if 1
-    const int gravity_err = accelgyro_preprocessor_set_gravity_lowpass(preprocessor,
+    const int gravity_err = motion_preprocessor_set_gravity_lowpass(preprocessor,
         gravity_lowpass_values, gravity_lowpass_length);
     if (gravity_err != 0) {
         fprintf(stderr, "lowpass config error %d\n", gravity_err);
@@ -236,7 +236,7 @@ main(int argc, const char *argv[])
 #endif
 
     const int fft_config_err = \
-        accelgyro_preprocessor_set_fft_features(preprocessor, 1, 10);
+        motion_preprocessor_set_fft_features(preprocessor, 1, 10);
     if (fft_config_err != 0) {
         fprintf(stderr, "FFT config error %d\n", fft_config_err);
         return 2;
@@ -244,7 +244,7 @@ main(int argc, const char *argv[])
 
     // Construct output column names
     // these depend on the preprocessor configuration used, in particular FFT features enabled
-    const int n_features = accelgyro_preprocessor_get_feature_length(preprocessor);
+    const int n_features = motion_preprocessor_get_feature_length(preprocessor);
     if (n_features < 0) {
         return 2;
     }
@@ -256,7 +256,7 @@ main(int argc, const char *argv[])
     for (int feature=0; feature<n_features; feature++) {
 
         // FIXME: actually push forward inside the pool
-        const int name_length = accelgyro_preprocessor_get_feature_name(preprocessor, \
+        const int name_length = motion_preprocessor_get_feature_name(preprocessor, \
             feature, pool_item, pool_remaining);
         if (name_length <= 0) {
             fprintf(stderr, "failed to get feature name %d \n", name_length);
@@ -341,7 +341,7 @@ main(int argc, const char *argv[])
             window_no += 1;
 
             const int preprocess_err = \
-                accelgyro_preprocessor_run(preprocessor, window_buffer, window_buffer_length);
+                motion_preprocessor_run(preprocessor, window_buffer, window_buffer_length);
             if (preprocess_err != 0) {
                 fprintf(stderr, "preprocessor error %d\n", preprocess_err);
                 return -3;
@@ -353,14 +353,14 @@ main(int argc, const char *argv[])
 
             // Provide extracted features as output
             const int copy_err = \
-                accelgyro_preprocessor_get_features(preprocessor, output_values+1, OUTPUT_COLUMNS_LENGTH-1);
+                motion_preprocessor_get_features(preprocessor, output_values+1, OUTPUT_COLUMNS_LENGTH-1);
             if (copy_err != 0) {
                 return -4;
             }
 
             // Run through classifier (if enabled)
 #ifdef MOTION_MODEL_FILE
-            int model_err = motion_model_predict_proba(preprocessor->features, accelgyro_features_length, model_predictions, MOTION_MODEL_CLASSES);
+            int model_err = motion_model_predict_proba(preprocessor->features, motion_features_length, model_predictions, MOTION_MODEL_CLASSES);
             if (model_err != 0) {
                 fprintf(stderr, "failed to run model %d\n", model_err);
                 return -4;
