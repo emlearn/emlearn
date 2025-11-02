@@ -184,7 +184,12 @@ int usb_disk_setup(void)
 {
 	int ret;
 
+    // FIXME: setup_disk() makes device not show up on USB at all
+#if 0
 	setup_disk();
+#else
+    return -2;
+#endif
 
 	sample_usbd = sample_usbd_init_device(NULL);
 	if (sample_usbd == NULL) {

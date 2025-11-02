@@ -14,6 +14,8 @@
 // 
 #include "sample_usbd.h"
 
+int usb_disk_setup(void);
+
 // Application includes
 #include "sensor_reader.h"
 #include "motion_preprocessing.h"
@@ -147,7 +149,7 @@ int main(void) {
     // Start high-priority thread for collecting data
     sensor_chunk_reader_start(&reader);
 
-
+	printk("Start USB setup.\n");
     // Setup USB disk
     const int usb_err = usb_disk_setup();
     if (usb_err) {
@@ -155,8 +157,6 @@ int main(void) {
     } else {
 		LOG_ERR("Now in USB mass storage mode");
     }
-#endif
-
 
     const int n_features = motion_preprocessor_get_feature_length(preprocessor);
     if (n_features < 0) {
@@ -187,12 +187,6 @@ int main(void) {
                 printk("%.4f ", (double)feature_values[i]);
             }
             printk("\n");
-
-#if 0
-            const float *gravity = preprocessor->gravity;
-            printk("gravity %.2f %.2f %.2f \n",
-                (double)gravity[0], (double)gravity[1], (double)gravity[2]);
-#endif
 
             // TODO: run through ML model, print outputs
             previous_input = uptime;
