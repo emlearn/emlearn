@@ -48,5 +48,5 @@ target_include_directories(app PRIVATE
 add_dependencies(app generate_model generate_filter)
 
 target_sources(app PRIVATE
-    ${ZEPHYR_BASE}/samples/subsys/usb/common/sample_usbd_init.c
+    # ${ZEPHYR_BASE}/samples/subsys/usb/common/sample_usbd_init.c
 )
