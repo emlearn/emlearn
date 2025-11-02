@@ -4,6 +4,25 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+
+/delete-node/ &code_partition;
+/delete-node/ &storage_partition;
+
+&flash0 {
+    partitions {
+        code_partition: partition@27000 {
+            label = "Application";
+            reg = <0x27000 DT_SIZE_K(660)>;  /* Reduce app to 660KB */
+        };
+
+        storage_partition: partition@c4000 {
+            label = "Storage";
+            reg = <0xC4000 DT_SIZE_K(160)>;  /* Increase storage to 160KB */
+        };
+    };
+};
+
+
 / {
 	msc_disk0 {
 		compatible = "zephyr,flash-disk";

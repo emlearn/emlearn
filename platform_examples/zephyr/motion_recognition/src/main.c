@@ -84,9 +84,19 @@ setup_sensor(const struct device *const lsm6dsl_dev)
 }
 
 
-
+// Large, use global and not stack
+struct motion_preprocessor _preprocessor;
 
 int main(void) {
+
+	printk("Start USB setup.\n");
+    // Setup USB disk
+    const int usb_err = usb_disk_setup();
+    if (usb_err) {
+		LOG_ERR("Failed to setup USB disk");
+    } else {
+		LOG_ERR("Now in USB mass storage mode");
+    }
 
     struct sensor_chunk_msg chunk;
 
@@ -113,7 +123,6 @@ int main(void) {
         .put_errors = 0
     };
 
-    struct motion_preprocessor _preprocessor;
     struct motion_preprocessor *preprocessor = &_preprocessor;
 
     const int init_err = motion_preprocessor_init(preprocessor, SAMPLERATE, WINDOW_LENGTH);
@@ -146,22 +155,13 @@ int main(void) {
     // Setup sensor
     setup_sensor(lsm6dsl_dev);
 
-    // Start high-priority thread for collecting data
-    sensor_chunk_reader_start(&reader);
-
-	printk("Start USB setup.\n");
-    // Setup USB disk
-    const int usb_err = usb_disk_setup();
-    if (usb_err) {
-		LOG_ERR("Failed to setup USB disk");
-    } else {
-		LOG_ERR("Now in USB mass storage mode");
-    }
-
     const int n_features = motion_preprocessor_get_feature_length(preprocessor);
     if (n_features < 0) {
         return 2;
     }
+
+    // Start high-priority thread for collecting data
+    sensor_chunk_reader_start(&reader);
 
     int iteration = 0;
     float previous_input = 0.0f;
@@ -171,6 +171,7 @@ int main(void) {
         // check for new data
         const int get_error = k_msgq_get(reader.queue, &chunk, K_NO_WAIT);
         if (get_error == 0) {
+
             const float dt = uptime - previous_input;
 
             //printk("process-chunk length=%d \n", chunk.length);
@@ -191,10 +192,6 @@ int main(void) {
             // TODO: run through ML model, print outputs
             previous_input = uptime;
         }
-
-#if 0
-        printk("main-loop-iter iteration=%d \n", iteration);
-#endif
 
         iteration += 1;
 	    k_msleep(100);
