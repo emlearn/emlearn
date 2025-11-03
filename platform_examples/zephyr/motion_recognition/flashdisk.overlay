@@ -15,9 +15,9 @@
             reg = <0x27000 DT_SIZE_K(660)>;  /* Reduce app to 660KB */
         };
 
-        storage_partition: partition@c4000 {
+        storage_partition: partition@c8000 {
             label = "Storage";
-            reg = <0xC4000 DT_SIZE_K(160)>;  /* Increase storage to 160KB */
+            reg = <0xC8000 DT_SIZE_K(160)>;  /* Increase storage to 160KB */
         };
     };
 };

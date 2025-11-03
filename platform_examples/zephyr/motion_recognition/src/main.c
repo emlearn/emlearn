@@ -10,6 +10,8 @@
 #include <zephyr/logging/log.h>
 #include <stdio.h>
 #include <zephyr/sys/util.h>
+#include <zephyr/fs/fs.h>
+#include <zephyr/storage/disk_access.h>
 
 #include <eml_csv.h>
 #include <eml_fileio.h>
@@ -29,7 +31,8 @@ LOG_MODULE_REGISTER(main, LOG_LEVEL_INF);
 // Configuration
 #define SAMPLERATE 52
 #define WINDOW_LENGTH 50
-#define HOP_LENGTH 25
+// TODO: support hop_length < window_length (overlap)
+#define HOP_LENGTH 50
 
 #define N_CHANNELS 6
 enum sensor_channel sensor_reader_channels[N_CHANNELS] = {
@@ -68,8 +71,15 @@ K_MSGQ_DEFINE(sensor_reader_queue, sizeof(struct sensor_chunk_msg), 1, 1);
 // Storing code
 
 
-int setup_writer(EmlCsvWriter *writer, const char *output_path)
+int write_header(const char *output_path)
 {
+    EmlCsvWriter _writer = {
+        .n_columns = N_CHANNELS,
+        .write = eml_fileio_write,
+        .stream = NULL, // initialized later
+    };
+    EmlCsvWriter *writer = &_writer;
+
     // Setup file output
     FILE *write_file = fopen(output_path, "w");
     if (write_file == NULL) {
@@ -83,10 +93,57 @@ int setup_writer(EmlCsvWriter *writer, const char *output_path)
         eml_csv_writer_write_header(writer, channel_names, N_CHANNELS);
     if (write_header_err != EmlOk) {
         fprintf(stderr, "header-write-fail error=%d \n", write_header_err);
+        fclose(writer->stream);
         return -1;
     }
 
+    fclose(writer->stream);
     return 0;
+}
+
+int write_samples(const char *output_path, float *values, int length)
+{
+    // Open file in append mode, write data and close file
+    // Without fclose() the data does not get to syncronized to disk
+    EmlCsvWriter _writer = {
+        .n_columns = N_CHANNELS,
+        .write = eml_fileio_write,
+        .stream = NULL, // initialized later
+    };
+    EmlCsvWriter *writer = &_writer;
+
+    // Setup file output
+    FILE *write_file = fopen(output_path, "a");
+    if (write_file == NULL) {
+        fprintf(stderr, "failed to open output\n");
+        return -1;
+    }
+    writer->stream = write_file;
+
+    // Write sensor data values to file
+    const int rows = length / N_CHANNELS;
+    int write_errors = 0;
+    int write_success = 0;
+    for (int i=0; i<rows; i++) {
+        const float *row = values + (i*N_CHANNELS);
+        const EmlError write_err = \
+            eml_csv_writer_write_data(writer, row, N_CHANNELS);
+        if (write_err != EmlOk) {
+            write_errors += 1;
+        } else {
+            write_success += 1;
+        }
+    }
+
+    fclose(writer->stream);
+
+    if (write_errors) {
+        return -2;
+    } else if (write_success == 0) {
+        return -3;
+    }
+
+    return 0; 
 }
 
 
@@ -132,26 +189,19 @@ int main(void) {
 		LOG_ERR("Now in USB mass storage mode");
     }
 
-    // Setup
-    EmlCsvWriter _writer = {
-        .n_columns = N_CHANNELS,
-        .write = eml_fileio_write,
-        .stream = NULL, // initialized later
-    };
-    EmlCsvWriter *writer = &_writer;
-
     const char *save_directory = "/NAND:";
-    const char *save_name = "test1";
+
+    // TODO: read the filename to write from a file
+    const char *save_name = "test4";
     char save_path[100];
     const int path_written = snprintf(save_path, 100, "%s/%s.csv", save_directory, save_name);
     if (path_written < 0 || path_written == 100) {
         return 2;
     }
-    const int writer_err = setup_writer(writer, save_path);
-    if (writer_err) {
+    const int header_err = write_header(save_path);
+    if (header_err) {
         return 3;
     }
-
 
     // Setup sensor reading
     struct sensor_chunk_msg chunk;
@@ -231,17 +281,7 @@ int main(void) {
 
             const float dt = uptime - previous_input;
 
-            // Write sensor data values to file
-            const int rows = chunk.length / N_CHANNELS;
-            int write_errors = 0;
-            for (int i=0; i<rows; i++) {
-                const float *row = chunk.buffer + (i*N_CHANNELS);
-                const EmlError write_err = \
-                    eml_csv_writer_write_data(writer, row, N_CHANNELS);
-                if (write_err != EmlOk) {
-                    write_errors += 1;
-                }
-            }
+            const int write_err = write_samples(save_path, chunk.buffer, chunk.length);
 
             //printk("process-chunk length=%d \n", chunk.length);
             const int run_status = \
@@ -251,11 +291,17 @@ int main(void) {
             const int copy_err = \
                 motion_preprocessor_get_features(preprocessor, feature_values, FEATURE_COLUMNS_LENGTH);
 
-            printk("features run_err=%d copy_err=%d write_err=%d l=%d dt=%.3f time=%.3f | ",
-                run_status, copy_err, write_errors, chunk.length, (double)dt, (double)uptime);
+            printk("features run_err=%d copy_err=%d write_err=%d | ",
+                run_status, copy_err, write_err);
+
+            printk("l=%d dt=%.3f time=%.3f", 
+                chunk.length, (double)dt, (double)uptime
+            );
+#if 0
             for (int i=0; i<n_features; i++) {
                 printk("%.4f ", (double)feature_values[i]);
             }
+#endif
             printk("\n");
 
             // TODO: run through ML model, print outputs
