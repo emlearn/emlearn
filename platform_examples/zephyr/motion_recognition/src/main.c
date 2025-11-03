@@ -11,7 +11,10 @@
 #include <stdio.h>
 #include <zephyr/sys/util.h>
 
-// 
+#include <eml_csv.h>
+#include <eml_fileio.h>
+
+
 #include "sample_usbd.h"
 
 int usb_disk_setup(void);
@@ -37,8 +40,16 @@ enum sensor_channel sensor_reader_channels[N_CHANNELS] = {
 	SENSOR_CHAN_GYRO_Y,
 	SENSOR_CHAN_GYRO_Z,
 };
+const char *channel_names[N_CHANNELS] = {
+    "accel_x",
+    "accel_y",
+    "accel_z",
+    "gyro_x",
+    "gyro_y",
+    "gyro_z"
+};
 
-
+// FIXME: load model
 #define MOTION_MODEL_CLASSES 0
 #define FEATURE_COLUMNS_LENGTH (1+motion_features_length+1+MOTION_MODEL_CLASSES+MOTION_FFT_LENGTH)
 float feature_values[FEATURE_COLUMNS_LENGTH];
@@ -53,6 +64,30 @@ K_THREAD_STACK_DEFINE(sensor_reader_stack, SENSOR_READER_STACK_SIZE);
 struct k_thread sensor_reader_thread;
 
 K_MSGQ_DEFINE(sensor_reader_queue, sizeof(struct sensor_chunk_msg), 1, 1);
+
+// Storing code
+
+
+int setup_writer(EmlCsvWriter *writer, const char *output_path)
+{
+    // Setup file output
+    FILE *write_file = fopen(output_path, "w");
+    if (write_file == NULL) {
+        fprintf(stderr, "failed to open output\n");
+        return -1;
+    }
+    writer->stream = write_file;
+
+    // Write output header
+    const EmlError write_header_err = \
+        eml_csv_writer_write_header(writer, channel_names, N_CHANNELS);
+    if (write_header_err != EmlOk) {
+        fprintf(stderr, "header-write-fail error=%d \n", write_header_err);
+        return -1;
+    }
+
+    return 0;
+}
 
 
 int
@@ -89,7 +124,6 @@ struct motion_preprocessor _preprocessor;
 
 int main(void) {
 
-	printk("Start USB setup.\n");
     // Setup USB disk
     const int usb_err = usb_disk_setup();
     if (usb_err) {
@@ -98,6 +132,28 @@ int main(void) {
 		LOG_ERR("Now in USB mass storage mode");
     }
 
+    // Setup
+    EmlCsvWriter _writer = {
+        .n_columns = N_CHANNELS,
+        .write = eml_fileio_write,
+        .stream = NULL, // initialized later
+    };
+    EmlCsvWriter *writer = &_writer;
+
+    const char *save_directory = "/NAND:";
+    const char *save_name = "test1";
+    char save_path[100];
+    const int path_written = snprintf(save_path, 100, "%s/%s.csv", save_directory, save_name);
+    if (path_written < 0 || path_written == 100) {
+        return 2;
+    }
+    const int writer_err = setup_writer(writer, save_path);
+    if (writer_err) {
+        return 3;
+    }
+
+
+    // Setup sensor reading
     struct sensor_chunk_msg chunk;
 
 	const struct device *const lsm6dsl_dev = DEVICE_DT_GET_ONE(st_lsm6dsl);
@@ -123,6 +179,7 @@ int main(void) {
         .put_errors = 0
     };
 
+    // Setup data preprocessing
     struct motion_preprocessor *preprocessor = &_preprocessor;
 
     const int init_err = motion_preprocessor_init(preprocessor, SAMPLERATE, WINDOW_LENGTH);
@@ -174,6 +231,18 @@ int main(void) {
 
             const float dt = uptime - previous_input;
 
+            // Write sensor data values to file
+            const int rows = chunk.length / N_CHANNELS;
+            int write_errors = 0;
+            for (int i=0; i<rows; i++) {
+                const float *row = chunk.buffer + (i*N_CHANNELS);
+                const EmlError write_err = \
+                    eml_csv_writer_write_data(writer, row, N_CHANNELS);
+                if (write_err != EmlOk) {
+                    write_errors += 1;
+                }
+            }
+
             //printk("process-chunk length=%d \n", chunk.length);
             const int run_status = \
                 motion_preprocessor_run(preprocessor, chunk.buffer, chunk.length);
@@ -182,8 +251,8 @@ int main(void) {
             const int copy_err = \
                 motion_preprocessor_get_features(preprocessor, feature_values, FEATURE_COLUMNS_LENGTH);
 
-            printk("features run_err=%d copy_err=%d l=%d dt=%.3f time=%.3f | ",
-                run_status, copy_err, chunk.length, (double)dt, (double)uptime);
+            printk("features run_err=%d copy_err=%d write_err=%d l=%d dt=%.3f time=%.3f | ",
+                run_status, copy_err, write_errors, chunk.length, (double)dt, (double)uptime);
             for (int i=0; i<n_features; i++) {
                 printk("%.4f ", (double)feature_values[i]);
             }
