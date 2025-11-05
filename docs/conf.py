@@ -205,6 +205,7 @@ sphinx_gallery_conf = {
     'examples_dirs': '../examples',   # path to your example scripts
     'gallery_dirs': 'auto_examples',  # path to where to save gallery generated output
     'filename_pattern': '/', # execute all .py files, not just those with plot_ prefix
+    'ignore_pattern': r'convert_data.py|plot.py',
 }
 
 
