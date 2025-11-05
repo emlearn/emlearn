@@ -41,26 +41,24 @@ sensor_chunk_reader_task(void *context, void *, void *)
         printk("reader-task-got-data index=%d \n", self->read_samples_index);
 #endif
 
-        // TODO: respect hop, ot
+        // TODO: respect hop_length, using overlap
         if (self->read_samples_index == self->window_length) {
+            const int out_length = self->n_channels * self->window_length;
+
             // Push onto output buffer
-            memcpy(self->read_samples, values, sizeof(float)*self->n_channels);
+            memcpy(self->output_buffer, self->read_samples, sizeof(float)*out_length);
             self->read_samples_index = 0;
 
-            // Check if output buffer is full
-            if (true) {
-                // Send as message
-                const int out_length = self->n_channels * self->window_length;
-                struct sensor_chunk_msg msg = { 1, self->output_buffer, out_length };
-
+            // Send as message
+            struct sensor_chunk_msg msg = { 1, self->output_buffer, out_length };
 #if 0
-        printk("reader-task-got-data index=%d \n", self->read_samples_index);
+    printk("reader-task-got-data index=%d \n", self->read_samples_index);
 #endif
-	            const int put_status = k_msgq_put(self->queue, &msg, K_NO_WAIT);
-                if (put_status < 0) {
-                    self->put_errors += 1;
-                }
+            const int put_status = k_msgq_put(self->queue, &msg, K_NO_WAIT);
+            if (put_status < 0) {
+                self->put_errors += 1;
             }
+
         }
 
         const int wait_timeout_us = 1000000/self->samplerate;
