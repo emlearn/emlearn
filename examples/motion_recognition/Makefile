@@ -3,6 +3,7 @@ EMLEARN_INCLUDE_DIR := /home/jon/projects/emlearn/emlearn
 
 #CFLAGS := -g 
 CFLAGS := -g -fsanitize=address,undefined,leak -Wall -Werror -Wno-error=unused-function
+CFLAGS += -I ${EMLEARN_INCLUDE_DIR} -I./ -I./build -lm
 
 all: check
 
@@ -15,12 +16,12 @@ build/motion_model.h: combined.estimator.pickle
 	python tools/convert_model.py --out $@ --model $<
 
 test_processing: build/gravity_filter.h
-	gcc -o ./build/motion_preprocess tools/motion_process.c -I ${EMLEARN_INCLUDE_DIR} -I./ -I./build -lm ${CFLAGS}
-	./build/motion_preprocess sensordata.csv build/features.csv 50
+	gcc -o ./build/motion_preprocess tools/motion_process.c  ${CFLAGS}
+	./build/motion_preprocess --input sensordata.csv --output build/features.csv
 
 test_model: build/motion_model.h build/gravity_filter.h
-	gcc -o build/motion_process_model tools/motion_process.c -I ${EMLEARN_INCLUDE_DIR} -I./ -I./build -lm ${CFLAGS} -DMOTION_MODEL_FILE=\"motion_model.h\"
-	build/motion_process_model sensordata.csv build/output.csv 50
+	gcc -o build/motion_process_model tools/motion_process.c ${CFLAGS} -DMOTION_MODEL_FILE=\"motion_model.h\"
+	build/motion_process_model --input sensordata.csv --output build/output.csv
 
 check: test_processing test_model
 

@@ -57,22 +57,6 @@ char read_buffer[READ_BUFFER_SIZE];
 float window_buffer[WINDOW_LENGTH_MAX*SENSOR_DATA_COLUMNS];
 
 
-// WARN: uses errno, not reentrant/threadsafe
-int parse_integer(const char *str, long *out)
-{
-    char *endptr;
-    errno = 0;
-
-    const long val = strtol(str, &endptr, 10);
-    if (errno != 0 || endptr == str || *endptr != '\0') {
-        return -1;
-    }
-
-    *out = val;
-    return 0;
-}
-
-
 // On success, returns the number of rows read. Normally @window_length, but might be shorter at end-of-input
 // On error, returns a negative integer
 int
@@ -155,32 +139,92 @@ read_overlapped_windows(EmlCsvReader *reader,
 }
 
 
+typedef enum { OPT_INT, OPT_FLOAT, OPT_STRING } OptType;
+
+typedef struct {
+    const char *name;
+    OptType type;
+    void *value;
+} Option;
+
+int opt_parse_args(int argc, const char **argv, Option *options, int opt_count) {
+    for (int i = 1; i < argc; i++) {
+        if (argv[i][0] != '-') continue;
+        
+        const char *arg = argv[i] + (argv[i][1] == '-' ? 2 : 1);
+        
+        for (int j = 0; j < opt_count; j++) {
+            if (strcmp(arg, options[j].name) == 0) {
+                if (++i >= argc) return -1;
+                
+                switch (options[j].type) {
+                    case OPT_INT:
+                        *(int *)options[j].value = atoi(argv[i]);
+                        break;
+                    case OPT_FLOAT:
+                        *(float *)options[j].value = atof(argv[i]);
+                        break;
+                    case OPT_STRING:
+                        *(const char **)options[j].value = argv[i];
+                        break;
+                }
+                break;
+            }
+        }
+    }
+    return 0;
+}
+
+
+typedef struct {
+    char *input;
+    char *output;
+    int samplerate;
+    int hop_length;
+    int window_length;
+} MotionConfig;
+
+
+int
+parse(int argc, const char *argv[], MotionConfig *cfg)
+{
+    Option opts[] = {
+        {"input", OPT_STRING, &cfg->input},
+        {"output", OPT_STRING, &cfg->output},
+        {"samplerate", OPT_INT, &cfg->samplerate},
+        {"hop_length", OPT_INT, &cfg->hop_length},
+        {"window_length", OPT_INT, &cfg->window_length},
+    };
+    const int opts_length = 5;
+
+    const int parse_err = opt_parse_args(argc, argv, opts, opts_length);
+    
+    return parse_err;
+}
 
 int
 main(int argc, const char *argv[])
 {
  
-    if (argc < 4) {
-        fprintf(stderr, "Expected 4+ arguments, got %d\n", argc);
-        return -1;
+    MotionConfig cfg = {
+        .input = NULL,
+        .output = NULL,
+        .samplerate = 50,
+        .hop_length = 50,
+        .window_length = 50
+    };
+
+    const int parse_err = parse(argc, argv, &cfg);
+    if (parse_err) {
+        return 1;
     }
 
-    const char *input_path = argv[1];
-    const char *output_path = argv[2];
-    long samplerate;
-    const int samplerate_err = parse_integer(argv[3], &samplerate);
-    if (samplerate_err != 0) {
-        return -1;
-    }
-
-    const int window_length = 50; // FIXME: unhardcode
-    const int hop_length = 25; // FIXME: unhardcode
 
     // Setup file input
-    FILE *read_file = fopen(input_path, "r");
+    FILE *read_file = fopen(cfg.input, "r");
     if (read_file == NULL) {
         fprintf(stderr, "failed to open input\n");
-        return -1;
+        return 1;
     }
     EmlCsvReader _reader = {
         .seek = eml_fileio_seek,
@@ -193,11 +237,13 @@ main(int argc, const char *argv[])
     const EmlError read_header_err = eml_csv_reader_read_header(reader,\
         read_buffer, READ_BUFFER_SIZE, input_columns, INPUT_COLUMNS_MAX);
     if (read_header_err != EmlOk) {
-        return 2;
+        return 20;
     }
     const int n_expect_columns = SENSOR_DATA_COLUMNS + 1; // sensor columns + time
     if (reader->n_columns != n_expect_columns) {
-        return 2;
+        fprintf(stderr, "expected %d columns, got %d\n",
+            (int)n_expect_columns, (int)reader->n_columns);
+        return 21;
     }
 
     // Check that columns are as expected
@@ -206,24 +252,24 @@ main(int argc, const char *argv[])
         if (!correct) {
             fprintf(stderr, "incorrect-sensordata-column index=%d got=%s expect=%s\n",
                 i, input_columns[i], expect_columns[i]);
-            return 2;
+            return 22;
         }
     }
 
 
-    if (window_length > WINDOW_LENGTH_MAX) {
-        return -2;
+    if (cfg.window_length > WINDOW_LENGTH_MAX) {
+        return 31;
     }
-    const int window_buffer_length = window_length*SENSOR_DATA_COLUMNS;
+    const int window_buffer_length = cfg.window_length*SENSOR_DATA_COLUMNS;
 
     // Setup preprocessing
     struct motion_preprocessor _preprocessor;
     struct motion_preprocessor *preprocessor = &_preprocessor;
 
-    const int init_err = motion_preprocessor_init(preprocessor, samplerate, window_length);
+    const int init_err = motion_preprocessor_init(preprocessor, cfg.samplerate, cfg.window_length);
     if (init_err != 0) {
         fprintf(stderr, "preprocess init error %d\n", init_err);
-        return -2;
+        return 3;
     }
 
 #if 1
@@ -231,7 +277,7 @@ main(int argc, const char *argv[])
         gravity_lowpass_values, gravity_lowpass_length);
     if (gravity_err != 0) {
         fprintf(stderr, "lowpass config error %d\n", gravity_err);
-        return 2;
+        return 3;
     }
 #endif
 
@@ -239,14 +285,14 @@ main(int argc, const char *argv[])
         motion_preprocessor_set_fft_features(preprocessor, 1, 10);
     if (fft_config_err != 0) {
         fprintf(stderr, "FFT config error %d\n", fft_config_err);
-        return 2;
+        return 3;
     }
 
     // Construct output column names
     // these depend on the preprocessor configuration used, in particular FFT features enabled
     const int n_features = motion_preprocessor_get_feature_length(preprocessor);
     if (n_features < 0) {
-        return 2;
+        return 3;
     }
     const int output_columns_total = 1 + n_features + MOTION_MODEL_CLASSES; 
     output_columns[0] = "time";
@@ -296,10 +342,10 @@ main(int argc, const char *argv[])
 
 
     // Setup file output
-    FILE *write_file = fopen(output_path, "w");
+    FILE *write_file = fopen(cfg.output, "w");
     if (write_file == NULL) {
         fprintf(stderr, "failed to open output\n");
-        return -1;
+        return 3;
     }
 
     EmlCsvWriter _writer = {
@@ -314,7 +360,7 @@ main(int argc, const char *argv[])
         eml_csv_writer_write_header(writer, output_columns, output_columns_total);
     if (write_header_err != EmlOk) {
         fprintf(stderr, "header-write-fail error=%d \n", write_header_err);
-        return -1;
+        return 3;
     }
 
     // Setup model
@@ -327,18 +373,21 @@ main(int argc, const char *argv[])
     // Processing loop
     int window_no = 0;
     int window_read_index = 0;
-    while (1) {
+    int read_attempts = 0;
+    const int max_read_attempts = 100;
+    while (read_attempts < max_read_attempts) {
 
         // Read input data
         const int window_read = read_overlapped_windows(reader, &window_read_index,
-            window_length, hop_length,
+            cfg.window_length, cfg.hop_length,
             window_buffer, window_buffer_length);
 
         fprintf(stdout, "main-read-window window=%d index=%d \n", window_no, window_read_index);
 
-        if (window_read == window_length) {
+        if (window_read == cfg.window_length) {
             // Complete window, process it
             window_no += 1;
+            read_attempts = 0;
 
             const int preprocess_err = \
                 motion_preprocessor_run(preprocessor, window_buffer, window_buffer_length);
@@ -348,14 +397,14 @@ main(int argc, const char *argv[])
             }
 
             // Provide time as output
-            const float hop_duration = hop_length / (float)samplerate;
+            const float hop_duration = cfg.hop_length / (float)cfg.samplerate;
             output_values[0] = window_no * hop_duration;
 
             // Provide extracted features as output
             const int copy_err = \
                 motion_preprocessor_get_features(preprocessor, output_values+1, OUTPUT_COLUMNS_LENGTH-1);
             if (copy_err != 0) {
-                return -4;
+                return 4;
             }
 
             // Run through classifier (if enabled)
@@ -363,7 +412,7 @@ main(int argc, const char *argv[])
             int model_err = motion_model_predict_proba(preprocessor->features, motion_features_length, model_predictions, MOTION_MODEL_CLASSES);
             if (model_err != 0) {
                 fprintf(stderr, "failed to run model %d\n", model_err);
-                return -4;
+                return 4;
             }
 #endif
 
@@ -389,6 +438,7 @@ main(int argc, const char *argv[])
             break;
         } else {
             // incomplete window, do nothing - wait for it to become complete
+            read_attempts += 1;
         }
 
     }
