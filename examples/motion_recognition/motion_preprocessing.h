@@ -81,7 +81,7 @@ int
 motion_preprocessor_init(struct motion_preprocessor *self, int samplerate, int window_length)
 {
     const int fft_length = MOTION_FFT_LENGTH;
-    if (fft_length != 0 && window_length >= fft_length) {
+    if (fft_length != 0 && window_length > fft_length) {
         return -1;
     }
     self->fft_length = fft_length;

@@ -8,6 +8,9 @@
 #include <stdlib.h>
 #include <errno.h>
 
+
+#define MOTION_FFT_LENGTH 128
+
 #include "motion_preprocessing.h"
 #include "gravity_filter.h"
 
@@ -53,7 +56,7 @@ static char output_columns_pool[OUTPUT_COLUMNS_POOL_LENGTH];
 char read_buffer[READ_BUFFER_SIZE];
 
 // Sensor data window
-#define WINDOW_LENGTH_MAX 100
+#define WINDOW_LENGTH_MAX 200
 float window_buffer[WINDOW_LENGTH_MAX*SENSOR_DATA_COLUMNS];
 
 
@@ -96,7 +99,8 @@ read_overlapped_windows(EmlCsvReader *reader,
     if (*read_index == window_length) {
         // previous execution hit a full window
         // prepare for new values coming in, by shifting existing data down
-        memmove(buffer, buffer+(hop_length*out_columns), sizeof(float)*out_columns*window_length);
+        const int move_length = window_length - hop_length;
+        memmove(buffer, buffer+(hop_length*out_columns), sizeof(float)*out_columns*move_length);
         *read_index -= hop_length;
     }
 
@@ -219,6 +223,8 @@ main(int argc, const char *argv[])
         return 1;
     }
 
+    fprintf(stdout, "hop=%d window=%d samplerate=%d \n",
+        cfg.hop_length, cfg.window_length, cfg.samplerate);
 
     // Setup file input
     FILE *read_file = fopen(cfg.input, "r");
@@ -377,12 +383,13 @@ main(int argc, const char *argv[])
     const int max_read_attempts = 100;
     while (read_attempts < max_read_attempts) {
 
+
+        fprintf(stdout, "main-read-window window=%d index=%d \n", window_no, window_read_index);
+
         // Read input data
         const int window_read = read_overlapped_windows(reader, &window_read_index,
             cfg.window_length, cfg.hop_length,
             window_buffer, window_buffer_length);
-
-        fprintf(stdout, "main-read-window window=%d index=%d \n", window_no, window_read_index);
 
         if (window_read == cfg.window_length) {
             // Complete window, process it
