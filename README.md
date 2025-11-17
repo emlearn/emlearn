@@ -1,5 +1,5 @@
 
-![Tests](https://github.com/emlearn/emlearn/actions/workflows/tests/badge.svg)
+![Tests](https://github.com/emlearn/emlearn/actions/workflows/tests.yaml/badge.svg)
 [![DOI](https://zenodo.org/badge/125562741.svg)](https://zenodo.org/badge/latestdoi/125562741)
 
 # emlearn
@@ -10,31 +10,54 @@ Train in Python, then do inference on any device with a C99 compiler.
 ![emlearn logo](./brand/emlearn-logo-wordmark-wide-600px.png)
 
 ## Status
-**Minimally useful**.
-Used in dozens of projects by dozens of developers.
+**Actively maintained since 2018**.
+Used in dozens of projects by many different developers,
+across a range of usecases and applications.
+
+## License
+
+emlearn is [MIT licensed](https://github.com/emlearn/emlearn/blob/master/LICENSE.md).
+
 
 ## Key features
+
+Convert machine learning models to C
+
+* Supports models made with [scikit-learn](http://scikit-learn.org) and [Keras](https://keras.io/)
+* Supports [classification](https://emlearn.readthedocs.io/en/latest/classification.html), [regression](https://emlearn.readthedocs.io/en/latest/regression.html) and [anomaly/outlier detection](https://emlearn.readthedocs.io/en/latest/anomaly_detection.html)
+* Supports [tree-based ensembles](https://emlearn.readthedocs.io/en/latest/tree_based_models.html), such as Random Forest, decision trees
+* Supports simple neural networks, such as Multi-Layer Perceptron (MLP)
 
 Embedded-friendly Inference
 
 * Portable C99 code
-* No libc required
 * No dynamic allocations
-* Single header file include
-* Support integer/fixed-point math (some methods)
-* Can be embedded/integrated with other languages via C API
+* Small code size (from 2kB FLASH)
+* Small RAM size (from 50 bytes RAM)
+* Support integer/fixed-point math (some models)
+* No libc required (some models)
 
-Convenient Training
+Easy to integrate in project
 
-* Using Python with [scikit-learn](http://scikit-learn.org) or [Keras](https://keras.io/)
-* The generated C classifier is also accessible in Python
+* Single header file to include
+* Easy to embedd/integrate in other languages, via C API
+* Packaged as [Arduino library](https://emlearn.readthedocs.io/en/latest/getting_started_arduino.html)
+* Packaged as [Zephyr module](https://emlearn.readthedocs.io/en/latest/getting_started_zephyr.html)
+* MicroPython bindings via [emlearn-micropython](https://github.com/emlearn/emlearn-micropython)
 
-[MIT licensed](https://github.com/emlearn/emlearn/blob/master/LICENSE.md)
+Feature extraction and data processing utilities
 
-Supporting libraries
+* Infinite Impulse Response (IIR) filters
+* Fast Fourier Transform (FFT)
+* Read/write CSV files, with streaming support
 
-- [emlearn-micropython](https://github.com/emlearn/emlearn-micropython).
-Efficient Machine Learning engine for [MicroPython](https://micropython.org), using emlearn.
+Model validation tools
+
+* Access generated C classifier via Python, to verify prediction correctness
+* Estimate model computational cost and size (using scikit-learn compatible metrics). [Example](https://emlearn.readthedocs.io/en/latest/auto_examples/trees_hyperparameters.html).
+* Measure tools for model program/FLASH size.
+[Example](https://emlearn.readthedocs.io/en/latest/auto_examples/trees_feature_quantization.html)
+
 
 Can be used as an open source alternative to MATLAB Classification Trees,
 Decision Trees using MATLAB Coder for C/C++ code generation.
@@ -67,7 +90,7 @@ Feature extraction:
 
 Tested running on AVR Atmega, ESP8266, ESP32, ARM Cortex M (STM32), Linux, Mac OS and Windows.
 
-Should work *anywhere* that has working C99 compiler. 
+Should work *anywhere* that has working C99 compiler.
 
 ## Installing
 
