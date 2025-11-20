@@ -40,7 +40,7 @@ Embedded-friendly Inference
 Easy to integrate in project
 
 * Single header file to include
-* Easy to embedd/integrate in other languages, via C API
+* Easy to embed/integrate in other languages, via C API
 * Packaged as [Arduino library](https://emlearn.readthedocs.io/en/latest/getting_started_arduino.html)
 * Packaged as [Zephyr module](https://emlearn.readthedocs.io/en/latest/getting_started_zephyr.html)
 * MicroPython bindings via [emlearn-micropython](https://github.com/emlearn/emlearn-micropython)
@@ -54,14 +54,15 @@ Feature extraction and data processing utilities
 Model validation tools
 
 * Access generated C classifier via Python, to verify prediction correctness
-* Estimate model computational cost and size (using scikit-learn compatible metrics). [Example](https://emlearn.readthedocs.io/en/latest/auto_examples/trees_hyperparameters.html).
+* Estimate model computational cost and size (using scikit-learn compatible metrics).
+[Example](https://emlearn.readthedocs.io/en/latest/auto_examples/trees_hyperparameters.html).
 * Measure tools for model program/FLASH size.
-[Example](https://emlearn.readthedocs.io/en/latest/auto_examples/trees_feature_quantization.html)
+[Example](https://emlearn.readthedocs.io/en/latest/auto_examples/trees_feature_quantization.html).
 
+## Documentation
 
-Can be used as an open source alternative to MATLAB Classification Trees,
-Decision Trees using MATLAB Coder for C/C++ code generation.
-`fitctree`, `fitcensemble`, `TreeBagger`, `ClassificationEnsemble`, `CompactTreeBagger`
+For full documentation see [examples](https://emlearn.readthedocs.io/en/latest/examples.html),
+the [user guide](https://emlearn.readthedocs.io/en/latest/user_guide.html).
 
 
 ## Model support
@@ -88,9 +89,9 @@ Feature extraction:
 
 ## Platform support
 
-Tested running on AVR Atmega, ESP8266, ESP32, ARM Cortex M (STM32), Linux, Mac OS and Windows.
-
 Should work *anywhere* that has working C99 compiler.
+Tested running on a large range of bare-metal, RTOS and desktop operating systems.
+Such as ESP8266, ESP32, AVR Atmega (8 bit), ARM Cortex M (STM32), Linux, Mac OS and Windows.
 
 ## Installing
 
@@ -162,11 +163,6 @@ else {
 
 For a complete runnable code see [Getting Started](https://emlearn.readthedocs.io/en/latest/getting_started_host.html).
 
-## Documentation
-
-For full documentation see [examples](https://emlearn.readthedocs.io/en/latest/examples.html),
-the [user guide](https://emlearn.readthedocs.io/en/latest/user_guide.html).
-
 #### More learning resources
 
 emlearn and emlearn-micropython has been covered in the following presentations.
@@ -187,9 +183,9 @@ emlearn and emlearn-micropython has been covered in the following presentations.
 
 ## Contributing
 
-Check out the source code, make sure you install the `Unity` submodule as well with `git submodule update --init`
+See [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) for contribution guidelines,
+and [docs/developing.md](docs/developing.md) for how to develop.
 
-Before committing any code, run the tests by `./test.sh` and install the module locally with `pip install ./ -v`
 
 ## Contributors
 
@@ -319,7 +315,5 @@ Running on Android devices.
 - [RIOT OS](https://www.riot-os.org/) has a package for emlearn.
 [RIOT OS emlearn package example](https://github.com/RIOT-OS/RIOT/tree/master/tests/pkg/emlearn).
 Their build system automatically runs this test on tens of different hardware boards.
-
-
 
 
