@@ -5,8 +5,11 @@
 Voting options for trees
 ===========================
 
-This example illustrates hard majority voting
-vs soft voting options for trees.
+This example illustrates hard majority voting vs soft voting options for trees.
+
+Hard voting can sometimes give a significant drop in predictive performance,
+and using soft voting can be neccesary to match the original model.
+This makes the model slightly bigger.
 """
 
 import os.path
@@ -123,6 +126,7 @@ def run_experiment(leaf_bits, X_test, Y_test, model):
         'score': round(100*score, 2),
         'ref_score': round(100*ref_score, 2),
     })
+    out['score_diff'] = out['score'] - out['ref_score']
 
     return out
 
@@ -136,8 +140,10 @@ experiments = pandas.DataFrame({
 #
 
 model, X_test, Y_test = train_model(sonar_data, max_depth=6)
-results = experiments.leaf_bits.apply(run_experiment, X_test=X_test, Y_test=Y_test, model=model)
-print(results)
+sonar_results = experiments.leaf_bits.apply(run_experiment, X_test=X_test, Y_test=Y_test, model=model)
+sonar_results['dataset'] = 'sonar'
+sonar_results['size_ratio'] = sonar_results['model_size_bytes'] / sonar_results['model_size_bytes'].min()
+print(sonar_results)
 
 # %%
 # Heart disease dataset
@@ -145,8 +151,10 @@ print(results)
 #
 
 model, X_test, Y_test = train_model(heart_data, max_depth=6)
-results = experiments.leaf_bits.apply(run_experiment, X_test=X_test, Y_test=Y_test, model=model)
-print(results)
+heart_results = experiments.leaf_bits.apply(run_experiment, X_test=X_test, Y_test=Y_test, model=model)
+heart_results['dataset'] = 'heart'
+heart_results['size_ratio'] = heart_results['model_size_bytes'] / heart_results['model_size_bytes'].min()
+print(heart_results)
 
 # %%
 # Digits dataset
@@ -154,7 +162,39 @@ print(results)
 #
 
 model, X_test, Y_test = train_model(digits_data, max_depth=5)
-results = experiments.leaf_bits.apply(run_experiment, X_test=X_test, Y_test=Y_test, model=model)
-print(results)
+digits_results = experiments.leaf_bits.apply(run_experiment, X_test=X_test, Y_test=Y_test, model=model)
+digits_results['dataset'] = 'digits'
+digits_results['size_ratio'] = digits_results['model_size_bytes'] / digits_results['model_size_bytes'].min()
+print(digits_results)
 
+# %%
+# Visualize results
+# -------------------------------
+#
+# Soft voting gives slightly bigger models, but often good improvements in predictive performance.
+
+def plot_results(results):
+    results = results.reset_index()
+
+    g = seaborn.relplot(data=results,
+        #kind='bar',
+        y='score_diff',
+        x='size_ratio',
+        hue='dataset',
+        height=4,
+        aspect=1.5,
+    )
+    fig = g.figure
+    fig.suptitle("Model scores vs size (higher is better)")
+
+    for ax in g.axes.flat:
+        ax.grid(True, which='major', axis='y')
+        ax.axhline(0.0, ls='-', lw=1.5, color='black', alpha=0.5)
+        ax.set_axisbelow(True)
+
+    return fig
+
+combined = pandas.concat([sonar_results, heart_results, digits_results], axis=0)
+fig = plot_results(combined)
+fig.savefig('example-trees-voting.png')
 
