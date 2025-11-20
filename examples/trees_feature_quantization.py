@@ -182,6 +182,10 @@ def plot_results(results):
     fig = g.figure
     fig.suptitle("Model size vs feature datatype")
 
+    for ax in g.axes.flat:
+        ax.grid(True, which='major', axis='y')
+        ax.set_axisbelow(True)
+
     return fig
 
 fig = plot_results(results)

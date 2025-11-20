@@ -1,6 +1,6 @@
 
 ![Tests](https://github.com/emlearn/emlearn/actions/workflows/tests.yaml/badge.svg)
-[![DOI](https://zenodo.org/badge/125562741.svg)](https://zenodo.org/badge/latestdoi/125562741)
+![DOI](https://zenodo.org/badge/125562741.svg)]
 
 # emlearn
 
