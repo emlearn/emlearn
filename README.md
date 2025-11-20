@@ -59,11 +59,11 @@ Model validation tools
 * Measure tools for model program/FLASH size.
 [Example](https://emlearn.readthedocs.io/en/latest/auto_examples/trees_feature_quantization.html).
 
-## Documentation
+## Platform support
 
-For full documentation see [examples](https://emlearn.readthedocs.io/en/latest/examples.html),
-the [user guide](https://emlearn.readthedocs.io/en/latest/user_guide.html).
-
+Should work *anywhere* that has working C99 compiler.
+Tested running on a large range of bare-metal, RTOS and desktop operating systems.
+Such as ESP8266, ESP32, AVR Atmega (8 bit), ARM Cortex M (STM32), Linux, Mac OS and Windows.
 
 ## Model support
 
@@ -76,22 +76,36 @@ Classification:
 Regression:
 
 * `eml_trees`: sklearn.RandomForestRegressor, sklearn.ExtraTreesRegressor, sklearn.DecisionTreeRegressor
-* `eml_net`: Keras.Sequential with fully-connected layers (```emlearn.convert(model, method='loadable', return_type='regressor')```)
+* `eml_net`: Keras.Sequential with fully-connected layers
 
 Unsupervised / Outlier Detection / Anomaly Detection
 
 * `eml_distance`: sklearn.EllipticEnvelope (Mahalanobis distance)
 * `eml_mixture`: sklearn.GaussianMixture, sklearn.BayesianGaussianMixture
 
-Feature extraction:
+## Documentation
 
-* `eml_audio`: Melspectrogram
+For full documentation see [examples](https://emlearn.readthedocs.io/en/latest/examples.html),
+the [user guide](https://emlearn.readthedocs.io/en/latest/user_guide.html).
 
-## Platform support
+#### Other learning resources
 
-Should work *anywhere* that has working C99 compiler.
-Tested running on a large range of bare-metal, RTOS and desktop operating systems.
-Such as ESP8266, ESP32, AVR Atmega (8 bit), ARM Cortex M (STM32), Linux, Mac OS and Windows.
+emlearn and emlearn-micropython has been covered in the following presentations.
+
+- Microcontrollers + Machine Learning in 1-2-3 (PyData Global 2024).
+[Slides etc](https://github.com/jonnor/embeddedml/tree/master/presentations/PyDataGlobal2024)
+- Sensor data processing on microcontrollers with MicroPython and emlearn (PyConZA 2024).
+[Slides etc](https://github.com/jonnor/embeddedml/tree/master/presentations/PyConZA2024)
+- 6 years of open source TinyML with emlearn - a scikit-learn for microcontrollers (TinyML EMEA 2024)
+[YouTube video](https://www.youtube.com/watch?v=oG7PjPMA3Is) |
+[Slides etc](https://github.com/jonnor/embeddedml/tree/master/presentations/TinymlEMEA2024)
+- emlearn - Machine Learning for Tiny Embedded Systems (Embedded Online Conference 2024).
+[Youtube video](https://www.youtube.com/watch?v=qamVWmcBdmI) |
+[Slides etc](https://github.com/jonnor/embeddedml/tree/master/presentations/EmbeddedOnlineConference2024)
+- Machine Learning on microcontrollers using MicroPython and emlearn (PyCon DE & PyData Berlin 2024).
+[Slides etc](https://github.com/jonnor/embeddedml/tree/master/presentations/PyDataBerlin2024) |
+[YouTube video](https://www.youtube.com/watch?v=_MGm8sctqjg&t=1311s&pp=ygUSZW1sZWFybiBtaWNyb3B5dGhv).
+
 
 ## Installing
 
@@ -163,23 +177,6 @@ else {
 
 For a complete runnable code see [Getting Started](https://emlearn.readthedocs.io/en/latest/getting_started_host.html).
 
-#### More learning resources
-
-emlearn and emlearn-micropython has been covered in the following presentations.
-
-- Microcontrollers + Machine Learning in 1-2-3 (PyData Global 2024).
-[Slides etc](https://github.com/jonnor/embeddedml/tree/master/presentations/PyDataGlobal2024)
-- Sensor data processing on microcontrollers with MicroPython and emlearn (PyConZA 2024).
-[Slides etc](https://github.com/jonnor/embeddedml/tree/master/presentations/PyConZA2024)
-- 6 years of open source TinyML with emlearn - a scikit-learn for microcontrollers (TinyML EMEA 2024)
-[YouTube video](https://www.youtube.com/watch?v=oG7PjPMA3Is) |
-[Slides etc](https://github.com/jonnor/embeddedml/tree/master/presentations/TinymlEMEA2024)
-- emlearn - Machine Learning for Tiny Embedded Systems (Embedded Online Conference 2024).
-[Youtube video](https://www.youtube.com/watch?v=qamVWmcBdmI) |
-[Slides etc](https://github.com/jonnor/embeddedml/tree/master/presentations/EmbeddedOnlineConference2024)
-- Machine Learning on microcontrollers using MicroPython and emlearn (PyCon DE & PyData Berlin 2024).
-[Slides etc](https://github.com/jonnor/embeddedml/tree/master/presentations/PyDataBerlin2024) |
-[YouTube video](https://www.youtube.com/watch?v=_MGm8sctqjg&t=1311s&pp=ygUSZW1sZWFybiBtaWNyb3B5dGhv).
 
 ## Contributing
 
