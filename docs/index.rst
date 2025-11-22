@@ -15,6 +15,7 @@ Welcome to emlearn's documentation!
    examples
    api_reference
    c_api
+   made_with
    source/LICENSE.md
 
 

@@ -7,14 +7,13 @@ For example, emlearn is known to work together with the following.
 
 ### Software frameworks and RTOS
 
-- Zephyr
-- MBed
-- Arduino
+- Zephyr. Has [first-party support](https://emlearn.readthedocs.io/en/latest/getting_started_zephyr.html).
+- Arduino. Has [first-party support](https://emlearn.readthedocs.io/en/latest/getting_started_arduino.html).
 - STM32Cube
 - ESP-IDF
 - FreeRTOS
 - Contiki-NG
-- RIOT
+- [RIOT OS](https://www.riot-os.org/) has a [package for emlearn.](https://github.com/RIOT-OS/RIOT/tree/master/tests/pkg/emlearn).
 - Apache mynewt
 - Azure RTOS ThreadX
 - and so on..
@@ -22,10 +21,10 @@ For example, emlearn is known to work together with the following.
 ### Microcontroller hardware platforms
 
 - ST STM32F4/STM32L4/STM32F1 et.c.
-- Espressif ESP8266/ESP32
-- Nordic NRF51/NRF52/NRF53/NRF91
+- Espressif Xtensa ESP8266/ESP32/ESP32-S3 and RISC-V ESP32-C5/C3 etc.
+- Nordic NRF51/NRF52/NRF53/NRF54/NRF91
 - Atmel AVR8/AVR32
-- Raspberry PI Pico / RP2040
+- Raspberry PI Pico / RP2040 / RP2350
 - and so on...
 
 ### Embedded OS platforms
@@ -43,9 +42,10 @@ Since emlearn is a standard C library, it works well with any language that supp
 - Rust
 - Zig
 - Nim
+- MicroPython. Via [emlearn-micropython](https://emlearn-micropython.readthedocs.io/en/latest/).
 - Python. Using CFFI or pybind11
 - Node.js/JavaScript
-- WebAssembly/WASM. Using Emscripten
+- WebAssembly/WASM. Using Emscripten. [Quickstart](https://emlearn.readthedocs.io/en/latest/getting_started_browser.html).
 - Java. Using JNI/JNA
 
 
