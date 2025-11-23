@@ -8,10 +8,12 @@
 #include <zephyr/device.h>
 #include <zephyr/drivers/sensor.h>
 #include <zephyr/logging/log.h>
-#include <stdio.h>
 #include <zephyr/sys/util.h>
 #include <zephyr/fs/fs.h>
 #include <zephyr/storage/disk_access.h>
+
+#include <stdio.h>
+#include <ctype.h>
 
 #include <eml_csv.h>
 #include <eml_fileio.h>
@@ -83,7 +85,7 @@ int write_header(const char *output_path)
     // Setup file output
     FILE *write_file = fopen(output_path, "w");
     if (write_file == NULL) {
-        fprintf(stderr, "failed to open output\n");
+        fprintf(stderr, "failed to open output path=%s\n", output_path);
         return -1;
     }
     writer->stream = write_file;
@@ -175,6 +177,34 @@ setup_sensor(const struct device *const lsm6dsl_dev)
     return 0;
 }
 
+int read_file(const char* filename, char* buffer, size_t buffer_size) {
+    FILE* file = fopen(filename, "r");
+    if (file == NULL) {
+        fprintf(stderr, "read_file: Failed to open file %s\n", filename);
+        return -1;
+    }
+
+    // Read up to buffer_size - 1 characters
+    size_t bytes_read = fread(buffer, 1, buffer_size - 1, file);
+
+    // Check if file is larger than buffer
+    if (!feof(file)) {
+        fprintf(stderr, "Error: File too large for buffer\n");
+        fclose(file);
+        return -1;
+    }
+
+    buffer[bytes_read] = '\0';
+    fclose(file);
+
+    // Strip trailing whitespace
+    while (bytes_read > 0 && isspace((unsigned char)buffer[bytes_read - 1])) {
+        buffer[--bytes_read] = '\0';
+    }
+
+    return bytes_read;
+}
+
 
 // Large, use global and not stack
 struct motion_preprocessor _preprocessor;
@@ -191,17 +221,29 @@ int main(void) {
 
     const char *save_directory = "/NAND:";
 
-    // TODO: read the filename to write from a file
-    const char *save_name = "test4";
-    char save_path[100];
-    const int path_written = snprintf(save_path, 100, "%s/%s.csv", save_directory, save_name);
-    if (path_written < 0 || path_written == 100) {
-        return 2;
+    // See if we should record or not
+    // Read the filename to write from a file 
+    char recording_name[40] = {0};
+    const char *record_name_path = "/NAND:/record.txt";
+    const int record_read = read_file(record_name_path, recording_name, 40);
+    const bool recording_enabled = record_read > 0;
+ 
+    char recording_save_path[100] = {0};
+    if (recording_enabled) {
+        const int path_written = snprintf(recording_save_path, 100, "%s/%s.csv",
+                save_directory, recording_name);
+        if (path_written < 0 || path_written == 100) {
+            return 2;
+        }
+        const int header_err = write_header(recording_save_path);
+        if (header_err) {
+            return 3;
+        }
     }
-    const int header_err = write_header(save_path);
-    if (header_err) {
-        return 3;
-    }
+
+    printk("record-check enabled=%d path=%s \n",
+        (int)recording_enabled, recording_save_path);
+
 
     // Setup sensor reading
     struct sensor_chunk_msg chunk;
@@ -281,7 +323,11 @@ int main(void) {
 
             const float dt = uptime - previous_input;
 
-            const int write_err = write_samples(save_path, chunk.buffer, chunk.length);
+            int write_err = 0;
+
+            if (recording_enabled) {
+                write_err = write_samples(recording_save_path, chunk.buffer, chunk.length);
+            }
 
             //printk("process-chunk length=%d \n", chunk.length);
             const int run_status = \
