@@ -888,6 +888,7 @@ class Wrapper:
 
             lines.append(f'f,{self.n_features}')
             lines.append(f'c,{self.n_classes}')
+            lines.append(f'lb,{self.leaf_bits}')
             for l in leaves:
                 lines.append(f'l,{l}')
             for r in roots:
