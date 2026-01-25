@@ -728,6 +728,9 @@ class Wrapper:
         if self.is_classifier:
             self.n_classes = estimators[0].n_classes_
         self.method = method
+
+        self.n_outputs = estimators[0].n_outputs_
+
         if self.method not in ('loadable', 'inline'):
             raise ValueError("Unsupported inference method '{}'".format(self.method))
 
@@ -888,6 +891,7 @@ class Wrapper:
 
             lines.append(f'f,{self.n_features}')
             lines.append(f'c,{self.n_classes}')
+            lines.append(f'o,{self.n_outputs}')
             lines.append(f'lb,{self.leaf_bits}')
             for l in leaves:
                 lines.append(f'l,{l}')
