@@ -50,22 +50,28 @@ def flatten_tree(tree, leaf='argmax', leaf_bits=8):
     leaf_nodes = []
 
     assert tree.node_count == len(tree.value)
-    assert tree.value.shape[1] == 1 # number of outputs
+
+    if leaf != 'value':
+        # only regression supports multi-output
+        assert tree.value.shape[1] == 1 # number of outputs
 
     def add_leaf(idx):
         """
         Returns an updated index value to identify the leaf
         """
         value = tree.value[idx]
-        assert len(value) == 1, 'only one output supported'
 
         if leaf == 'argmax':
-            # majority voting
+            # classification with majority voting
+            assert len(value) == 1, 'only one output supported'
             val = numpy.argmax(value[0])
         elif leaf == 'value':
             # regression
+            # FIXME: serialize all values
             val = value[0][0]
         elif leaf == 'probabilities':
+            # classification with class probabilities
+            assert len(value) == 1, 'only one output supported'
             val = quantize_probabilities_into_byte(value[0], bits=leaf_bits)
 
         leaf_data = val
@@ -836,6 +842,13 @@ class Wrapper:
             predictions = self.classifier_.predict(X)
         else:
             predictions = self.classifier_.regress(X)            
+
+        predictions = numpy.array(predictions)
+
+        # check post-conditions
+        assert len(predictions.shape) == 2, predictions.shape
+        assert predictions.shape[0] == X.shape[0]
+        assert predictions.shape[1] == self.n_outputs
 
         return predictions
 

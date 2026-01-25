@@ -52,6 +52,7 @@ CLASSIFICATION_DATASETS = {
 
 REGRESSION_DATASETS = {
     '1out': datasets.make_regression(n_targets=1, n_samples=100, random_state=random),
+    '3out': datasets.make_regression(n_targets=3, n_samples=100, random_state=random),
 }
 
 METHODS = ['loadable', 'inline']
