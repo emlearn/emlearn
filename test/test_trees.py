@@ -65,13 +65,14 @@ def check_csv_export(cmodel):
     csv = cmodel.save(format='csv', name='mymodelname22')
     loaded = pandas.read_csv(io.StringIO(csv), header=None, engine='python', names=['item', '1', '2', '3', '4'])
     csv_items = set(loaded.item.unique())
-    assert csv_items == set(['r', 'n', 'l', 'f', 'c'])
+    assert csv_items == set(['r', 'n', 'l', 'f', 'c', 'lb'])
 
     nodes = loaded[loaded.item == 'n']
     leaves = loaded[loaded.item == 'l']
     roots = loaded[loaded.item == 'r']
     classes = loaded[loaded.item == 'c']
     features = loaded[loaded.item == 'f']
+    leaf_bits_rows = loaded[loaded.item == 'lb']
 
     assert len(nodes) == len(cmodel.forest_[0])
     assert len(roots) == len(cmodel.forest_[1])
@@ -82,6 +83,9 @@ def check_csv_export(cmodel):
 
     assert len(features) == 1
     assert features.iloc[0, 1] == cmodel.n_features
+
+    assert len(leaf_bits_rows) == 1
+    assert leaf_bits_rows.iloc[0, 1] == cmodel.leaf_bits
 
 @pytest.mark.parametrize("data", CLASSIFICATION_DATASETS.keys())
 @pytest.mark.parametrize("model", CLASSIFICATION_MODELS.keys())
