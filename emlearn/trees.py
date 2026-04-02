@@ -859,6 +859,12 @@ class Wrapper:
             raise ValueError(f"Cannot call predict_proba on a Regressor")
         
         probabilities = self.classifier_.predict_proba(X)
+
+        # check post-conditions
+        assert len(probabilities.shape) == 2, probabilities.shape
+        assert probabilities.shape[0] == X.shape[0]
+        assert probabilities.shape[1] == self.n_classes
+
         return probabilities
 
     def save(self, name=None, file=None, format='c', inference=None, include_proba=True):
