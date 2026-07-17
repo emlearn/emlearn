@@ -6,11 +6,13 @@ Convert a Python model into C code
 """
 
 from . import trees
+from . import gbtrees
 from . import net
 from . import bayes
 from . import distance
 from . import mixture
 from . import neighbors
+
 
 from typing import Optional
 
@@ -69,6 +71,10 @@ def convert(estimator,
     if kind in set(trees.SUPPORTED_ESTIMATORS):
         # return_type is intentionally not passed through - the Wrapper will guess based on Class name
         return trees.Wrapper(estimator, method, dtype=dtype, **kwargs)
+    
+    elif kind in ['GradientBoostingClassifier']:
+        return gbtrees.Wrapper(estimator, method, dtype=dtype)
+    
     elif kind in ['EllipticEnvelope']:
         if dtype is None:
             dtype = 'float'
