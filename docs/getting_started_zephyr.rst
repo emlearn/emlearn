@@ -4,9 +4,9 @@
 
 .. _getting_started_zephyr:
 
-=========================
+==============================
 Getting started on Zephyr RTOS
-=========================
+==============================
 
 .. currentmodule:: emlearn
 
@@ -35,7 +35,7 @@ The QEMU board specifically requires the ``arm-zephyr-eabi`` compiler toolchain,
 and the ``cmsis`` and ``hal_nordic`` Zephyr modules.
 
 Add emlearn to your Zephyr project
-========================
+==================================
 
 emlearn provides the neccesary metadata to be used a Zephyr module (since Feburary 2024).
 To include the module, add an entry to the ``projects`` section of your ``west.yml`` configuration.
@@ -58,7 +58,7 @@ This should now pull the emlearn git repository into your workspace.
 
 
 Enable emlearn in your Zephyr project
-========================
+=====================================
 
 Once you have the emlearn Zephyr module, you must enable it in your application.
 You can add this manually to your configuration file.
@@ -102,7 +102,7 @@ Here is some example code for calling the XOR model on some inputs.
 
 
 Build and run in simulator
-========================
+==========================
 
 We are assuming that your code is called `helloworld_xor`.
 
@@ -126,4 +126,22 @@ This should result in output similar to this:
     xor(1,1) = 0
 
 
+Sensor data example
+========================
+
+For a more practical sensor-data workflow, the repository also includes a
+Zephyr motion-recognition example:
+`platform_examples/zephyr/motion_recognition <https://github.com/emlearn/emlearn/tree/master/platform_examples/zephyr/motion_recognition>`_.
+
+This example targets the XIAO BLE Sense nRF52840 board and its LSM6DSL
+accelerometer/gyroscope. It demonstrates how a Zephyr application can:
+
+* read accelerometer and gyroscope samples through Zephyr's sensor API
+* store captured samples as CSV data
+* run the portable motion preprocessing code used by the host-side example
+* generate preprocessing/model headers from Python tools during a west build
+
+The motion-recognition example is marked as a work in progress, but it is a
+useful starting point when adapting emlearn to real sensor data instead of the
+XOR toy example.
 

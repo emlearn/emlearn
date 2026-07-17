@@ -1,8 +1,13 @@
 Motion classification
-********
+*********************
+
+This sample shows how to use emlearn with Zephyr and real motion sensor data.
+It reads accelerometer and gyroscope samples from the LSM6DSL sensor on the
+XIAO BLE Sense nRF52840 board, writes captured samples to CSV, and runs the
+same feature extraction code used by the host-side motion-recognition example.
 
 Status
-************************
+******
 
 **Work in progress**.
 
@@ -13,6 +18,9 @@ Implemented
 * Preprocessing code for motion, with IIR gravity estimation and FFT analysis of motion 
 * Generating the model/preprocessing code as part of west build, using CMake targets
 * Tool for running preprocessing/model on CSV files, for training and validation on PC
+
+This sample currently demonstrates data capture and feature extraction on the
+device. The live classifier call is still a TODO in ``src/main.c``.
 
 TODO complete example
 
@@ -57,9 +65,14 @@ Need to have Python3 and install some dependencies
     source venv/bin/activate
     pip install emlearn
 
+The west build also runs Python helper scripts from
+``examples/motion_recognition/tools`` to generate headers for the model and the
+gravity low-pass filter. Those generated headers are written into the Zephyr
+build directory.
+
 
 Building on XIAO BLE Sense NRF52840 board
-==========================
+==========================================
 
 .. code-block:: console
 
@@ -71,5 +84,9 @@ Sample Output
 
 .. code-block:: console
 
-    TODO
+    features run_err=0 copy_err=0 write_err=0 | l=300 dt=0.962 time=12.345
+    features run_err=0 copy_err=0 write_err=0 | l=300 dt=0.963 time=13.308
 
+The ``features`` log line means that the application received a sensor window,
+wrote it to CSV, ran motion preprocessing, and copied the extracted feature
+vector. The exact timing values depend on the board and sampling configuration.
