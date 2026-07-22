@@ -8,7 +8,7 @@ import os
 import sys
 import subprocess
 import platform
-from distutils.ccompiler import new_compiler
+from setuptools import distutils
 
 import numpy
 
@@ -51,7 +51,7 @@ def build_classifier(cmodel, name, temp_dir,
 
     # create a new compiler object
     # force re-compilation even if object files exist (required)
-    cc = new_compiler(force=1)
+    cc = _distutils.new_compiler(force=1)
 
     tree_name = name
     def_file_name = name+'.h'
