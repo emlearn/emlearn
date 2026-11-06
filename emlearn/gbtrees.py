@@ -3,98 +3,14 @@ Gradient Boosted Trees
 ======================
 
 Support for GradientBoostingClassifier inference on embedded devices.
-Binary classification only in this initial version.
+Supports binary and multiclass classification.
 """
 
-from .trees import assert_node_references_valid
+from .trees import flatten_tree
 from . import cgen
 import os
 from . import common
 import numpy
-
-def flatten_tree(tree):
-    """Flatten a tree into a list of nodes, for easier code generation
-
-    :param tree: The tree to flatten
-
-    :return: two lists as arrays: nodes and leaves values. 
-    """
-
-    decision_nodes = []
-    leaf_nodes = []
-
-
-
-    def add_leaf(idx):
-        
-
-        value = tree.value[idx]
-        assert len(value) == 1, 'only one output supported'
-    
-        
-        leaf_data = value[0][0]
-        leaf_idx = len(leaf_nodes)
-        leaf_nodes.append(leaf_data)
-        encoded = -leaf_idx-1
-        assert encoded <= -1 # 0 means decision node. So first leaf is -1
-        return encoded
-
-    def process_child(idx): 
-        is_leaf = tree.children_left[idx] == -1 and tree.children_right[idx] == -1
-        if is_leaf:
-            return add_leaf(idx)
-        else:
-            return idx # will be corrected later
-
-    def add_decision_node(node):
-        out_idx = len(decision_nodes)
-        decision_nodes.append(node)
-        decision_node_mapping[node_no] = out_idx
-
-    decision_node_mapping = {}
-    zipped = list(zip(tree.children_left, tree.children_right, tree.feature, tree.threshold, tree.value))
-    for node_no, (left, right, feature, th, value) in enumerate(zipped):
-
-        if len(zipped) == 1:
-            # single node tree - must be a leaf
-            # this can happen in some edge cases, like min_samples_leaf is very high
-            assert left == -1
-            assert right == -1
-            assert node_no == 0
-            # add a dummy decision node, where both sides go to the leaf
-            leaf_idx = add_leaf(0)
-            add_decision_node([0, 0, leaf_idx, leaf_idx])
-            break
-
-        if left == -1 and right == -1:
-            continue
-
-        else:
-            left = process_child(left)
-            right = process_child(right)
-
-            node = [ feature, th, left, right ]
-            add_decision_node(node)
-       
-    # Update child decision node references to reflect smaller output nodes array
-    for node in decision_nodes:
-        if node[2] >= 0:
-            node[2] = decision_node_mapping[node[2]]
-        if node[3] >= 0:
-            node[3] = decision_node_mapping[node[3]]
-    
-    total_nodes = len(decision_nodes) + len(leaf_nodes)
-    if len(zipped) == 1:
-        assert total_nodes == 2
-        assert len(decision_nodes) == 1
-        assert len(leaf_nodes) == 1
-    else:
-        assert total_nodes == tree.node_count, (total_nodes, tree.node_count)
-
-    #print_tree((decision_nodes, leaf_nodes))
-    assert_node_references_valid(decision_nodes, leaf_nodes, roots=[0])
-    t = decision_nodes, leaf_nodes
-    return t
 
 def generate_c_inline(nodes, leaves, name, dtype='float'):
     
@@ -140,7 +56,7 @@ def generate_c_trees(trees_per_class, name):
     c_functions = []
     for k, trees in enumerate(trees_per_class):
         for stage, tree in enumerate(trees):
-            nodes, leaves = flatten_tree(tree)
+            nodes, leaves = flatten_tree(tree, leaf='value')
             c_code = generate_c_inline(nodes, leaves, name=f"{name}_tree_stage{stage}_class{k}")
             c_functions.append(c_code)
     return c_functions
@@ -157,6 +73,7 @@ def generate_c_predict_proba(trees_per_class, learning_rate, init_score, name, d
 
         tree_calls = " + ".join([c_tree_call(stage) for stage in range(n_stages)])
         out = """int {name}_predict_proba(const float *features, int32_t features_length, float *out, int out_length) {{
+        if (out_length < 2) return -1;
         float raw = {init_score};
         raw += {learning_rate}*({tree_calls});
         float p1 = 1.0f / (1.0f + expf(-raw));
@@ -166,14 +83,50 @@ def generate_c_predict_proba(trees_per_class, learning_rate, init_score, name, d
         }}""".format(
                 name=name,
                 learning_rate=cgen.constant(learning_rate, dtype=dtype),
-                init_score=cgen.constant(init_score, dtype=dtype),
+                init_score=cgen.constant(init_score[0], dtype=dtype),
                 tree_calls=tree_calls,
             )
         
     else:
         # multiclass - softmax
-        # Todo: multi-class softmax Fall 
-        pass
+        scores = []
+        for k, trees in enumerate(trees_per_class):
+            tree_calls = " + ".join(
+                f"{name}_tree_stage{stage}_class{k}(features, features_length)"
+                for stage in range(len(trees))
+            )
+            scores.append(
+                f"raw[{k}] = {cgen.constant(init_score[k], dtype=dtype)} "
+                f"+ {cgen.constant(learning_rate, dtype=dtype)} * ({tree_calls});"
+            )
+
+        out = """int {name}_predict_proba(const float *features, int32_t features_length, float *out, int out_length) {{
+            if (out_length < {n_classes}) return -1;
+
+            float raw[{n_classes}];
+            {scores}
+
+            float max_raw = raw[0];
+            for (int i = 1; i < {n_classes}; i++) {{
+                if (raw[i] > max_raw) max_raw = raw[i];
+            }}
+
+            float sum = 0.0f;
+            for (int i = 0; i < {n_classes}; i++) {{
+                out[i] = expf(raw[i] - max_raw);
+                sum += out[i];
+            }}
+
+            for (int i = 0; i < {n_classes}; i++) {{
+                out[i] /= sum;
+            }}
+
+            return 0;
+        }}""".format(
+                    name=name,
+                    n_classes=n_classes,
+                    scores="\n    ".join(scores),
+                )
 
     return out
 
@@ -186,7 +139,8 @@ def generate_c_gbtrees_classifier(trees_per_class, learning_rate, init_score, na
 
 
 def generate_c_predict(trees_per_class, name):
-    n_classes = len(trees_per_class)
+    n_classes = 2 if len(trees_per_class) == 1 else len(trees_per_class)
+
     return """int32_t {name}_predict(const float *features, int32_t features_length) {{
     float out[{n_classes}];
     {name}_predict_proba(features, features_length, out, {n_classes});
@@ -195,7 +149,7 @@ def generate_c_predict(trees_per_class, name):
         if (out[i] > out[best]) best = i;
     }}
     return best;
-}}""".format(name=name, n_classes=2)  # binary: immer 2
+}}""".format(name=name, n_classes=n_classes)
 
 
 def _extract_sklearn_gbc_trees(estimator):
@@ -206,10 +160,12 @@ def _extract_sklearn_gbc_trees(estimator):
         trees_per_class.append(trees)
 
     lr = estimator.learning_rate
-    init_score = float(estimator._raw_predict_init(numpy.zeros((1, estimator.n_features_in_)))[0][0])
+    init_scores = estimator._raw_predict_init(
+        numpy.zeros((1, estimator.n_features_in_))
+    )[0]
     n_classes_internal = 1 if estimator.n_classes_ == 2 else estimator.n_classes_
 
-    return trees_per_class, lr, init_score, n_classes_internal
+    return trees_per_class, lr, init_scores, n_classes_internal
 
 class Wrapper:
     """
@@ -252,16 +208,16 @@ class Wrapper:
                 "Use GradientBoostingClassifier instead."
             )
  
-        trees_per_class, lr, init_score, n_classes_internal = \
+        trees_per_class, lr, init_scores, n_classes_internal = \
             _extract_sklearn_gbc_trees(estimator)
- 
+
         self._trees_per_class = trees_per_class
         self._learning_rate = lr
-        self._init_score = init_score
+        self._init_score = init_scores
         self._n_classes_internal = n_classes_internal  # 1 for binary
         self.n_classes = estimator.n_classes_
         self.n_features = estimator.n_features_in_
- 
+
     def _init_regressor(self, estimator):
         trees, lr, init_score = _extract_sklearn_gbr_trees(estimator)
         self._trees = trees
