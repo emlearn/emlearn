@@ -11,7 +11,11 @@
 #include "test_quantizer.c"
 #include "test_trees.c"
 #include "test_net.c"
+<<<<<<< HEAD
 #include "test_csv_file.c"
+=======
+#include "test_npy_file.c"
+>>>>>>> 4d94f58 (eml_npy: WIP)
 
 #include <unity.c>
 
@@ -31,6 +35,7 @@ TestModule test_modules[TEST_MODULES] = {
     { "net", test_eml_net },
     { "trees", test_eml_trees },
     { "csv_file", test_eml_csv_file },
+    { "npy_file", test_eml_npy_file }
 };
 
 void
